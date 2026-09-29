@@ -158,7 +158,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 01:35';
+const APP_VERSION = '30-sep · 01:45';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1435,13 +1435,16 @@ function openShopping(keep) {
 async function syncShop(wk) {
   if (!syncReady() || shopBusy) return false; shopBusy = true;
   try {
-    const path = `compra/${wk}.json`, remote = await ghGet(path), rd = remote.data || {}, loc = (S.shopChecked[wk] = S.shopChecked[wk] || {});
-    let changed = false, push = false;
-    for (const [n, e] of Object.entries(rd)) { const l = loc[n], ld = (l && l.d) || ''; if ((!l || (e.d || '') > ld) && JSON.stringify(l) !== JSON.stringify(e)) { loc[n] = e; changed = true; } }
-    const out = { ...rd };
-    for (const [n, l] of Object.entries(loc)) { const lo = typeof l === 'object' ? l : { v: 1, d: '1970-01-01T00:00:00.000Z' }; if (!rd[n] || (lo.d || '') > (rd[n].d || '')) { out[n] = lo; push = true; } }
+    const path = `compra/${wk}.json`, loc = (S.shopChecked[wk] = S.shopChecked[wk] || {});
+    let changed = false;
+    await ghUpdate(path, remote => {
+      const rd = remote || {}; let push = false;
+      for (const [n, e] of Object.entries(rd)) { const l = loc[n], ld = (l && l.d) || ''; if ((!l || (e.d || '') > ld) && JSON.stringify(l) !== JSON.stringify(e)) { loc[n] = e; changed = true; } }
+      const out = { ...rd };
+      for (const [n, l] of Object.entries(loc)) { const lo = typeof l === 'object' ? l : { v: 1, d: '1970-01-01T00:00:00.000Z' }; if (!rd[n] || (lo.d || '') > (rd[n].d || '')) { out[n] = lo; push = true; } }
+      return push ? out : null;
+    }, 'Lista de la compra');
     if (changed) save(true);
-    if (push) await ghPut(path, out, remote.sha, 'Lista de la compra');
     return changed;
   } catch (e) { return false; } finally { shopBusy = false; }
 }
@@ -1457,12 +1460,22 @@ const syncReady = () => !!(SY.repo && SY.token && SY.profile);
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = b => decodeURIComponent(escape(atob(b.replace(/\s/g, ''))));
 async function gh(path, opts = {}) {
-  const r = await fetch(`https://api.github.com/repos/${SY.repo}/contents/${path}`, { ...opts, cache: 'no-store', headers: { Authorization: 'Bearer ' + SY.token, Accept: 'application/vnd.github+json', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) } });
+  const r = await fetch(`https://api.github.com/repos/${SY.repo}/contents/${path}${opts.method ? '' : (path.includes('?') ? '&' : '?') + '_=' + Date.now()}`, { ...opts, cache: 'no-store', headers: { Authorization: 'Bearer ' + SY.token, Accept: 'application/vnd.github+json', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) } });
   if (r.status === 404) return null;
   if (r.status === 401) throw new Error('token no válido');
   if (r.status === 403) throw new Error('el token no tiene permiso de escritura en ese repositorio');
+  if (r.status === 409 || r.status === 422) throw Object.assign(new Error('conflicto al guardar'), { conflict: true });
   if (!r.ok) throw new Error('GitHub respondió ' + r.status);
   return r.json();
+}
+/* lee, calcula y escribe; si GitHub dice que la versión ha cambiado, vuelve a leer y reintenta */
+async function ghUpdate(path, make, msg) {
+  for (let i = 0; i < 4; i++) {
+    const cur = await ghGet(path), next = make(cur.data);
+    if (next == null) return cur.data;
+    try { await ghPut(path, next, cur.sha, msg); return next; }
+    catch (e) { if (!e.conflict || i === 3) throw e; await sleep(700 * (i + 1) + Math.random() * 400); }
+  }
 }
 async function ghGet(path) { const j = await gh(path); return j ? { data: JSON.parse(b64dec(j.content)), sha: j.sha } : { data: null, sha: null }; }
 async function ghPut(path, data, sha, msg) { return gh(path, { method: 'PUT', body: JSON.stringify({ message: msg, content: b64enc(JSON.stringify(data)), ...(sha ? { sha } : {}) }) }); }
@@ -1477,26 +1490,27 @@ window.addEventListener('online', () => { if (SY.pending && syncReady()) syncPus
 const isNetErr = e => e instanceof TypeError || /load failed|failed to fetch|network|internet|offline|timed out/i.test((e && e.message) || '');
 const syncColor = m => /^Error/.test(m || '') ? 'var(--bad)' : /^Pendiente|^Guardando/.test(m || '') ? 'var(--warn)' : 'var(--acc)';
 function setSyncMsg(m) { SY.msg = m; saveSync(); const el = $('#symsg'); if (el) { el.textContent = m; el.style.color = syncColor(m); } }
+let syncAgain = false;
 async function syncPush(silent) {
-  if (!syncReady() || syncBusy) return; syncBusy = true;
+  if (!syncReady()) return; if (syncBusy) { syncAgain = true; return; } syncBusy = true;
   try {
-    const pr = await ghGet('precios.json'); const merged = mergePrices(pr.data || {}, S.prices); S.prices = merged; save(true);
-    const ps = JSON.stringify(merged);
-    if (ps !== lastPushed.prices && ps !== JSON.stringify(pr.data || {})) await ghPut('precios.json', merged, pr.sha, 'Precios actualizados');
-    lastPushed.prices = ps;
+    let merged = S.prices;
+    await ghUpdate('precios.json', remote => { merged = mergePrices(remote || {}, S.prices); return JSON.stringify(merged) === JSON.stringify(remote || {}) ? null : merged; }, 'Precios actualizados');
+    S.prices = merged; save(true); lastPushed.prices = JSON.stringify(merged);
     const mine = Object.fromEntries(Object.entries(S.foods).filter(([, f]) => f.src === 'off' || f.src === 'custom'));
-    const pd = await ghGet('productos.json'), allP = { ...(pd.data || {}), ...mine };
-    if (Object.keys(mine).some(k => JSON.stringify((pd.data || {})[k]) !== JSON.stringify(mine[k]))) await ghPut('productos.json', allP, pd.sha, 'Productos');
+    let allP = mine;
+    await ghUpdate('productos.json', remote => { allP = { ...(remote || {}), ...mine }; return Object.keys(mine).some(k => JSON.stringify((remote || {})[k]) !== JSON.stringify(mine[k])) ? allP : null; }, 'Productos');
     SHARED = allP; try { localStorage.setItem('bascula.shared', JSON.stringify(SHARED)); } catch (e) {}
     const body = { ...S }; delete body.prices; const ms = JSON.stringify(body);
-    if (ms !== lastPushed.me) { const me = await ghGet(`perfiles/${SY.profile}.json`); if (JSON.stringify(me.data) !== ms) await ghPut(`perfiles/${SY.profile}.json`, body, me.sha, `Datos de ${SY.profile}`); lastPushed.me = ms; }
+    if (ms !== lastPushed.me) { await ghUpdate(`perfiles/${SY.profile}.json`, remote => JSON.stringify(remote) === ms ? null : body, `Datos de ${SY.profile}`); lastPushed.me = ms; }
     SY.pending = 0; setSyncMsg('Guardado en GitHub · ' + new Date().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
     if (!silent) toast('Guardado en GitHub');
   } catch (e) {
-    if (isNetErr(e)) { SY.pending = 1; setSyncMsg('Pendiente de guardar: sin conexión, se reintentará solo'); clearTimeout(syncTimer); syncTimer = setTimeout(() => syncPush(true), 60000); if (!silent) toast('Sin conexión: se guardará en cuanto vuelva'); }
+    if (e.conflict) { SY.pending = 1; setSyncMsg('Pendiente de guardar: GitHub estaba ocupado, se reintentará solo'); clearTimeout(syncTimer); syncTimer = setTimeout(() => syncPush(true), 20000); if (!silent) toast('GitHub estaba ocupado: lo reintento en unos segundos'); }
+    else if (isNetErr(e)) { SY.pending = 1; setSyncMsg('Pendiente de guardar: sin conexión, se reintentará solo'); clearTimeout(syncTimer); syncTimer = setTimeout(() => syncPush(true), 60000); if (!silent) toast('Sin conexión: se guardará en cuanto vuelva'); }
     else { setSyncMsg('Error al guardar: ' + e.message); if (!silent) toast('Error: ' + e.message); }
   }
-  finally { syncBusy = false; }
+  finally { syncBusy = false; if (syncAgain) { syncAgain = false; lastPushed.me = null; setTimeout(() => syncPush(true), 2000); } }
 }
 async function syncPull() {
   try {
@@ -1618,6 +1632,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 01:45', short: 'Arreglado el error 409 al guardar en GitHub: ahora se resuelve solo.', items: ['☁️ Arreglado el <b>error 409</b> al guardar varias cosas seguidas (por ejemplo, en la despensa): la app vuelve a leer y reintenta sola.'] },
   { v: '30-sep · 01:35', short: 'Alternativas más sanas también para los alimentos básicos, con las calorías que te ahorras.', items: ['🌿 <b>Alternativas más sanas</b> también en los básicos: arroz blanco → integral o quinoa, pan blanco → integral, mantequilla → aceite de oliva o aguacate, mayonesa → yogur griego o hummus…', '🔥 Cada alternativa te dice <b>cuántas calorías ahorras</b> con el mismo peso.', '🔎 En productos envasados sin categoría, busca alternativas por el nombre.'] },
   { v: '30-sep · 01:25', short: 'Ahora la valoración 🟢🟡🔴 también sale en los alimentos básicos (fruta, arroz, pollo…) y en los creados a mano.', items: ['🟢🟡🔴 La valoración <b>¿Es saludable?</b> sale también en los <b>alimentos básicos</b>, con sus motivos ("Cereal refinado", "Mucha sal", "Grasas saludables"…).', '✏️ Los alimentos creados a mano sin azúcar o sal te piden completarlos para poder valorarlos.'] },
   { v: '30-sep · 01:15', short: '¿Es saludable? y alternativas más sanas, cenas de madrugada, mover comidas de día y más.', items: ['🌿 <b>¿Es saludable?</b>: veredicto 🟢🟡🔴 en cada producto envasado, con los motivos (azúcar, sal, ultraprocesado…).', '🌿 <b>Alternativas más sanas</b> de la misma categoría, con dónde se venden.', '🌙 <b>El día termina a las 4:00</b>: las cenas de madrugada cuentan para el día anterior.', '📅 <b>Mover una comida</b> a otro día u otra comida desde su ficha.', '🍽️ <b>Ficha de alimento y escáner rediseñados</b>.', '☁️ La copia en GitHub <b>reintenta sola</b> si se corta la conexión, con estado en colores.', '🆕 Esta sección de novedades y el número de versión en Ajustes.'] },
@@ -1733,6 +1748,7 @@ const HELP = [
 <li><b>La cámara no abre:</b> usa "hacer foto al código" o escribe el número. Revisa que Bluefy tenga permiso de cámara en Ajustes del iPhone.</li>
 <li><b>Un producto tiene datos raros:</b> los de Open Food Facts los sube la gente. Edítalo en Ajustes → Mis alimentos.</li>
 <li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
+<li><b>"GitHub respondió 409" o "GitHub estaba ocupado":</b> dos guardados muy seguidos chocaron. La app lo resuelve sola reintentando; no se pierde nada.</li>
 <li><b>Error al guardar en GitHub (en rojo):</b> revisa que el repositorio se escriba como usuario/nombre y que el token tenga "Contents: Read and write" y no haya caducado.</li>
 <li><b>Apunté la cena en el día que no era:</b> tócala en el Diario, elige el día correcto (Ayer, Anteayer u Otro) y pulsa Guardar.</li>
 <li><b>No sale la tarjeta de "¿Es saludable?":</b> sale en productos envasados y en los básicos. No sale en recetas ni en condimentos (especias, vinagre…). En alimentos creados a mano hay que rellenar azúcares y sal. Si falta, comprueba que tienes la última versión.</li>
