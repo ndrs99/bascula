@@ -158,7 +158,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 01:45';
+const APP_VERSION = '30-sep · 02:00';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -208,7 +208,7 @@ const EXTRA_RAW = [
 ['Especias variadas',280,12,30,10,30],['Caldo de verduras',5,0.3,0.8,0.1,0],['Pasta integral cruda',350,13,64,2.5,8],['Arroz integral crudo',355,7.5,74,2.7,3.5],
 ['Pan pita integral',260,9,50,1.7,6],['Maicena',350,0.3,87,0.1,0.9],['Levadura química',53,0,28,0,0],['Jengibre fresco',80,1.8,18,0.8,2],
 ['Hierbas frescas',36,3,6,0.8,3],['Semillas de sésamo',573,18,12,50,12],['Salsa sriracha',105,2,20,1,1],
-['Queso cottage',98,11,3.4,4.3,0],['Arroz integral cocido',123,2.7,25.6,1,1.6],['Quinoa cocida',120,4.4,21.3,1.9,2.8],['Pasta integral cocida',149,6,30,1.7,4],['Papel de arroz',330,6,77,0.3,1],['Ñoquis de patata',150,4,32,0.3,1.5],['Copos de maíz sin azúcar',370,7,84,0.9,3],
+['Queso cottage',98,11,3.4,4.3,0],['Café solo',2,0.1,0,0,0],['Edamame',121,11.9,8.9,5.2,5.2],['Maíz para palomitas',375,11,74,4.3,15],['Remolacha cocida',44,1.7,10,0.2,2],['Galletas integrales',440,7,68,15,6],['Arroz integral cocido',123,2.7,25.6,1,1.6],['Quinoa cocida',120,4.4,21.3,1.9,2.8],['Pasta integral cocida',149,6,30,1.7,4],['Papel de arroz',330,6,77,0.3,1],['Ñoquis de patata',150,4,32,0.3,1.5],['Copos de maíz sin azúcar',370,7,84,0.9,3],
 ['Harina de trigo',340,10,71,1.2,3],['Tomates secos',258,14,43,3,12],['Judías verdes',31,1.8,4.5,0.2,3],['Guisantes',80,5.4,10,0.4,5],['Dátiles',280,2.5,66,0.4,8],
 ['Pechuga de pavo en lonchas',100,20,1.5,1.5,0],['Semillas de chía',486,17,8,31,34],['Vinagre de vino',20,0,0.5,0,0],['Caldo de pollo',8,1,0.5,0.3,0],['Tortitas de arroz',380,8,80,3,3]];
 
@@ -250,7 +250,12 @@ const WHERE = {
 'Tomates secos':'Conservas o encurtidos de Mercadona, Carrefour, Alcampo',
 'Dátiles':'Pasillo de frutos secos',
 'Semillas de chía':'Pasillo de cereales o frutos secos',
-'Tortitas de arroz':'Pasillo de galletas o cereales'};
+'Tortitas de arroz':'Pasillo de galletas o cereales',
+'Edamame':'Congelados de Mercadona, Lidl, Carrefour o tiendas asiáticas',
+'Maíz para palomitas':'Pasillo de legumbres o aperitivos (maíz en grano para palomitas)',
+'Remolacha cocida':'Verduras envasadas de Mercadona, Lidl, Carrefour (ya cocida al vacío)',
+'Galletas integrales':'Pasillo de galletas (elige las que tengan menos azúcar)',
+'Café solo':'Cualquier súper o tu cafetera'};
 
 /* ---------- recetario ---------- */
 const RECIPES = [
@@ -487,6 +492,127 @@ steps:['Corta el calabacín en bastones o rodajas de medio centímetro y sécalo
 {id:'tortitas-arroz',name:'Tortitas de arroz con cacahuete, plátano y chocolate',emoji:'🍌',cat:'dulce',time:3,serv:1,tags:['Snack rápido','Pre-entreno'],
 ing:[['Tortitas de arroz',20,'2 tortitas'],['Crema de cacahuete',15],['Plátano',80],['Chocolate negro 70%',5,'rallado'],['Canela molida',1]],
 steps:['Unta las tortitas con la crema de cacahuete.','Pon el plátano en rodajas por encima.','Termina con el chocolate rallado y la canela.']}
+);
+
+RECIPES.push(
+{id:'huevos-turcos',name:'Huevos turcos (çılbır) con yogur al ajo',emoji:'🍳',cat:'desayuno',time:15,serv:2,tags:['Viral en redes','Alto en proteína'],
+ing:[['Skyr o yogur griego 0%',250],['Ajo',4,'1 diente'],['Huevo entero',220,'4 huevos'],['Aceite de oliva',10],['Especias variadas',3,'pimentón y guindilla'],['Hierbas frescas',5,'eneldo o perejil'],['Pan integral',80,'para mojar']],
+steps:['Mezcla el yogur con el ajo rallado y una pizca de sal y extiéndelo en dos platos hondos. Mejor a temperatura ambiente.','Haz los huevos poché: agua a punto de hervir con un chorrito de vinagre, remolino y huevo dentro 3 minutos.','Calienta el aceite con el pimentón y la guindilla 30 segundos, sin que se queme: es la mantequilla roja pero ligera.','Pon los huevos sobre el yogur, riega con el aceite especiado y termina con las hierbas. Moja con el pan tostado.'],
+tip:'El contraste del yogur frío con el huevo caliente es lo que lo hace tan bueno.'},
+{id:'pancakes-cottage',name:'Pancakes de cottage (3 ingredientes)',emoji:'🥞',cat:'desayuno',time:15,serv:1,tags:['Viral en redes','Alto en proteína'],
+ing:[['Queso cottage',120],['Huevo entero',110,'2 huevos'],['Harina de avena',40],['Levadura química',3],['Frutos rojos congelados',80],['Miel',8]],
+steps:['Tritura el cottage con los huevos, la harina de avena y la levadura hasta que no queden grumos.','Cocina cucharadas de masa en sartén antiadherente a fuego medio-bajo, 2 minutos por lado. Salen 6-7 pancakes.','Calienta los frutos rojos 1 minuto en el microondas y sirve por encima con la miel.'],
+tip:'Fuego medio-bajo: al llevar queso se doran muy rápido.'},
+{id:'overnight-cheesecake',name:'Overnight oats de tarta de queso y frutos rojos',emoji:'🍰',cat:'desayuno',time:5,serv:1,tags:['Viral en redes','Sin cocinar'],
+ing:[['Avena en copos',45],['Queso fresco batido 0%',150],['Leche desnatada',80],['Miel',8],['Zumo de limón',5],['Frutos rojos congelados',80],['Galletas integrales',10,'1 galleta, para el crujiente']],
+steps:['Mezcla la avena, el queso batido, la leche, la miel y el limón en un tarro.','Pon los frutos rojos encima (se descongelan en la nevera y sueltan su jugo).','Deja toda la noche en la nevera y por la mañana desmenuza la galleta por encima.']},
+{id:'proffee',name:'Café proteico helado ("proffee")',emoji:'🧋',cat:'desayuno',time:3,serv:1,tags:['Viral en redes','Sin cocinar'],
+ing:[['Café solo',60,'1 espresso doble'],['Leche desnatada',200],['Skyr o yogur griego 0%',100],['Cacao puro en polvo',5],['Canela molida',1]],
+steps:['Bate la leche con el skyr, el cacao y la canela hasta que haga espuma (batidora o agitando en un bote).','Llena un vaso de hielo, vierte la mezcla y termina con el café por encima.'],
+tip:'Si te gusta más dulce, añade edulcorante o 5 g de miel.'},
+{id:'granola-casera',name:'Granola casera crujiente',emoji:'🥣',cat:'desayuno',time:30,serv:8,tags:['Batch cooking','Sin azúcar refinado'],
+ing:[['Avena en copos',250],['Almendras',60,'troceadas'],['Nueces',40],['Semillas de sésamo',20],['Miel',60],['Aceite de oliva',20],['Canela molida',4],['Clara de huevo',30,'el truco para los clusters']],
+steps:['Precalienta el horno a 160 °C.','Mezcla todo en un bol hasta que la avena quede bien impregnada.','Extiende en una bandeja con papel, aplastando con una espátula para que se formen trozos.','Hornea 25 minutos sin remover. Deja enfriar del todo en la bandeja antes de romperla en trozos.'],
+tip:'Aguanta 3 semanas en un tarro cerrado. Ración: 40 g con skyr y fruta.'},
+{id:'pan-nube',name:'Pan nube (cloud bread) con pavo y tomate',emoji:'☁️',cat:'desayuno',time:30,serv:2,tags:['Viral en redes','Bajo en carbohidratos'],
+ing:[['Clara de huevo',150,'5 claras'],['Queso fresco batido 0%',60],['Maicena',8],['Especias variadas',1,'orégano o sal de ajo'],['Pechuga de pavo en lonchas',60],['Tomate',100],['Rúcula',20]],
+steps:['Monta las claras a punto de nieve firme.','Mezcla aparte el queso batido con la maicena y las especias e incorpóralo a las claras con movimientos suaves.','Haz 4 montoncitos planos sobre papel de horno y hornea a 150 °C 25 minutos hasta que estén dorados.','Deja enfriar y rellena como un sándwich con el pavo, el tomate y la rúcula.']},
+{id:'tostada-hummus',name:'Tostada de hummus, huevo y tomate',emoji:'🍞',cat:'desayuno',time:10,serv:1,tags:['Rápido','Mucha fibra'],
+ing:[['Pan integral',70],['Hummus',40],['Huevo entero',55],['Tomate',80,'cherry'],['Especias variadas',1,'za\'atar o pimentón'],['Hierbas frescas',3]],
+steps:['Tuesta el pan y úntalo con el hummus.','Haz el huevo a la plancha o cocido 7 minutos y córtalo en láminas.','Coloca el huevo y los tomates en mitades, y termina con las especias y las hierbas.']},
+{id:'pudin-chia-cacao',name:'Pudin de chía y cacao',emoji:'🍫',cat:'desayuno',time:5,serv:1,tags:['Sin cocinar','Se prepara la noche antes'],
+ing:[['Semillas de chía',25],['Bebida de almendras sin azúcar',160],['Cacao puro en polvo',8],['Miel',8],['Plátano',60],['Crema de cacahuete',10]],
+steps:['Mezcla la chía, la bebida de almendras, el cacao y la miel. Espera 5 minutos y vuelve a remover para que no se hagan grumos.','Nevera toda la noche.','Sirve con el plátano en rodajas y la crema de cacahuete por encima.']},
+{id:'pasta-gigi',name:'Pasta cremosa de tomate estilo "Gigi Hadid" (ligera)',emoji:'🍝',cat:'principal',time:25,serv:2,tags:['Viral en redes','Sin nata'],
+ing:[['Pasta integral cruda',160],['Aceite de oliva',10],['Cebolla',60,'o chalota'],['Ajo',6],['Especias variadas',2,'guindilla en escamas'],['Tomate triturado',150,'o 2 cucharadas de concentrado'],['Queso fresco batido 0%',150],['Queso parmesano',20],['Hierbas frescas',5,'albahaca']],
+steps:['Cuece la pasta y guarda un vaso del agua de cocción.','Pocha la cebolla y el ajo picados en el aceite 5 minutos. Añade la guindilla y el tomate y cocina 5 minutos más hasta que oscurezca un poco.','Fuera del fuego, añade el queso batido y remueve hasta tener una salsa rosa y cremosa.','Mezcla con la pasta, el parmesano y un chorrito del agua de cocción. Termina con albahaca.']},
+{id:'pasta-pesto-aguacate',name:'Pasta con pesto de aguacate y albahaca',emoji:'🥑',cat:'principal',time:20,serv:2,tags:['Vegetariana','Grasas saludables'],
+ing:[['Pasta integral cruda',160],['Aguacate',120],['Hierbas frescas',20,'albahaca'],['Ajo',3],['Zumo de limón',15],['Queso parmesano',15],['Almendras',15],['Tomate',120,'cherry'],['Pechuga de pollo a la plancha',150,'opcional']],
+steps:['Cuece la pasta.','Tritura el aguacate con la albahaca, el ajo, el limón, el parmesano, las almendras, sal y 3-4 cucharadas del agua de cocción hasta tener una crema.','Mezcla la pasta escurrida con el pesto (sin volver al fuego para que no se oscurezca).','Sirve con los tomates cherry y, si quieres, el pollo en tiras.']},
+{id:'salmon-teriyaki',name:'Salmón teriyaki en freidora de aire con arroz integral',emoji:'🍣',cat:'principal',time:20,serv:2,tags:['Freidora de aire','Omega 3'],
+ing:[['Salmón crudo',300,'2 lomos'],['Salsa de soja',25],['Miel',12],['Jengibre fresco',5],['Ajo',3],['Maicena',4],['Arroz integral cocido',300],['Brócoli',250],['Semillas de sésamo',5]],
+steps:['Mezcla la soja, la miel, el jengibre y el ajo rallados y 30 ml de agua. Separa la mitad y dale un hervor con la maicena para que espese: es la salsa teriyaki.','Pinta el salmón con la otra mitad y cocínalo en la freidora a 200 °C 8-10 minutos (o horno 12 minutos).','Cuece el brócoli al vapor 5 minutos.','Sirve con el arroz, riega con la salsa espesa y el sésamo.']},
+{id:'pollo-limon-griego',name:'Pollo al limón griego con patatas en bandeja',emoji:'🍋',cat:'principal',time:55,serv:3,tags:['Una sola bandeja','Horno'],
+ing:[['Pechuga de pollo cruda',500,'o contramuslo sin piel'],['Patata cruda',500],['Cebolla',120,'morada'],['Zumo de limón',40],['Ajo',10],['Aceite de oliva',15],['Especias variadas',5,'orégano, pimienta'],['Caldo de pollo',100],['Skyr o yogur griego 0%',150,'con pepino para servir'],['Pepino',100]],
+steps:['Mezcla el limón, el ajo picado, el aceite, el orégano y sal. Marina el pollo en trozos grandes al menos 15 minutos.','Corta las patatas en gajos y la cebolla en cuartos y ponlo todo en una bandeja con el pollo y su marinada.','Añade el caldo y hornea a 200 °C 40-45 minutos, removiendo a mitad, hasta que las patatas estén doradas.','Sirve con el yogur mezclado con pepino rallado (tzatziki rápido).']},
+{id:'arroz-crujiente',name:'Ensalada de arroz crujiente con edamame',emoji:'🍚',cat:'principal',time:35,serv:2,tags:['Viral en redes','Aprovechamiento'],
+ing:[['Arroz blanco cocido',250,'del día anterior'],['Aceite de oliva',10],['Salsa de soja',20],['Edamame',120,'pelado'],['Pepino',150],['Zanahoria',100],['Hierbas frescas',10,'menta y cilantro'],['Cacahuetes',20],['Zumo de limón',20],['Miel',6],['Salsa sriracha',8]],
+steps:['Mezcla el arroz frío con el aceite y 10 g de soja, extiéndelo en una bandeja con papel y hornea a 210 °C 20-25 minutos hasta que esté crujiente (o en freidora 12 minutos).','Cuece el edamame 3 minutos y enfría.','Corta el pepino y la zanahoria en tiras finas.','Aliño: el resto de la soja, el limón, la miel y la sriracha.','Mezcla todo con el arroz crujiente justo antes de comer y termina con hierbas y cacahuetes.']},
+{id:'tacos-pescado',name:'Tacos de pescado con salsa de yogur y lima',emoji:'🐟',cat:'principal',time:25,serv:2,tags:['Estilo mexicano','Ligero'],
+ing:[['Merluza cruda',300],['Especias variadas',5,'comino, pimentón, ajo en polvo'],['Aceite de oliva',8],['Tortilla de trigo integral',120,'4 pequeñas'],['Lechuga',60,'o col lombarda'],['Skyr o yogur griego 0%',80],['Zumo de limón',15,'mejor lima'],['Aguacate',60],['Cebolla',30,'morada'],['Hierbas frescas',5,'cilantro']],
+steps:['Seca la merluza, sálala y cúbrela con las especias.','Hazla en la sartén con el aceite 3 minutos por lado y desmenúzala en trozos grandes.','Salsa: mezcla el skyr con el limón, sal y un poco de cilantro picado.','Calienta las tortillas y rellénalas con lechuga, pescado, aguacate, cebolla, la salsa y cilantro.']},
+{id:'burrito-bowl',name:'Burrito bowl de pollo',emoji:'🌯',cat:'principal',time:30,serv:2,tags:['Para llevar','Mucha fibra'],
+ing:[['Pechuga de pollo cruda',300],['Especias variadas',6,'comino, pimentón, chile'],['Aceite de oliva',8],['Arroz integral cocido',250],['Alubias cocidas',150,'negras o rojas'],['Maíz dulce (lata)',80],['Tomate',150],['Cebolla',40],['Aguacate',80],['Skyr o yogur griego 0%',60],['Zumo de limón',15],['Lechuga',60]],
+steps:['Marina el pollo con las especias y sal y hazlo a la plancha con el aceite. Córtalo en tiras.','Pico de gallo: tomate y cebolla picados con la mitad del limón y sal.','Aliña el arroz con el resto del limón.','Monta los boles: lechuga, arroz, alubias, maíz, pollo, pico de gallo, aguacate y una cucharada de skyr.']},
+{id:'pad-kra-pao',name:'Pad kra pao (salteado tailandés de albahaca)',emoji:'🌶️',cat:'principal',time:20,serv:2,tags:['Estilo tailandés','Rápido'],
+ing:[['Carne picada de pavo',300],['Aceite de oliva',10],['Ajo',10],['Especias variadas',2,'guindilla'],['Pimiento rojo',100],['Cebolla',60],['Salsa de soja',25],['Miel',6],['Hierbas frescas',15,'albahaca'],['Arroz blanco crudo',120,'jazmín'],['Huevo entero',110,'2 huevos']],
+steps:['Cuece el arroz.','Saltea el ajo picado y la guindilla 30 segundos en el aceite muy caliente. Añade el pavo y dóralo bien, deshaciéndolo.','Añade el pimiento y la cebolla en tiras 2 minutos, luego la soja y la miel. Al final, la albahaca, que se ablande en segundos.','Sirve con el arroz y un huevo a la plancha con la yema líquida por encima.']},
+{id:'poke-tofu',name:'Poke bowl vegano de tofu crujiente',emoji:'🥢',cat:'principal',time:30,serv:2,tags:['Vegano','Alto en proteína'],
+ing:[['Tofu',300,'firme'],['Maicena',10],['Salsa de soja',25],['Aceite de oliva',10],['Arroz integral cocido',250],['Edamame',100],['Mango',100],['Pepino',100],['Zanahoria',80],['Semillas de sésamo',6],['Salsa sriracha',10]],
+steps:['Seca bien el tofu con papel, córtalo en dados, mézclalo con 10 g de soja y rebózalo en la maicena.','Dóralo en la sartén con el aceite (o freidora a 200 °C 12 minutos) hasta que esté crujiente.','Cuece el edamame 3 minutos. Corta el mango, el pepino y la zanahoria.','Monta los boles con el arroz, todo por zonas y el tofu, y aliña con el resto de la soja, la sriracha y el sésamo.']},
+{id:'pizza-tortilla',name:'Pizza de tortilla crujiente en sartén',emoji:'🍕',cat:'principal',time:12,serv:1,tags:['Viral en redes','Rápido'],
+ing:[['Tortilla de trigo integral',60,'1 grande'],['Tomate triturado',50],['Especias variadas',1,'orégano'],['Queso mozzarella light',50],['Pechuga de pavo en lonchas',40],['Champiñones',40],['Rúcula',15]],
+steps:['Pon la tortilla en una sartén a fuego medio 1 minuto para que empiece a tostarse.','Extiende el tomate, el orégano, la mozzarella, el pavo y los champiñones en láminas finas.','Tapa y deja 4-5 minutos a fuego medio-bajo hasta que el queso se funda y la base cruja.','Termina con la rúcula.']},
+{id:'quesadilla-pollo',name:'Quesadilla de pollo y espinacas',emoji:'🫓',cat:'principal',time:15,serv:1,tags:['Rápido','Para llevar'],
+ing:[['Tortilla de trigo integral',60,'1 grande'],['Pechuga de pollo a la plancha',100,'desmenuzada'],['Espinacas',40],['Queso mozzarella light',40],['Pimiento rojo',40],['Especias variadas',2,'comino y pimentón'],['Skyr o yogur griego 0%',40,'para mojar']],
+steps:['En la mitad de la tortilla pon la mozzarella, el pollo, las espinacas, el pimiento en tiras y las especias.','Dobla y dora en una sartén sin aceite 2-3 minutos por lado, apretando con la espátula.','Corta en triángulos y moja en el skyr con una pizca de sal y limón.']},
+{id:'hot-honey-chicken',name:'Pollo "hot honey" en freidora con ensalada',emoji:'🍯',cat:'principal',time:25,serv:2,tags:['Viral en redes','Freidora de aire'],
+ing:[['Pechuga de pollo cruda',350],['Copos de maíz sin azúcar',40],['Huevo entero',55],['Especias variadas',4,'pimentón ahumado, ajo en polvo'],['Miel',20],['Salsa sriracha',15],['Zumo de limón',5],['Lechuga',120],['Tomate',120],['Pepino',100],['Aceite de oliva',8]],
+steps:['Corta el pollo en tiras, sálalo y pásalo por el huevo batido y luego por los copos de maíz triturados con las especias.','Freidora de aire a 200 °C 10-12 minutos, dándoles la vuelta a mitad.','Salsa hot honey: calienta la miel con la sriracha y el limón 20 segundos.','Riega el pollo con la salsa y sirve con la ensalada aliñada con el aceite.']},
+{id:'gazpacho',name:'Gazpacho andaluz',emoji:'🍅',cat:'principal',time:15,serv:4,tags:['Receta española','Sin cocinar'],
+ing:[['Tomate',1000,'muy maduro'],['Pimiento verde',80],['Pepino',120],['Cebolla',30],['Ajo',3],['Aceite de oliva',25],['Vinagre de vino',15],['Pan integral',30,'opcional, para más cuerpo']],
+steps:['Trocea todas las verduras y ponlas en la batidora con el pan, el ajo, el vinagre y sal.','Tritura a máxima potencia 2 minutos y añade el aceite poco a poco mientras sigue batiendo.','Pásalo por un colador si lo quieres muy fino, prueba de sal y vinagre y enfría al menos 1 hora.'],
+tip:'Aguanta 3 días en la nevera. Es un buen primer plato o merienda con muy pocas calorías.'},
+{id:'tortilla-calabacin',name:'Tortilla de calabacín y cebolla',emoji:'🥒',cat:'principal',time:25,serv:2,tags:['Receta española','Bajo en carbohidratos'],
+ing:[['Calabacín',400],['Cebolla',120],['Aceite de oliva',10],['Huevo entero',220,'4 huevos'],['Clara de huevo',60],['Queso parmesano',10]],
+steps:['Pica la cebolla y corta el calabacín en dados pequeños.','Pocha la cebolla con la mitad del aceite 5 minutos, añade el calabacín y cocina 10 minutos hasta que esté tierno y haya perdido el agua.','Bate los huevos, las claras, el parmesano y sal, añade la verdura escurrida y deja reposar 2 minutos.','Cuaja en la sartén con el resto del aceite 3-4 minutos por lado.']},
+{id:'moussaka',name:'Musaka ligera de berenjena',emoji:'🍆',cat:'principal',time:70,serv:4,tags:['Horno','Batch cooking'],
+ing:[['Berenjena',700,'2 grandes'],['Aceite de oliva',12],['Cebolla',150],['Ajo',6],['Ternera magra cruda',400,'picada'],['Tomate triturado',400],['Especias variadas',4,'canela, orégano, pimienta'],['Queso fresco batido 0%',250],['Huevo entero',55],['Queso parmesano',25]],
+steps:['Corta las berenjenas en rodajas de 1 cm, píntalas con la mitad del aceite y ásalas a 200 °C 20 minutos.','Sofríe la cebolla y el ajo con el resto del aceite, añade la carne, dórala y agrega el tomate y las especias. 15 minutos a fuego suave.','Bechamel ligera: queso batido con el huevo, la mitad del parmesano, sal y nuez moscada.','Monta capas de berenjena y carne, termina con la bechamel y el resto del parmesano y hornea a 190 °C 25 minutos. Reposa 10 minutos antes de cortar.']},
+{id:'burger-salmon',name:'Hamburguesas de salmón con salsa de yogur y eneldo',emoji:'🐟',cat:'principal',time:25,serv:2,tags:['Omega 3','Alto en proteína'],
+ing:[['Salmón crudo',300,'sin piel'],['Clara de huevo',30],['Harina de avena',20],['Cebolla',30,'cebolleta'],['Zumo de limón',10],['Hierbas frescas',8,'eneldo'],['Aceite de oliva',6],['Skyr o yogur griego 0%',80],['Pan integral',120,'2 panes'],['Lechuga',40],['Pepino',60]],
+steps:['Pica el salmón a cuchillo (o con 3-4 golpes de picadora, que no quede pasta).','Mézclalo con la clara, la harina de avena, la cebolleta, la mitad del eneldo, ralladura de limón y sal. Forma 2 hamburguesas y enfría 10 minutos.','Dóralas con el aceite 3 minutos por lado.','Salsa: skyr con limón, el resto del eneldo y sal. Monta con el pan, lechuga y pepino.']},
+{id:'crema-calabacin',name:'Crema de calabacín con queso y picatostes',emoji:'🥣',cat:'principal',time:25,serv:3,tags:['Reconfortante','Muy ligera'],
+ing:[['Calabacín',800],['Cebolla',120],['Patata cruda',150],['Aceite de oliva',10],['Caldo de verduras',500],['Queso fresco batido 0%',100],['Pan integral',45,'para picatostes']],
+steps:['Pocha la cebolla con el aceite 5 minutos. Añade el calabacín y la patata troceados y rehoga 3 minutos.','Cubre con el caldo y cuece 15 minutos.','Tritura con el queso batido hasta que quede muy fina y ajusta de sal y pimienta.','Tuesta el pan en dados en una sartén sin aceite y sirve por encima.']},
+{id:'arroz-meloso-setas',name:'Arroz meloso de pollo y setas',emoji:'🍄',cat:'principal',time:40,serv:3,tags:['Reconfortante','Una sola olla'],
+ing:[['Aceite de oliva',12],['Cebolla',100],['Ajo',6],['Pechuga de pollo cruda',300],['Champiñones',300,'o setas variadas'],['Arroz blanco crudo',210],['Caldo de pollo',900],['Especias variadas',2,'tomillo, pimienta'],['Queso parmesano',20],['Hierbas frescas',5,'perejil']],
+steps:['Dora el pollo en dados con la mitad del aceite y resérvalo.','Sofríe la cebolla, el ajo y las setas laminadas con el resto del aceite 8 minutos.','Añade el arroz, remueve 1 minuto y ve añadiendo el caldo caliente en tandas, removiendo a menudo, durante unos 18 minutos.','Vuelve a meter el pollo, apaga, añade el parmesano y deja reposar 2 minutos. Termina con perejil.']},
+{id:'banana-bread',name:'Banana bread fit',emoji:'🍌',cat:'dulce',time:55,serv:10,tags:['Sin azúcar refinado','Batch cooking'],
+ing:[['Plátano',360,'3 muy maduros'],['Huevo entero',110,'2 huevos'],['Skyr o yogur griego 0%',100],['Harina de avena',180],['Levadura química',8],['Canela molida',3],['Miel',30],['Nueces',40],['Chocolate negro 70%',30,'opcional']],
+steps:['Precalienta el horno a 180 °C.','Aplasta 2 plátanos y mézclalos con los huevos, el skyr y la miel.','Añade la harina de avena, la levadura y la canela, mezcla lo justo e incorpora las nueces y el chocolate troceados.','Vierte en un molde de plum cake con papel, pon el tercer plátano abierto por la mitad encima y hornea 40-45 minutos.'],
+tip:'Se congela en rebanadas. 1 ración = 1/10 del bizcocho.'},
+{id:'cookie-dough',name:'Cookie dough proteico para comer a cucharadas',emoji:'🍪',cat:'dulce',time:5,serv:2,tags:['Viral en redes','Sin horno'],
+ing:[['Harina de avena',40,'tostada 1 min en sartén'],['Crema de cacahuete',20],['Skyr o yogur griego 0%',80],['Miel',10],['Chocolate negro 70%',15,'en trocitos'],['Canela molida',1]],
+steps:['Tuesta la harina de avena 1-2 minutos en una sartén sin aceite (así pierde el sabor a crudo) y deja enfriar.','Mezcla con la crema de cacahuete, el skyr, la miel, la canela y una pizca de sal hasta tener una masa.','Añade el chocolate y guarda 15 minutos en la nevera.']},
+{id:'cheesecake-taza',name:'Tarta de queso en taza (microondas)',emoji:'🧁',cat:'dulce',time:5,serv:1,tags:['Microondas','Alto en proteína'],
+ing:[['Queso fresco batido 0%',120],['Huevo entero',55],['Maicena',6],['Miel',10],['Zumo de limón',3],['Galletas integrales',10,'para la base'],['Frutos rojos congelados',40]],
+steps:['Desmenuza la galleta en el fondo de una taza grande.','Bate el queso batido con el huevo, la maicena, la miel y el limón y viértelo encima.','Microondas a potencia media 2-3 minutos, en tandas de 45 segundos, hasta que cuaje con el centro ligeramente tembloroso.','Enfría en la nevera al menos 1 hora y sirve con los frutos rojos.']},
+{id:'uvas-yogur',name:'Uvas heladas con yogur ("frozen yogurt grapes")',emoji:'🍇',cat:'dulce',time:10,serv:2,tags:['Viral en redes','Sin horno'],
+ing:[['Uvas',200],['Skyr o yogur griego 0%',120],['Miel',8],['Chocolate negro 70%',10,'rallado, opcional']],
+steps:['Lava y seca muy bien las uvas.','Mezcla el yogur con la miel y reboza las uvas (con un palillo es más fácil).','Colócalas separadas en una bandeja con papel, ralla el chocolate por encima y congela 2 horas.']},
+{id:'apple-nachos',name:'Nachos de manzana con cacahuete y chocolate',emoji:'🍏',cat:'dulce',time:5,serv:1,tags:['Viral en redes','Snack rápido'],
+ing:[['Manzana',180,'1 manzana'],['Zumo de limón',3],['Crema de cacahuete',15],['Chocolate negro 70%',8],['Almendras',8],['Canela molida',1]],
+steps:['Corta la manzana en láminas finas y rocíalas con limón para que no se oxiden.','Extiéndelas en un plato como si fueran nachos.','Calienta la crema de cacahuete 10 segundos para que quede líquida y riégalas. Termina con el chocolate rallado, las almendras picadas y la canela.']},
+{id:'barritas-avena',name:'Barritas de avena y cacahuete sin horno',emoji:'🍫',cat:'dulce',time:15,serv:8,tags:['Sin horno','Pre-entreno'],
+ing:[['Avena en copos',150],['Crema de cacahuete',80],['Miel',50],['Dátiles',60,'picados'],['Cacao puro en polvo',10],['Chocolate negro 70%',30]],
+steps:['Calienta la crema de cacahuete con la miel 30 segundos y mézclala con la avena, los dátiles y el cacao.','Presiona la mezcla con fuerza en un molde con papel (unos 20x15 cm).','Funde el chocolate, extiéndelo por encima y deja en la nevera 1 hora antes de cortar en 8 barritas.']},
+{id:'brownie-alubias',name:'Brownie de alubias negras',emoji:'🟫',cat:'dulce',time:35,serv:9,tags:['Viral en redes','Sin harina'],
+ing:[['Alubias cocidas',250,'negras, bien escurridas y lavadas'],['Huevo entero',110,'2 huevos'],['Cacao puro en polvo',30],['Miel',50],['Aceite de oliva',15],['Levadura química',4],['Chocolate negro 70%',30]],
+steps:['Precalienta el horno a 180 °C.','Tritura las alubias con los huevos, el cacao, la miel, el aceite, la levadura y una pizca de sal hasta que quede totalmente liso.','Añade la mitad del chocolate troceado, pasa a un molde de 20x20 cm y pon el resto encima.','Hornea 20-22 minutos. Deja enfriar del todo antes de cortar: nadie adivina que lleva alubias.']},
+{id:'palomitas-cacao',name:'Palomitas caseras con cacao y canela',emoji:'🍿',cat:'dulce',time:8,serv:2,tags:['Snack','Mucha fibra'],
+ing:[['Maíz para palomitas',50],['Aceite de oliva',6],['Cacao puro en polvo',5],['Canela molida',2],['Miel',6]],
+steps:['Pon el maíz con el aceite en una olla con tapa a fuego medio-alto y mueve de vez en cuando hasta que dejen de explotar.','Mezcla el cacao con la canela.','Calienta la miel 5 segundos, riégala sobre las palomitas, espolvorea el cacao y mezcla bien.'],
+tip:'Versión salada: sin miel ni cacao, con pimentón ahumado y una pizca de sal.'},
+{id:'edamame-snack',name:'Edamame salteado con ajo y lima',emoji:'🫛',cat:'dulce',time:8,serv:2,tags:['Snack salado','Alto en proteína'],
+ing:[['Edamame',250,'con vaina, congelado'],['Aceite de oliva',5],['Ajo',4],['Salsa de soja',8],['Zumo de limón',8,'mejor lima'],['Especias variadas',1,'guindilla y sal en escamas']],
+steps:['Cuece el edamame 3 minutos y escúrrelo.','Saltéalo con el aceite y el ajo laminado 1 minuto.','Añade la soja, el limón y la guindilla. Se come sacando las semillas de la vaina con los dientes.']},
+{id:'hummus-remolacha',name:'Hummus de remolacha con crudités',emoji:'🩷',cat:'dulce',time:10,serv:4,tags:['Viral en redes','Vegano'],
+ing:[['Garbanzos cocidos',250],['Remolacha cocida',150],['Tahini',25],['Zumo de limón',25],['Ajo',3],['Especias variadas',2,'comino'],['Aceite de oliva',8],['Zanahoria',150],['Pepino',150]],
+steps:['Tritura los garbanzos con la remolacha, el tahini, el limón, el ajo, el comino, sal y un poco de agua fría hasta que quede muy cremoso.','Sirve con el aceite por encima.','Acompaña con bastones de zanahoria y pepino.']},
+{id:'cafe-granizado',name:'Granizado de café proteico',emoji:'☕',cat:'dulce',time:5,serv:1,tags:['Verano','Alto en proteína'],
+ing:[['Café solo',120,'frío'],['Leche desnatada',100],['Skyr o yogur griego 0%',80],['Miel',8],['Canela molida',1]],
+steps:['Congela el café en cubitera la noche antes.','Tritura los cubitos de café con la leche, el skyr, la miel y la canela hasta tener textura de granizado.','Sirve enseguida.']}
 );
 
 const BASE_FOODS = BASE_RAW.concat(EXTRA_RAW).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([name, kcal, p, c, f, fib]) => ({ id: 'b_' + norm(name).replace(/[^a-z0-9]+/g, '_'), name, kcal, p, c, f, fib, src: 'base' }));
@@ -753,6 +879,7 @@ const BASE_HEALTH = {
   'Mantequilla': [1, [GS, CAL], []], 'Mayonesa': [1, ['Mucha grasa', CAL, PROC], []], 'Crema de cacahuete': [1, [CAL], [GOOD, 'Rico en proteína']], 'Chocolate negro 70%': [1, [CAL, 'Azúcar añadido'], ['Rico en fibra']],
   'Miel': [1, [AZ], []], 'Dátiles': [1, ['Mucho azúcar natural'], ['Rico en fibra']], 'Salsa de soja': [1, [SAL], []], 'Salsa sriracha': [1, [SAL, 'Azúcar añadido'], []], 'Tomates secos': [1, [SAL], ['Rico en fibra']],
   'Leche de coco light': [1, [GS], []], 'Tortilla de trigo integral': [2, [PROC], ['Integral']],
+  'Galletas integrales': [1, ['Azúcar añadido', PROC], ['Integral']], 'Café solo': null,
   'Azúcar': [0, [AZ, 'Sin nutrientes'], []], 'Cerveza': [0, ['Alcohol'], []], 'Vino tinto': [0, ['Alcohol'], []],
   'Aceite de oliva': [2, [CAL], [GOOD]], 'Aguacate': [2, [], [GOOD, 'Rico en fibra']], 'Almendras': [2, [CAL], [GOOD, 'Rico en fibra']], 'Nueces': [2, [CAL], [GOOD, 'Omega 3']], 'Cacahuetes': [2, [CAL], [GOOD, 'Rico en proteína']],
   'Tahini': [2, [CAL], [GOOD]], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
@@ -1214,13 +1341,13 @@ function slotSheet(d, s) {
   openSheet(`<div class="row"><div class="mealic" style="width:52px;height:52px;font-size:28px;background:var(--soft)">${r.emoji}</div><div class="sp"><div class="sm mute" style="font-weight:600">${sl[1]} · ${DAYN[(parseKey(d).getDay() + 6) % 7]} ${parseKey(d).getDate()}</div><b style="font-size:17px">${esc(r.name)}</b></div><button class="btn ghost" onclick="closeSheet()">✕</button></div>
   <div class="grid4">${nut('kcal/rac.', r0(pr.kcal), 'var(--acc)')}${nut('Proteína', r0(pr.p), 'var(--p)')}${nut('Carbos', r0(pr.c), 'var(--c)')}${nut('Grasa', r0(pr.f), 'var(--f)')}</div>
   <label class="chk" style="background:var(--soft);border-radius:14px;padding:12px;margin-bottom:8px"><input type="checkbox" id="sfit" ${ref.fit !== false ? 'checked' : ''}><span class="sp"><b>🎯 Ajustar a mis calorías</b><br><span class="sm mute">${ref.fit !== false ? `Tu ración es ×${pr.fk.toFixed(2).replace('.', ',')} la de la receta original` : 'Usando la ración original de la receta'}</span></span></label>
-  <div class="row" style="background:var(--soft);border-radius:14px;padding:10px 12px"><div class="sp"><b>Raciones a cocinar</b><div class="sm mute">Para la lista de la compra</div></div><button class="btn round" style="width:34px;height:34px" id="sm-">−</button><b style="min-width:26px;text-align:center" id="sv">${ref.serv}</b><button class="btn round" style="width:34px;height:34px" id="sm+">+</button></div>
+  <div class="row" style="background:var(--soft);border-radius:14px;padding:10px 12px"><div class="sp"><b>Raciones a cocinar</b><div class="sm mute">Para la lista de la compra</div></div><button class="btn round" style="width:34px;height:34px" id="sm_m">−</button><b style="min-width:26px;text-align:center" id="sv">${ref.serv}</b><button class="btn round" style="width:34px;height:34px" id="sm_p">+</button></div>
   <div class="grid2" style="margin-top:12px"><button class="btn" id="sview">📖 Ver receta</button><button class="btn" id="schg">🔄 Cambiar</button></div>
   <button class="btn pri block" style="margin-top:8px" id="seat">+ Añadir 1 ración al diario</button>
   <button class="btn bad block" style="margin-top:4px" id="sdel">Quitar del menú</button>`);
   const upd = n => { ref.serv = Math.max(1, Math.min(12, n)); $('#sv').textContent = ref.serv; save(); render(); };
   $('#sfit').onchange = e => { ref.fit = e.target.checked; save(); render(); slotSheet(d, s); };
-  $('#sm-').onclick = () => upd(ref.serv - 1); $('#sm+').onclick = () => upd(ref.serv + 1);
+  $('#sm_m').onclick = () => upd(ref.serv - 1); $('#sm_p').onclick = () => upd(ref.serv + 1);
   $('#sview').onclick = () => ref.src === 'lib' ? openLib(ref.id, ref.serv, true) : viewRecipe(ref.id);
   $('#schg').onclick = () => pickForSlot(d, s);
   $('#sdel').onclick = () => { setSlot(d, s, null); closeSheet(); render(); };
@@ -1632,6 +1759,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 02:00', short: '37 recetas nuevas (muchas virales) y arreglados los botones de los platos del menú.', items: ['🍽️ Arreglado: en el <b>menú semanal</b> ya funcionan cambiar raciones, Ver receta, Cambiar, Añadir al diario y Quitar del menú.', '📖 <b>37 recetas nuevas</b>, muchas virales: huevos turcos, pancakes de cottage, pasta estilo Gigi Hadid, ensalada de arroz crujiente, pollo hot honey, pizza de tortilla, brownie de alubias, cookie dough proteico, uvas con yogur heladas…'] },
   { v: '30-sep · 01:45', short: 'Arreglado el error 409 al guardar en GitHub: ahora se resuelve solo.', items: ['☁️ Arreglado el <b>error 409</b> al guardar varias cosas seguidas (por ejemplo, en la despensa): la app vuelve a leer y reintenta sola.'] },
   { v: '30-sep · 01:35', short: 'Alternativas más sanas también para los alimentos básicos, con las calorías que te ahorras.', items: ['🌿 <b>Alternativas más sanas</b> también en los básicos: arroz blanco → integral o quinoa, pan blanco → integral, mantequilla → aceite de oliva o aguacate, mayonesa → yogur griego o hummus…', '🔥 Cada alternativa te dice <b>cuántas calorías ahorras</b> con el mismo peso.', '🔎 En productos envasados sin categoría, busca alternativas por el nombre.'] },
   { v: '30-sep · 01:25', short: 'Ahora la valoración 🟢🟡🔴 también sale en los alimentos básicos (fruta, arroz, pollo…) y en los creados a mano.', items: ['🟢🟡🔴 La valoración <b>¿Es saludable?</b> sale también en los <b>alimentos básicos</b>, con sus motivos ("Cereal refinado", "Mucha sal", "Grasas saludables"…).', '✏️ Los alimentos creados a mano sin azúcar o sal te piden completarlos para poder valorarlos.'] },
@@ -1685,7 +1813,7 @@ const HELP = [
 <li>Es una estimación: si en 2-3 semanas tu peso no va como esperas, ajusta 100-200 kcal.</li>
 <li>El objetivo se reparte entre comidas para las recetas "a tu medida": desayuno 25%, comida 35%, merienda 10% y cena 30%.</li></ul>`},
 {id:'recetas',icon:'🍲',title:'Recetas a tu medida',tabs:['recetas'],body:`
-<p>El <b>Recetario</b> tiene 70 recetas ligeras, con buscador y filtros por tipo.</p>
+<p>El <b>Recetario</b> tiene ${RECIPES.length} recetas ligeras, con buscador y filtros por tipo.</p>
 <ul><li><b>🎯 A mi medida</b> (activado por defecto): los gramos se recalculan para que tu ración encaje con tu objetivo. Tu pareja, con su objetivo, verá otras cantidades.</li>
 <li><b>Receta original:</b> las cantidades tal cual.</li>
 <li>Con <b>− / +</b> cambias las raciones y se recalcula todo.</li>
