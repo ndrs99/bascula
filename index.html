@@ -88,6 +88,12 @@ video{width:100%;border-radius:18px;background:#000;max-height:50vh;object-fit:c
 .scanst{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
 .qwrap{flex-wrap:wrap;overflow:visible;margin:6px 0 0;padding:0}
 label.chip,label.btn{display:inline-flex;align-items:center;justify-content:center;margin:0;color:var(--ink);font-size:inherit}
+.hcard{margin-top:14px;border-radius:20px;padding:14px;background:color-mix(in srgb,var(--hc) 11%,transparent);border:1.5px solid color-mix(in srgb,var(--hc) 35%,transparent)}
+.hchip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--card);color:var(--ink)}
+.hchip.bad{color:var(--bad)}.hchip.good{color:var(--acc-d)}
+@media (prefers-color-scheme:dark){.hchip.good{color:var(--acc)}}
+.altit{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.altload{text-align:center;color:var(--mute);padding:40px 10px;line-height:1.5}
 .scanst.busy{background:rgba(18,184,134,.85)}.scanst.err{background:rgba(240,62,62,.88);white-space:normal;text-align:center;border-radius:16px;width:86%;line-height:1.35}
 .qhead{display:flex;gap:14px;align-items:flex-start}
 .qimg{width:72px;height:72px;border-radius:18px;background:#fff;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.12)}
@@ -644,7 +650,7 @@ function editEntry(id) { const e = (S.diary[day] || []).find(x => x.id === id); 
 
 /* ---------- selector de alimento ---------- */
 const offCache = {};
-const foodItem = f => `<div class="item" data-id="${esc(f.id)}"><div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
+const foodItem = f => `<div class="item" data-id="${esc(f.id)}">${(() => { const h = healthInfo(f); return h ? `<span title="${h.label}" style="flex:none;width:10px;height:10px;border-radius:50%;background:${h.col}"></span>` : ''; })()}<div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
 function openPicker(onPick, title = 'Añadir alimento') {
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">${title}</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="row" style="margin:8px 0"><input id="ps" placeholder="Buscar alimento o marca…" autocomplete="off"><button class="btn" id="pbc" title="Código de barras">▥</button></div>
@@ -677,9 +683,9 @@ function openPicker(onPick, title = 'Añadir alimento') {
 }
 function offToFood(p) {
   const n = p.nutriments || {}; let kcal = n['energy-kcal_100g']; if (kcal == null && n.energy_100g != null) kcal = n.energy_100g / 4.184; if (kcal == null) return null;
-  return { id: 'off_' + p.code, code: p.code, name: p.product_name_es || p.product_name || 'Producto sin nombre', brand: (p.brands || '').split(',')[0].trim(), kcal: +kcal, p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), fib: +(n.fiber_100g || 0), sug: +(n.sugars_100g || 0), salt: +(n.salt_100g || 0), img: p.image_front_small_url || '', ns: (p.nutriscore_grade || '').length === 1 ? p.nutriscore_grade : '', qty: p.quantity || '', src: 'off' };
+  return { id: 'off_' + p.code, code: p.code, name: p.product_name_es || p.product_name || 'Producto sin nombre', brand: (p.brands || '').split(',')[0].trim(), kcal: +kcal, p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), fib: +(n.fiber_100g || 0), sug: +(n.sugars_100g || 0), salt: +(n.salt_100g || 0), img: p.image_front_small_url || '', ns: (p.nutriscore_grade || '').length === 1 ? p.nutriscore_grade : '', qty: p.quantity || '', nova: +p.nova_group || 0, lv: p.nutrient_levels || {}, cats: p.categories_tags || [], stores: p.stores || '', hv: 1, src: 'off' };
 }
-const OFF_FIELDS = 'code,product_name,product_name_es,brands,nutriments,image_front_small_url,nutriscore_grade,quantity';
+const OFF_FIELDS = 'code,product_name,product_name_es,brands,nutriments,image_front_small_url,nutriscore_grade,quantity,nova_group,nutrient_levels,categories_tags,stores';
 async function offSearch(q) { const r = await fetch(`https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20&fields=${OFF_FIELDS}`); const j = await r.json(); return (j.products || []).map(offToFood).filter(Boolean); }
 async function offBarcode(code) { const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${OFF_FIELDS}`); const j = await r.json(); return j.status === 1 ? offToFood(j.product) : null; }
 
@@ -732,6 +738,70 @@ function openFoodForm(f, onSaved) {
   };
 }
 
+/* ---------- ¿ES SALUDABLE? ---------- */
+const LV_NAME = { sugars: 'azúcar', salt: 'sal', 'saturated-fat': 'grasas saturadas', fat: 'grasa' };
+function healthInfo(f) {
+  const ns = f.ns || '', nova = +f.nova || 0, lv = f.lv || {}, has = ns || nova || Object.keys(lv).length;
+  if (!has) return null;
+  const highs = Object.entries(lv).filter(([k, v]) => v === 'high' && LV_NAME[k]).map(([k]) => k);
+  let level;
+  if (ns) level = 'ab'.includes(ns) ? (nova === 4 ? 1 : 2) : ns === 'c' ? 1 : 0;
+  else level = highs.length >= 2 ? 0 : highs.length === 1 || nova === 4 ? 1 : 2;
+  const pros = [], cons = [];
+  if (ns) ('ab'.includes(ns) ? pros : ns === 'c' ? [] : cons).push(`Nutri-Score ${ns.toUpperCase()}`);
+  if (nova === 4) cons.push('Ultraprocesado'); else if (nova === 1) pros.push('Sin procesar'); else if (nova === 2 || nova === 3) pros.push('Poco procesado');
+  highs.forEach(k => cons.push(`Mucha ${LV_NAME[k]}`.replace('Mucha azúcar', 'Mucho azúcar').replace('Mucha grasas', 'Muchas grasas')));
+  Object.entries(lv).filter(([k, v]) => v === 'low' && (k === 'sugars' || k === 'salt' || k === 'saturated-fat')).forEach(([k]) => pros.push(`Poca ${LV_NAME[k]}`.replace('Poca azúcar', 'Poco azúcar').replace('Poca grasas', 'Pocas grasas')));
+  if (f.fib >= 6) pros.push('Rico en fibra');
+  if (f.p >= 12 && f.kcal < 250) pros.push('Rico en proteína');
+  return { level, pros, cons, label: ['Poco saludable', 'Con moderación', 'Saludable'][level], icon: ['🔴', '🟡', '🟢'][level], col: ['var(--bad)', 'var(--warn)', 'var(--acc)'][level] };
+}
+function healthCard(f) {
+  const h = healthInfo(f); if (!h) return '';
+  return `<div class="hcard" style="--hc:${h.col}"><div class="row"><span style="font-size:20px">${h.icon}</span><div class="sp"><b style="color:${h.col};font-size:16px">${h.label}</b><div class="sm mute">${h.level === 2 ? 'Buena elección para el día a día' : h.level === 1 ? 'Está bien de vez en cuando' : 'Mejor como algo ocasional'}</div></div></div>
+  <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:10px">${h.cons.map(c => `<span class="hchip bad">${esc(c)}</span>`).join('')}${h.pros.map(c => `<span class="hchip good">${esc(c)}</span>`).join('')}</div>
+  ${h.level < 2 && (f.cats || []).length ? `<button class="btn block" id="qalt" style="margin-top:12px;background:var(--card)">🌿 Ver alternativas más sanas</button>` : ''}</div>`;
+}
+const altCache = {};
+async function offCategorySearch(tag, spain) {
+  const q = `action=process&json=1&page_size=50&sort_by=unique_scans_n&tagtype_0=categories&tag_contains_0=contains&tag_0=${encodeURIComponent(tag)}` + (spain ? '&tagtype_1=countries&tag_contains_1=contains&tag_1=spain' : '') + `&fields=${OFF_FIELDS}`;
+  const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?${q}`); const j = await r.json();
+  return (j.products || []).map(offToFood).filter(Boolean);
+}
+async function findAlternatives(f) {
+  if (altCache[f.id]) return altCache[f.id];
+  const cur = healthInfo(f), rank = x => { const h = healthInfo(x); return h ? h.level * 10 + ('abcde'.length - 'abcde'.indexOf(x.ns || 'e')) - (x.nova === 4 ? 2 : 0) + (x.stores ? 1 : 0) : -99; };
+  const better = x => { const h = healthInfo(x); if (!h || x.code === f.code || !x.name || x.name === 'Producto sin nombre') return false; if (h.level > cur.level) return true; return h.level === cur.level && h.level >= 1 && x.ns && f.ns && x.ns < f.ns; };
+  const cats = (f.cats || []).slice().reverse().slice(0, 3), seen = new Set(), out = [];
+  for (const spain of [true, false]) for (const c of cats) {
+    if (out.length >= 8) break;
+    try { (await offCategorySearch(c, spain)).filter(better).forEach(x => { if (!seen.has(x.code)) { seen.add(x.code); out.push(x); } }); } catch (e) {}
+    if (out.length >= 4) break;
+  }
+  const res = out.sort((a, b) => rank(b) - rank(a)).slice(0, 10); altCache[f.id] = res; return res;
+}
+function openAlternatives(f, ctx) {
+  const back = () => openQty(f, ctx);
+  openSheet(`<div class="row"><button class="btn round" style="width:36px;height:36px;font-size:18px" id="altb">‹</button><b class="sp" style="font-size:19px">🌿 Alternativas más sanas</b></div>
+  <p class="sm mute" style="margin:8px 0">Productos de la misma categoría que <b style="color:var(--ink)">${esc(f.name)}</b> con mejor valoración.</p><div id="altl"><div class="altload">Buscando alternativas…</div></div>`);
+  $('#altb').onclick = back;
+  findAlternatives(f).then(list => {
+    const el = $('#altl'); if (!el) return;
+    if (!list.length) { el.innerHTML = `<div class="altload">No he encontrado alternativas mejores con datos suficientes para esta categoría.<br><span class="sm">La base de datos la completa la gente y en algunos productos faltan datos.</span></div>`; return; }
+    el.innerHTML = list.map((x, i) => { const h = healthInfo(x), st = (x.stores || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
+      return `<div class="altit" data-a="${i}"><div class="qimg" style="width:60px;height:60px;border-radius:14px">${x.img ? `<img src="${esc(x.img)}" alt="">` : '<span style="font-size:26px">🥫</span>'}</div>
+      <div class="sp" style="min-width:0"><div class="nm" style="line-height:1.25">${esc(x.name)}</div><div class="sm mute">${esc(x.brand || '')}${x.brand ? ' · ' : ''}${r0(x.kcal)} kcal/100 g</div>
+      <div class="row" style="gap:6px;margin-top:5px;flex-wrap:wrap">${x.ns ? `<span class="nsb" style="background:${NS_COL[x.ns]}">${x.ns.toUpperCase()}</span>` : ''}<span class="hchip" style="color:${h.col}">${h.icon} ${h.label}</span></div>
+      <div class="sm" style="margin-top:5px;color:${st.length ? 'var(--ink)' : 'var(--mute)'}">🛒 ${st.length ? esc(st.join(', ')) : 'Tienda no indicada'}</div></div><span class="mute">›</span></div>`; }).join('')
+      + `<p class="sm mute" style="margin-top:12px">Las tiendas las indican los usuarios de Open Food Facts: pueden faltar o no estar al día.</p>`;
+    el.onclick = e => { const it = e.target.closest('[data-a]'); if (it) openQty(list[+it.dataset.a], { ...ctx, entry: undefined }); };
+  });
+}
+async function enrichFood(f) {
+  if (!f.code || f.src !== 'off' || f.hv === 1) return null;
+  try { const n = await offBarcode(f.code); if (!n) return null; Object.assign(f, { ns: n.ns, nova: n.nova, lv: n.lv, cats: n.cats, stores: n.stores, img: f.img || n.img, hv: 1 }); if (S.foods[f.id]) { S.foods[f.id] = f; save(); } return f; } catch (e) { return null; }
+}
+
 /* ---------- cantidad (pesar y añadir) ---------- */
 const nut = (l, v, col) => `<div class="nut"><b style="${col ? 'color:' + col : ''}">${v}</b><span>${l}</span></div>`;
 const NS_COL = { a: '#038141', b: '#85bb2f', c: '#e8b400', d: '#ee8100', e: '#e63e11' };
@@ -749,6 +819,7 @@ function openQty(food, ctx) {
     <div class="sp" style="min-width:0"><div class="qname">${esc(food.name)}</div>${sub ? `<div class="sm mute" style="margin-top:2px">${sub}</div>` : ''}
       <div class="row" style="gap:6px;margin-top:7px;flex-wrap:wrap">${food.ns ? `<span class="nsb" style="background:${NS_COL[food.ns]}">Nutri-Score ${food.ns.toUpperCase()}</span>` : ''}<span class="tag">${r0(food.kcal)} kcal / 100 g</span></div></div>
     <div style="display:flex;flex-direction:column;gap:8px">${canFav ? `<button class="btn round qfav" id="qfav" style="width:38px;height:38px;font-size:18px">${S.favs.includes(food.id) ? '★' : '☆'}</button>` : ''}<button class="btn round" style="width:38px;height:38px;font-size:15px" onclick="closeSheet()">✕</button></div></div>
+  <div id="qhealth">${healthCard(food)}</div>
   <div class="qweigh">
     <div class="qnum"><button class="qstep" data-d="-1">−</button><div class="qin"><input id="qg" type="number" inputmode="decimal" step="0.1" value="${fmtNum(grams)}"><span>g</span></div><button class="qstep" data-d="1">+</button></div>
     <div class="row" style="justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap" id="qscale"></div>
@@ -801,9 +872,13 @@ function openQty(food, ctx) {
     const e = { id: ctx.entry?.id || uid(), foodId: food.id, name: food.name, grams: gr, meal, ...x, per: { kcal: food.kcal, p: food.p, c: food.c, f: food.f } };
     if (ctx.entry) S.diary[origDate] = (S.diary[origDate] || []).filter(z => z.id !== e.id);
     const arr = S.diary[date] = S.diary[date] || [], i = arr.findIndex(z => z.id === e.id); i >= 0 ? arr[i] = e : arr.push(e);
+    if (food.src === 'off' && !S.foods[food.id]) S.foods[food.id] = food;
     if (getFood(food.id)) pushRecent(food.id); save(); closeSheet(); render();
     toast((ctx.entry ? 'Guardado' : 'Añadido') + (date !== day ? ' en ' + dateLabelShort(date).toLowerCase() : ''));
   };
+  const bindAlt = () => { const b = $('#qalt'); if (b) b.onclick = () => openAlternatives(food, { ...ctx, meal, date, grams: live ? undefined : g() }); };
+  bindAlt();
+  if (food.code && food.src === 'off' && food.hv !== 1) enrichFood(food).then(n => { const el = $('#qhealth'); if (n && el && $('#qg') === qg) { el.innerHTML = healthCard(n); bindAlt(); if (n.img) $('.qimg').innerHTML = `<img src="${esc(n.img)}" alt="">`; if (n.ns && !document.querySelector('.qhead .nsb')) $('.qhead .tag').insertAdjacentHTML('beforebegin', `<span class="nsb" style="background:${NS_COL[n.ns]}">Nutri-Score ${n.ns.toUpperCase()}</span>`); } });
   upd(); drawDates(); sheetHook();
 }
 
@@ -1474,6 +1549,12 @@ const HELP = [
 <li><b>Recipiente:</b> guarda lo que pesan tus platos y táperes. Luego eliges "plato hondo" y lo resta solo, aunque ya tenga comida dentro.</li>
 <li><b>Modo resta:</b> para cosas que sacas de un bote. Deja el bote de frutos secos en la báscula, activa el modo, saca lo que vas a comer y la app te dice cuánto has sacado.</li>
 <li>En <b>Ajustes</b> puedes ver el peso con décimas (0,1 g). Es orientativo: la báscula es fiable al gramo.</li></ul>`},
+{id:'saludable',icon:'🌿',title:'¿Es saludable? y alternativas',tabs:['pesar'],body:`
+<p>Al abrir un producto escaneado aparece una tarjeta con un veredicto:</p>
+<ul><li>🟢 <b>Saludable</b>: Nutri-Score A o B y no es ultraprocesado.</li><li>🟡 <b>Con moderación</b>: Nutri-Score C, o A/B pero ultraprocesado.</li><li>🔴 <b>Poco saludable</b>: Nutri-Score D o E.</li></ul>
+<p>Debajo te dice por qué: "Mucho azúcar", "Ultraprocesado", "Poca sal", "Rico en fibra"…</p>
+<p>Si no es saludable, pulsa <b>🌿 Ver alternativas más sanas</b>: busca productos de la misma categoría con mejor valoración y te dice en qué tiendas se venden. Toca uno para ver su ficha y apuntarlo.</p>
+<p>El puntito de color junto a cada producto en las búsquedas te da el veredicto de un vistazo. Es una guía orientativa basada en Open Food Facts, no un consejo médico; las tiendas las indican los usuarios y pueden faltar.</p>`},
 {id:'escanear',icon:'📷',title:'Escanear productos',tabs:['pesar'],body:`
 <p>En <b>Pesar → 📷 Escanear producto</b> (o con el botón ▥ al buscar un alimento) lees el código de barras de cualquier producto envasado.</p>
 <ul><li>Te muestra la foto, el Nutri-Score, y las calorías y macros <b>de lo que estás pesando en ese momento</b>, que cambian en vivo con la báscula.</li>
