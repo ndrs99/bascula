@@ -158,7 +158,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 01:15';
+const APP_VERSION = '30-sep · 01:25';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -652,7 +652,7 @@ function editEntry(id) { const e = (S.diary[day] || []).find(x => x.id === id); 
 
 /* ---------- selector de alimento ---------- */
 const offCache = {};
-const foodItem = f => `<div class="item" data-id="${esc(f.id)}">${(() => { const h = healthInfo(f); return h && !h.none ? `<span title="${h.label}" style="flex:none;width:10px;height:10px;border-radius:50%;background:${h.col}"></span>` : ''; })()}<div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
+const foodItem = f => `<div class="item" data-id="${esc(f.id)}">${(() => { const h = healthInfo(f); return h && !h.none && !h.incomplete ? `<span title="${h.label}" style="flex:none;width:10px;height:10px;border-radius:50%;background:${h.col}"></span>` : ''; })()}<div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
 function openPicker(onPick, title = 'Añadir alimento') {
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">${title}</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="row" style="margin:8px 0"><input id="ps" placeholder="Buscar alimento o marca…" autocomplete="off"><button class="btn" id="pbc" title="Código de barras">▥</button></div>
@@ -742,13 +742,42 @@ function openFoodForm(f, onSaved) {
 
 /* ---------- ¿ES SALUDABLE? ---------- */
 const LV_NAME = { sugars: 'azúcar', salt: 'sal', 'saturated-fat': 'grasas saturadas', fat: 'grasa' };
+
+const RF = 'Harina refinada', SAL = 'Mucha sal', GS = 'Mucha grasa saturada', AZ = 'Mucho azúcar', CAL = 'Muy calórico', PROC = 'Procesado', GOOD = 'Grasas saludables';
+const BASE_HEALTH = {
+  'Arroz blanco cocido': [1, ['Cereal refinado'], []], 'Arroz blanco crudo': [1, ['Cereal refinado'], []], 'Pasta cocida': [1, [RF], []], 'Pasta cruda': [1, [RF], []],
+  'Pan blanco': [1, [RF], []], 'Harina de trigo': [1, [RF], []], 'Cuscús crudo': [1, [RF], []], 'Fideos de arroz (crudos)': [1, ['Cereal refinado'], []], 'Papel de arroz': [1, ['Cereal refinado'], []],
+  'Maicena': [1, [RF], []], 'Ñoquis de patata': [1, [RF, PROC], []], 'Copos de maíz sin azúcar': [1, ['Cereal refinado', PROC], ['Sin azúcar añadido']], 'Tortitas de arroz': [1, ['Absorción rápida'], []],
+  'Carne picada de vacuno': [1, [GS], ['Rico en proteína']], 'Jamón serrano': [1, [SAL], ['Rico en proteína']], 'Pechuga de pavo en lonchas': [1, [PROC, SAL], ['Rico en proteína']],
+  'Salmón ahumado': [1, [SAL], ['Omega 3', 'Rico en proteína']], 'Queso curado': [1, [SAL, GS], ['Rico en calcio']], 'Queso parmesano': [1, [SAL, GS], ['Rico en calcio']], 'Queso feta': [1, [SAL, GS], []],
+  'Mantequilla': [1, [GS, CAL], []], 'Mayonesa': [1, ['Mucha grasa', CAL, PROC], []], 'Crema de cacahuete': [1, [CAL], [GOOD, 'Rico en proteína']], 'Chocolate negro 70%': [1, [CAL, 'Azúcar añadido'], ['Rico en fibra']],
+  'Miel': [1, [AZ], []], 'Dátiles': [1, ['Mucho azúcar natural'], ['Rico en fibra']], 'Salsa de soja': [1, [SAL], []], 'Salsa sriracha': [1, [SAL, 'Azúcar añadido'], []], 'Tomates secos': [1, [SAL], ['Rico en fibra']],
+  'Leche de coco light': [1, [GS], []], 'Tortilla de trigo integral': [2, [PROC], ['Integral']],
+  'Azúcar': [0, [AZ, 'Sin nutrientes'], []], 'Cerveza': [0, ['Alcohol'], []], 'Vino tinto': [0, ['Alcohol'], []],
+  'Aceite de oliva': [2, [CAL], [GOOD]], 'Aguacate': [2, [], [GOOD, 'Rico en fibra']], 'Almendras': [2, [CAL], [GOOD, 'Rico en fibra']], 'Nueces': [2, [CAL], [GOOD, 'Omega 3']], 'Cacahuetes': [2, [CAL], [GOOD, 'Rico en proteína']],
+  'Tahini': [2, [CAL], [GOOD]], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
+  'Pan integral': [2, [], ['Integral', 'Rico en fibra']], 'Pan pita integral': [2, [], ['Integral']], 'Pasta integral cruda': [2, [], ['Integral', 'Rico en fibra']], 'Arroz integral crudo': [2, [], ['Integral']],
+  'Hummus': [2, [], ['Legumbre', 'Rico en fibra']], 'Maíz dulce (lata)': [2, [], []], 'Leche entera': [2, [], ['Rico en calcio']], 'Yogur griego': [2, [], ['Fermentado']], 'Yogur natural': [2, [], ['Fermentado']],
+  'Levadura química': null, 'Especias variadas': null, 'Hierbas frescas': null, 'Canela molida': null, 'Vinagre balsámico': null, 'Vinagre de vino': null, 'Caldo de verduras': null, 'Caldo de pollo': null, 'Zumo de limón': null, 'Mostaza': null
+};
+function baseHealth(f) {
+  if (!(f.name in BASE_HEALTH) && f.src !== 'base') return null;
+  const row = f.name in BASE_HEALTH ? BASE_HEALTH[f.name] : [2, [], ['Sin procesar']]; if (!row) return null;
+  const [level, cons, pros0] = row, pros = pros0.slice();
+  if (!pros.includes('Rico en proteína') && f.p >= 12 && f.kcal < 250) pros.push('Rico en proteína');
+  if (!pros.includes('Rico en fibra') && f.fib >= 6) pros.push('Rico en fibra');
+  if (!pros.length && level === 2) pros.push('Sin procesar');
+  return { level, pros, cons, base: true, label: ['Poco saludable', 'Con moderación', 'Saludable'][level], icon: ['🔴', '🟡', '🟢'][level], col: ['var(--bad)', 'var(--warn)', 'var(--acc)'][level] };
+}
 function calcLevels(f) {
   const lv = {}, t = (v, lo, hi) => v == null || isNaN(v) ? null : v > hi ? 'high' : v <= lo ? 'low' : 'moderate', put = (k, v) => { if (v) lv[k] = v; };
   put('fat', t(f.f, 3, 17.5)); put('sugars', t(f.sug, 5, 22.5)); put('salt', t(f.salt, 0.3, 1.5)); if (f.sat != null) put('saturated-fat', t(f.sat, 1.5, 5));
   return lv;
 }
 function healthInfo(f) {
-  if (!f || f.src === 'base' || f.src === 'recipe' || String(f.id || '').startsWith('lib_')) return null;
+  if (!f || f.src === 'recipe' || String(f.id || '').startsWith('lib_')) return null;
+  if (f.src === 'base') return baseHealth(f);
+  if (f.src === 'custom' && f.sug == null && !f.ns) return { incomplete: true };
   const ns = f.ns || '', nova = +f.nova || 0; let lv = f.lv || {}, est = false;
   if (!Object.keys(lv).length && (f.sug != null || f.salt != null) && (f.src === 'off' || f.src === 'custom')) { lv = calcLevels(f); est = true; }
   const has = ns || nova || Object.keys(lv).length;
@@ -768,9 +797,11 @@ function healthInfo(f) {
 }
 function healthCard(f) {
   const h = healthInfo(f); if (!h) return '';
+  if (h.incomplete) return `<div class="hcard" style="--hc:var(--mute)"><div class="row"><span style="font-size:20px">✏️</span><div class="sp"><b>Complétalo para valorarlo</b><div class="sm mute">Añade los azúcares y la sal de la etiqueta y te diré si es saludable.</div></div></div><button class="btn block" id="qedit" style="margin-top:12px;background:var(--card)">Completar datos</button></div>`;
   if (h.none) return `<div class="hcard" style="--hc:var(--mute)"><div class="row"><span style="font-size:20px">ℹ️</span><div class="sp"><b>Sin datos para valorarlo</b><div class="sm mute">Este producto no tiene Nutri-Score ni información nutricional completa en Open Food Facts.</div></div></div></div>`;
   return `<div class="hcard" style="--hc:${h.col}"><div class="row"><span style="font-size:20px">${h.icon}</span><div class="sp"><b style="color:${h.col};font-size:16px">${h.label}</b><div class="sm mute">${h.level === 2 ? 'Buena elección para el día a día' : h.level === 1 ? 'Está bien de vez en cuando' : 'Mejor como algo ocasional'}</div></div></div>
   <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:10px">${h.cons.map(c => `<span class="hchip bad">${esc(c)}</span>`).join('')}${h.pros.map(c => `<span class="hchip good">${esc(c)}</span>`).join('')}</div>
+  ${h.base ? '<div class="sm mute" style="margin-top:8px">Valoración general del alimento, no de una marca concreta.</div>' : ''}
   ${h.est ? '<div class="sm mute" style="margin-top:8px">Sin Nutri-Score: valoración estimada con el azúcar, la sal y la grasa de la etiqueta.</div>' : ''}
   ${h.level < 2 && (f.cats || []).length ? `<button class="btn block" id="qalt" style="margin-top:12px;background:var(--card)">🌿 Ver alternativas más sanas</button>` : ''}</div>`;
 }
@@ -782,8 +813,8 @@ async function offCategorySearch(tag, spain) {
 }
 async function findAlternatives(f) {
   if (altCache[f.id]) return altCache[f.id];
-  const cur = healthInfo(f), rank = x => { const h = healthInfo(x); return h && !h.none ? h.level * 10 + ('abcde'.length - 'abcde'.indexOf(x.ns || 'e')) - (x.nova === 4 ? 2 : 0) + (x.stores ? 1 : 0) : -99; };
-  const better = x => { const h = healthInfo(x); if (!h || h.none || x.code === f.code || !x.name || x.name === 'Producto sin nombre') return false; if (h.level > cur.level) return true; return h.level === cur.level && h.level >= 1 && x.ns && f.ns && x.ns < f.ns; };
+  const cur = healthInfo(f), rank = x => { const h = healthInfo(x); return h && !h.none && !h.incomplete ? h.level * 10 + ('abcde'.length - 'abcde'.indexOf(x.ns || 'e')) - (x.nova === 4 ? 2 : 0) + (x.stores ? 1 : 0) : -99; };
+  const better = x => { const h = healthInfo(x); if (!h || h.none || h.incomplete || x.code === f.code || !x.name || x.name === 'Producto sin nombre') return false; if (h.level > cur.level) return true; return h.level === cur.level && h.level >= 1 && x.ns && f.ns && x.ns < f.ns; };
   const cats = (f.cats || []).slice().reverse().slice(0, 3), seen = new Set(), out = [];
   for (const spain of [true, false]) for (const c of cats) {
     if (out.length >= 8) break;
@@ -888,7 +919,7 @@ function openQty(food, ctx) {
     if (getFood(food.id)) pushRecent(food.id); save(); closeSheet(); render();
     toast((ctx.entry ? 'Guardado' : 'Añadido') + (date !== day ? ' en ' + dateLabelShort(date).toLowerCase() : ''));
   };
-  const bindAlt = () => { const b = $('#qalt'); if (b) b.onclick = () => openAlternatives(food, { ...ctx, meal, date, grams: live ? undefined : g() }); };
+  const bindAlt = () => { const b = $('#qalt'); if (b) b.onclick = () => openAlternatives(food, { ...ctx, meal, date, grams: live ? undefined : g() }); const ed = $('#qedit'); if (ed) ed.onclick = () => openFoodForm(food, nf => openQty(nf, { ...ctx, meal, date, grams: g() })); };
   bindAlt();
   if (food.code && food.src === 'off' && food.hv !== 1) enrichFood(food).then(n => { const el = $('#qhealth'); if (n && el && $('#qg') === qg) { el.innerHTML = healthCard(n); bindAlt(); if (n.img) $('.qimg').innerHTML = `<img src="${esc(n.img)}" alt="">`; if (n.ns && !document.querySelector('.qhead .nsb')) $('.qhead .tag').insertAdjacentHTML('beforebegin', `<span class="nsb" style="background:${NS_COL[n.ns]}">Nutri-Score ${n.ns.toUpperCase()}</span>`); } });
   upd(); drawDates(); sheetHook();
@@ -1557,6 +1588,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 01:25', short: 'Ahora la valoración 🟢🟡🔴 también sale en los alimentos básicos (fruta, arroz, pollo…) y en los creados a mano.', items: ['🟢🟡🔴 La valoración <b>¿Es saludable?</b> sale también en los <b>alimentos básicos</b>, con sus motivos ("Cereal refinado", "Mucha sal", "Grasas saludables"…).', '✏️ Los alimentos creados a mano sin azúcar o sal te piden completarlos para poder valorarlos.'] },
   { v: '30-sep · 01:15', short: '¿Es saludable? y alternativas más sanas, cenas de madrugada, mover comidas de día y más.', items: ['🌿 <b>¿Es saludable?</b>: veredicto 🟢🟡🔴 en cada producto envasado, con los motivos (azúcar, sal, ultraprocesado…).', '🌿 <b>Alternativas más sanas</b> de la misma categoría, con dónde se venden.', '🌙 <b>El día termina a las 4:00</b>: las cenas de madrugada cuentan para el día anterior.', '📅 <b>Mover una comida</b> a otro día u otra comida desde su ficha.', '🍽️ <b>Ficha de alimento y escáner rediseñados</b>.', '☁️ La copia en GitHub <b>reintenta sola</b> si se corta la conexión, con estado en colores.', '🆕 Esta sección de novedades y el número de versión en Ajustes.'] },
   { v: '29-sep', items: ['Recetas a tu medida, menú semanal, lista de la compra compartida, despensa, batch cooking, comidas habituales, calculadora de objetivos y guía de uso.'] }
 ];
@@ -1576,7 +1608,7 @@ const HELP = [
 <li><b>Modo resta:</b> para cosas que sacas de un bote. Deja el bote de frutos secos en la báscula, activa el modo, saca lo que vas a comer y la app te dice cuánto has sacado.</li>
 <li>En <b>Ajustes</b> puedes ver el peso con décimas (0,1 g). Es orientativo: la báscula es fiable al gramo.</li></ul>`},
 {id:'saludable',icon:'🌿',title:'¿Es saludable? y alternativas',tabs:['pesar'],body:`
-<p>Al abrir un producto escaneado aparece una tarjeta con un veredicto:</p>
+<p>Al abrir cualquier alimento aparece una tarjeta con un veredicto (en los productos envasados, con sus datos de Open Food Facts; en los básicos como fruta, pollo o arroz, con una valoración general del alimento):</p>
 <ul><li>🟢 <b>Saludable</b>: Nutri-Score A o B y no es ultraprocesado.</li><li>🟡 <b>Con moderación</b>: Nutri-Score C, o A/B pero ultraprocesado.</li><li>🔴 <b>Poco saludable</b>: Nutri-Score D o E.</li></ul>
 <p>Debajo te dice por qué: "Mucho azúcar", "Ultraprocesado", "Poca sal", "Rico en fibra"…</p>
 <p>Si no es saludable, pulsa <b>🌿 Ver alternativas más sanas</b>: busca productos de la misma categoría con mejor valoración y te dice en qué tiendas se venden. Toca uno para ver su ficha y apuntarlo.</p>
@@ -1672,7 +1704,7 @@ const HELP = [
 <li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
 <li><b>Error al guardar en GitHub (en rojo):</b> revisa que el repositorio se escriba como usuario/nombre y que el token tenga "Contents: Read and write" y no haya caducado.</li>
 <li><b>Apunté la cena en el día que no era:</b> tócala en el Diario, elige el día correcto (Ayer, Anteayer u Otro) y pulsa Guardar.</li>
-<li><b>No sale la tarjeta de "¿Es saludable?":</b> solo aparece en productos envasados (escaneados o de Open Food Facts), no en alimentos básicos ni recetas. Si el producto no tiene datos, verás "Sin datos para valorarlo".</li>
+<li><b>No sale la tarjeta de "¿Es saludable?":</b> sale en productos envasados y en los básicos. No sale en recetas ni en condimentos (especias, vinagre…). En alimentos creados a mano hay que rellenar azúcares y sal. Si falta, comprueba que tienes la última versión.</li>
 <li><b>No veo lo último que se ha añadido:</b> mira la versión en Ajustes (abajo del todo) y compárala con la de 🆕 Novedades. GitHub tarda hasta 10 minutos en publicar una versión nueva; después recarga la página en Bluefy.</li>
 <li><b>¿Puedo tener un icono en la pantalla de inicio?</b> Sí: en la app Atajos crea un atajo con la acción "Abrir app → Bluefy", llámalo Báscula y pulsa "Añadir a pantalla de inicio". Desde Safari no sirve, porque Safari no tiene Bluetooth.</li>
 <li><b>Quiero probar sin báscula:</b> Ajustes → Modo demo.</li></ul>`}
