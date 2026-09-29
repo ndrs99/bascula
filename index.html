@@ -618,7 +618,8 @@ const miniMacro = (l, v, g, col) => `<div class="mini"><div style="display:flex;
 const MEAL_UI = { desayuno: ['☕', 'rgba(245,159,0,.16)'], comida: ['🍽️', 'rgba(18,184,134,.16)'], merienda: ['🍎', 'rgba(230,73,128,.14)'], cena: ['🌙', 'rgba(121,80,242,.15)'], picoteo: ['🥜', 'rgba(160,120,70,.16)'] };
 function vHoy(v) {
   const t = dayTotals(day), g = S.goals, es = S.diary[day] || [], left = g.kcal - t.kcal, water = S.water[day] || 0, over = left < 0;
-  v.innerHTML = `${tipCard('hoy')}
+  const newsCard = S.onboarded && S.seenVersion !== APP_VERSION ? `<div class="card row" style="background:var(--grad);color:#fff;border:0;align-items:flex-start"><span style="font-size:24px">🆕</span><div class="sp"><b>La app se ha actualizado</b><div class="sm" style="opacity:.9;margin-top:2px">${NEWS[0].short}</div><button class="btn small" style="background:#fff;color:#0c8f68;margin-top:10px" onclick="S.seenVersion=APP_VERSION;save();openHelp('novedades')">Ver novedades</button></div><button class="btn small" style="background:none;color:#fff" onclick="S.seenVersion=APP_VERSION;save();render()">✕</button></div>` : '';
+  v.innerHTML = `${newsCard}${newsCard ? '' : tipCard('hoy')}
   <div class="row" style="margin-top:2px"><button class="btn round" onclick="shiftDay(-1)">‹</button><div class="sp" style="text-align:center;font-weight:750;font-size:16px;text-transform:capitalize">${dayLabel(day)}</div><button class="btn round" onclick="shiftDay(1)">›</button></div>
   <div class="card hero row" style="gap:16px;padding:20px">
     <div class="sp" style="position:relative;z-index:1">
@@ -1502,7 +1503,7 @@ function vAjustes(v) {
   const g = S.goals, mine = Object.values(S.foods).filter(f => f.src !== 'recipe');
   const numI = (id, l, val) => `<label>${l}<input id="${id}" type="number" inputmode="numeric" value="${val}"></label>`;
   v.innerHTML = `<div class="card row" style="background:var(--grad);color:#fff;border:0"><span style="font-size:28px">📖</span><div class="sp"><b>Guía de uso</b><div class="sm" style="opacity:.85">Para qué sirve cada cosa y cómo usarla</div></div><button class="btn small" style="background:#fff;color:#0c8f68" onclick="openHelp()">Abrir</button></div>
-  <div class="row" style="gap:8px;margin:-4px 0 4px"><button class="btn small sp" onclick="startTour()">▶️ Repetir tour</button><button class="btn small sp" onclick="S.tipsSeen={};save();toast('Consejos activados de nuevo')">💡 Ver consejos otra vez</button></div>
+  <div class="row" style="gap:8px;margin:-4px 0 4px"><button class="btn small sp" onclick="openHelp('novedades')">🆕 Novedades</button><button class="btn small sp" onclick="startTour()">▶️ Repetir tour</button><button class="btn small sp" onclick="S.tipsSeen={};save();toast('Consejos activados de nuevo')">💡 Ver consejos otra vez</button></div>
   <div class="card"><div class="row"><b class="sp">Objetivos diarios</b><button class="btn small pri" onclick="openCalc()">🧮 Calcular</button></div>
   <div class="grid2">${numI('g_k', 'Calorías (kcal)', g.kcal)}${numI('g_w', 'Agua (ml)', g.water)}${numI('g_p', 'Proteína (g)', g.p)}${numI('g_c', 'Carbohidratos (g)', g.c)}${numI('g_f', 'Grasa (g)', g.f)}</div>
   <p class="sm mute" id="g_hint"></p><p class="sm mute">Las recetas "a tu medida" reparten tu objetivo así: desayuno 25%, comida 35%, merienda 10% y cena 30%.</p><button class="btn pri block" id="g_ok">Guardar objetivos</button></div>
@@ -1555,7 +1556,12 @@ function importData() {
 }
 
 /* ---------- GUÍA DE USO ---------- */
+const NEWS = [
+  { v: '30-sep · 01:15', short: '¿Es saludable? y alternativas más sanas, cenas de madrugada, mover comidas de día y más.', items: ['🌿 <b>¿Es saludable?</b>: veredicto 🟢🟡🔴 en cada producto envasado, con los motivos (azúcar, sal, ultraprocesado…).', '🌿 <b>Alternativas más sanas</b> de la misma categoría, con dónde se venden.', '🌙 <b>El día termina a las 4:00</b>: las cenas de madrugada cuentan para el día anterior.', '📅 <b>Mover una comida</b> a otro día u otra comida desde su ficha.', '🍽️ <b>Ficha de alimento y escáner rediseñados</b>.', '☁️ La copia en GitHub <b>reintenta sola</b> si se corta la conexión, con estado en colores.', '🆕 Esta sección de novedades y el número de versión en Ajustes.'] },
+  { v: '29-sep', items: ['Recetas a tu medida, menú semanal, lista de la compra compartida, despensa, batch cooking, comidas habituales, calculadora de objetivos y guía de uso.'] }
+];
 const HELP = [
+{id:'novedades',icon:'🆕',title:'Novedades',tabs:[],body:`${NEWS.map(n => `<p style="margin-top:12px"><b>${n.v}</b></p><ul>${n.items.map(i => `<li>${i}</li>`).join('')}</ul>`).join('')}`},
 {id:'empezar',icon:'🚀',title:'Primeros pasos',tabs:['hoy'],body:`
 <p>La app vive en una página web que se abre con <b>Bluefy</b> (gratis en la App Store), porque Safari no deja conectar con la báscula por Bluetooth.</p>
 <ol><li>Abre Bluefy y entra en la dirección de la app. Guárdala en favoritos para tenerla a mano.</li>
@@ -1584,8 +1590,10 @@ const HELP = [
 {id:'diario',icon:'📅',title:'El diario',tabs:['hoy'],body:`
 <ul><li>La tarjeta verde te dice cuántas calorías <b>te quedan</b>. Debajo, cómo vas de proteína, carbohidratos y grasa.</li>
 <li>Pulsa <b>+ Añadir</b> en cualquier comida para buscar un alimento, escanearlo o elegir uno reciente o favorito (★).</li>
-<li>Toca cualquier alimento ya apuntado para cambiar la cantidad o borrarlo.</li>
+<li>Toca cualquier alimento ya apuntado para cambiar la cantidad, <b>moverlo a otra comida u otro día</b> (botones Anteayer · Ayer · Hoy · 📅 Otro) o borrarlo con 🗑.</li>
+<li>En la ficha de cada alimento ajustas el peso con <b>− / +</b>, los atajos de 25 a 200 g o la báscula en vivo. El botón de abajo te dice cuántas calorías vas a apuntar antes de confirmar.</li>
 <li>Con las flechas ‹ › cambias de día. Puedes copiar un día entero o una comida de ayer.</li>
+<li><b>Cenas de madrugada:</b> el día termina a las <b>4:00</b>, no a medianoche. Si cenas a la 1:00, se apunta en la cena del día anterior. La hora se cambia en Ajustes → "El día termina a las".</li>
 <li>El agua se suma de vaso en vaso (250 ml).</li></ul>`},
 {id:'habituales',icon:'⭐',title:'Comidas habituales',tabs:['hoy'],body:`
 <p>Si desayunas casi siempre lo mismo, apúntalo una vez y pulsa <b>⭐</b> en esa comida para guardarlo como habitual.</p>
@@ -1647,16 +1655,26 @@ const HELP = [
 <li>Crea un <b>Fine-grained token</b> con acceso solo a ese repositorio y permiso <b>Contents: Read and write</b>. Los pasos detallados están en Ajustes.</li>
 <li>En Ajustes pega el repositorio, el token y <b>tu nombre</b>. Tu pareja pone lo mismo con su propio nombre.</li></ol>
 <p>A partir de ahí se guarda solo unos segundos después de cada cambio. Si reinstalas: vuelve a poner los tres datos y pulsa <b>Restaurar</b>.</p>
+<p>El mensaje de estado en Ajustes te dice cómo va:</p>
+<ul><li>🟢 <b>Verde</b> "Guardado en GitHub": todo a salvo.</li>
+<li>🟡 <b>Ámbar</b> "Pendiente de guardar": se cortó la conexión (por ejemplo, al bloquear el móvil mientras guardaba). La app lo reintenta sola; no tienes que hacer nada.</li>
+<li>🔴 <b>Rojo</b> "Error al guardar": algo que sí hay que arreglar, normalmente el token caducado o sin permisos. Crea uno nuevo y pégalo en los dos móviles.</li></ul>
+<p>Los datos nunca se pierden por un fallo de guardado: siempre quedan en el móvil hasta que se suben.</p>
 <p>Además de la copia, esto activa: precios compartidos, productos escaneados compartidos, sumar el menú de tu pareja y la lista de la compra en tiempo real.</p>`},
 {id:'progreso',icon:'📈',title:'Progreso',tabs:['progreso'],body:`
 <p>Al final del Diario, <b>Mi progreso</b> muestra las calorías de los últimos 7 o 30 días frente a tu objetivo, tus medias de macros, cuántos días has estado dentro de ±10% del objetivo y qué alimentos te aportan más calorías.</p>`},
-{id:'problemas',icon:'🛟',title:'Problemas frecuentes',tabs:['ajustes','pesar'],body:`
+{id:'problemas',icon:'🛟',title:'Preguntas y problemas frecuentes',tabs:['ajustes','pesar'],body:`
 <ul><li><b>No encuentra la báscula:</b> enciéndela poniendo algo encima y <b>cierra la app Silvergear Fit</b> del todo (la báscula solo acepta una conexión). Tiene que abrirse desde Bluefy, no desde Safari.</li>
 <li><b>Se desconecta:</b> la báscula se apaga sola al rato. La app intenta reconectar; si no, pulsa Conectar otra vez.</li>
 <li><b>El peso no se queda "estable":</b> apoya la báscula en una superficie firme y sin vibraciones.</li>
 <li><b>La cámara no abre:</b> usa "hacer foto al código" o escribe el número. Revisa que Bluefy tenga permiso de cámara en Ajustes del iPhone.</li>
 <li><b>Un producto tiene datos raros:</b> los de Open Food Facts los sube la gente. Edítalo en Ajustes → Mis alimentos.</li>
-<li><b>Error al guardar en GitHub:</b> revisa que el repositorio se escriba como usuario/nombre y que el token tenga "Contents: Read and write" y no haya caducado.</li>
+<li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
+<li><b>Error al guardar en GitHub (en rojo):</b> revisa que el repositorio se escriba como usuario/nombre y que el token tenga "Contents: Read and write" y no haya caducado.</li>
+<li><b>Apunté la cena en el día que no era:</b> tócala en el Diario, elige el día correcto (Ayer, Anteayer u Otro) y pulsa Guardar.</li>
+<li><b>No sale la tarjeta de "¿Es saludable?":</b> solo aparece en productos envasados (escaneados o de Open Food Facts), no en alimentos básicos ni recetas. Si el producto no tiene datos, verás "Sin datos para valorarlo".</li>
+<li><b>No veo lo último que se ha añadido:</b> mira la versión en Ajustes (abajo del todo) y compárala con la de 🆕 Novedades. GitHub tarda hasta 10 minutos en publicar una versión nueva; después recarga la página en Bluefy.</li>
+<li><b>¿Puedo tener un icono en la pantalla de inicio?</b> Sí: en la app Atajos crea un atajo con la acción "Abrir app → Bluefy", llámalo Báscula y pulsa "Añadir a pantalla de inicio". Desde Safari no sirve, porque Safari no tiene Bluetooth.</li>
 <li><b>Quiero probar sin báscula:</b> Ajustes → Modo demo.</li></ul>`}
 ];
 const TAB_HELP = { hoy: 'diario', pesar: 'bascula', recetas: 'recetas', menu: 'menu', progreso: 'progreso', ajustes: 'github' };
@@ -1693,8 +1711,8 @@ function startTour(i = 0) {
   const [ic, t, b] = TOUR[i], last = i === TOUR.length - 1;
   openSheet(`<div style="text-align:center;padding:10px 4px 0"><div style="font-size:64px;line-height:1.2">${ic}</div><h2 style="margin:10px 0 8px;font-size:24px;letter-spacing:-.02em">${t}</h2><p style="line-height:1.55;color:var(--mute);margin:0 0 18px">${b}</p>
   <div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px">${TOUR.map((_, j) => `<span style="width:${j === i ? 20 : 7}px;height:7px;border-radius:4px;background:${j === i ? 'var(--acc)' : 'var(--line)'};transition:width .2s"></span>`).join('')}</div>
-  ${last ? `<button class="btn pri block" onclick="S.onboarded=1;save();openCalc()">🧮 Calcular mi objetivo</button><button class="btn ghost block" style="margin-top:6px" onclick="S.onboarded=1;save();closeSheet()">Empezar sin calcular</button>`
-    : `<div class="row">${i ? `<button class="btn sp" onclick="startTour(${i - 1})">‹ Atrás</button>` : `<button class="btn sp" onclick="S.onboarded=1;save();closeSheet()">Saltar</button>`}<button class="btn pri sp" onclick="startTour(${i + 1})">Siguiente ›</button></div>`}</div>`);
+  ${last ? `<button class="btn pri block" onclick="S.onboarded=1;S.seenVersion=APP_VERSION;save();openCalc()">🧮 Calcular mi objetivo</button><button class="btn ghost block" style="margin-top:6px" onclick="S.onboarded=1;S.seenVersion=APP_VERSION;save();closeSheet();render()">Empezar sin calcular</button>`
+    : `<div class="row">${i ? `<button class="btn sp" onclick="startTour(${i - 1})">‹ Atrás</button>` : `<button class="btn sp" onclick="S.onboarded=1;S.seenVersion=APP_VERSION;save();closeSheet();render()">Saltar</button>`}<button class="btn pri sp" onclick="startTour(${i + 1})">Siguiente ›</button></div>`}</div>`);
 }
 
 /* ---------- inicio ---------- */
