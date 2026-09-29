@@ -158,6 +158,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
+const APP_VERSION = '30-sep · 01:10';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -650,7 +651,7 @@ function editEntry(id) { const e = (S.diary[day] || []).find(x => x.id === id); 
 
 /* ---------- selector de alimento ---------- */
 const offCache = {};
-const foodItem = f => `<div class="item" data-id="${esc(f.id)}">${(() => { const h = healthInfo(f); return h ? `<span title="${h.label}" style="flex:none;width:10px;height:10px;border-radius:50%;background:${h.col}"></span>` : ''; })()}<div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
+const foodItem = f => `<div class="item" data-id="${esc(f.id)}">${(() => { const h = healthInfo(f); return h && !h.none ? `<span title="${h.label}" style="flex:none;width:10px;height:10px;border-radius:50%;background:${h.col}"></span>` : ''; })()}<div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
 function openPicker(onPick, title = 'Añadir alimento') {
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">${title}</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="row" style="margin:8px 0"><input id="ps" placeholder="Buscar alimento o marca…" autocomplete="off"><button class="btn" id="pbc" title="Código de barras">▥</button></div>
@@ -683,7 +684,7 @@ function openPicker(onPick, title = 'Añadir alimento') {
 }
 function offToFood(p) {
   const n = p.nutriments || {}; let kcal = n['energy-kcal_100g']; if (kcal == null && n.energy_100g != null) kcal = n.energy_100g / 4.184; if (kcal == null) return null;
-  return { id: 'off_' + p.code, code: p.code, name: p.product_name_es || p.product_name || 'Producto sin nombre', brand: (p.brands || '').split(',')[0].trim(), kcal: +kcal, p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), fib: +(n.fiber_100g || 0), sug: +(n.sugars_100g || 0), salt: +(n.salt_100g || 0), img: p.image_front_small_url || '', ns: (p.nutriscore_grade || '').length === 1 ? p.nutriscore_grade : '', qty: p.quantity || '', nova: +p.nova_group || 0, lv: p.nutrient_levels || {}, cats: p.categories_tags || [], stores: p.stores || '', hv: 1, src: 'off' };
+  return { id: 'off_' + p.code, code: p.code, name: p.product_name_es || p.product_name || 'Producto sin nombre', brand: (p.brands || '').split(',')[0].trim(), kcal: +kcal, p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), fib: +(n.fiber_100g || 0), sug: +(n.sugars_100g || 0), salt: +(n.salt_100g || 0), sat: n['saturated-fat_100g'] != null ? +n['saturated-fat_100g'] : null, img: p.image_front_small_url || '', ns: (p.nutriscore_grade || '').length === 1 ? p.nutriscore_grade : '', qty: p.quantity || '', nova: +p.nova_group || 0, lv: p.nutrient_levels || {}, cats: p.categories_tags || [], stores: p.stores || '', hv: 1, src: 'off' };
 }
 const OFF_FIELDS = 'code,product_name,product_name_es,brands,nutriments,image_front_small_url,nutriscore_grade,quantity,nova_group,nutrient_levels,categories_tags,stores';
 async function offSearch(q) { const r = await fetch(`https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20&fields=${OFF_FIELDS}`); const j = await r.json(); return (j.products || []).map(offToFood).filter(Boolean); }
@@ -727,22 +728,30 @@ function openFoodForm(f, onSaved) {
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">${f.id ? 'Editar' : 'Nuevo'} alimento</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <p class="sm mute" style="margin:4px 0">Valores <b>por 100 g</b>, como en la etiqueta.</p>
   <label>Nombre<input id="ff_n" value="${esc(f.name || '')}"></label><label>Marca (opcional)<input id="ff_b" value="${esc(f.brand || '')}"></label>
-  <div class="grid2">${num('ff_k', 'Calorías (kcal)', f.kcal)}${num('ff_p', 'Proteína (g)', f.p)}${num('ff_c', 'Carbohidratos (g)', f.c)}${num('ff_f', 'Grasa (g)', f.f)}${num('ff_fib', 'Fibra (g)', f.fib)}${num('ff_s', 'Sal (g)', f.salt)}</div>
+  <div class="grid2">${num('ff_k', 'Calorías (kcal)', f.kcal)}${num('ff_p', 'Proteína (g)', f.p)}${num('ff_c', 'Carbohidratos (g)', f.c)}${num('ff_f', 'Grasa (g)', f.f)}${num('ff_sug', 'Azúcares (g)', f.sug)}${num('ff_sat', 'Grasas saturadas (g)', f.sat)}${num('ff_fib', 'Fibra (g)', f.fib)}${num('ff_s', 'Sal (g)', f.salt)}</div>
   ${f.code ? `<p class="sm mute">Código: ${esc(f.code)}</p>` : ''}
   <button class="btn pri block" style="margin-top:12px" id="ff_ok">Guardar</button>`);
   $('#ff_ok').onclick = () => {
     const name = $('#ff_n').value.trim(), v = id => parseFloat($(id).value) || 0; if (!name) return toast('Ponle un nombre');
     const id = f.id || 'u_' + uid();
-    const food = { ...f, id, name, brand: $('#ff_b').value.trim(), kcal: v('#ff_k'), p: v('#ff_p'), c: v('#ff_c'), f: v('#ff_f'), fib: v('#ff_fib'), salt: v('#ff_s'), src: f.src && f.src !== 'base' ? f.src : 'custom' };
+    const food = { ...f, id, name, brand: $('#ff_b').value.trim(), kcal: v('#ff_k'), p: v('#ff_p'), c: v('#ff_c'), f: v('#ff_f'), fib: v('#ff_fib'), salt: $('#ff_s').value === '' ? null : v('#ff_s'), sug: $('#ff_sug').value === '' ? null : v('#ff_sug'), sat: $('#ff_sat').value === '' ? null : v('#ff_sat'), lv: undefined, src: f.src && f.src !== 'base' ? f.src : 'custom' };
     S.foods[id] = food; save(); toast('Alimento guardado'); onSaved ? onSaved(food) : (closeSheet(), render());
   };
 }
 
 /* ---------- ¿ES SALUDABLE? ---------- */
 const LV_NAME = { sugars: 'azúcar', salt: 'sal', 'saturated-fat': 'grasas saturadas', fat: 'grasa' };
+function calcLevels(f) {
+  const lv = {}, t = (v, lo, hi) => v == null || isNaN(v) ? null : v > hi ? 'high' : v <= lo ? 'low' : 'moderate', put = (k, v) => { if (v) lv[k] = v; };
+  put('fat', t(f.f, 3, 17.5)); put('sugars', t(f.sug, 5, 22.5)); put('salt', t(f.salt, 0.3, 1.5)); if (f.sat != null) put('saturated-fat', t(f.sat, 1.5, 5));
+  return lv;
+}
 function healthInfo(f) {
-  const ns = f.ns || '', nova = +f.nova || 0, lv = f.lv || {}, has = ns || nova || Object.keys(lv).length;
-  if (!has) return null;
+  if (!f || f.src === 'base' || f.src === 'recipe' || String(f.id || '').startsWith('lib_')) return null;
+  const ns = f.ns || '', nova = +f.nova || 0; let lv = f.lv || {}, est = false;
+  if (!Object.keys(lv).length && (f.sug != null || f.salt != null) && (f.src === 'off' || f.src === 'custom')) { lv = calcLevels(f); est = true; }
+  const has = ns || nova || Object.keys(lv).length;
+  if (!has) return f.src === 'off' ? { none: true } : null;
   const highs = Object.entries(lv).filter(([k, v]) => v === 'high' && LV_NAME[k]).map(([k]) => k);
   let level;
   if (ns) level = 'ab'.includes(ns) ? (nova === 4 ? 1 : 2) : ns === 'c' ? 1 : 0;
@@ -754,12 +763,14 @@ function healthInfo(f) {
   Object.entries(lv).filter(([k, v]) => v === 'low' && (k === 'sugars' || k === 'salt' || k === 'saturated-fat')).forEach(([k]) => pros.push(`Poca ${LV_NAME[k]}`.replace('Poca azúcar', 'Poco azúcar').replace('Poca grasas', 'Pocas grasas')));
   if (f.fib >= 6) pros.push('Rico en fibra');
   if (f.p >= 12 && f.kcal < 250) pros.push('Rico en proteína');
-  return { level, pros, cons, label: ['Poco saludable', 'Con moderación', 'Saludable'][level], icon: ['🔴', '🟡', '🟢'][level], col: ['var(--bad)', 'var(--warn)', 'var(--acc)'][level] };
+  return { level, pros, cons, est: est && !ns, label: ['Poco saludable', 'Con moderación', 'Saludable'][level], icon: ['🔴', '🟡', '🟢'][level], col: ['var(--bad)', 'var(--warn)', 'var(--acc)'][level] };
 }
 function healthCard(f) {
   const h = healthInfo(f); if (!h) return '';
+  if (h.none) return `<div class="hcard" style="--hc:var(--mute)"><div class="row"><span style="font-size:20px">ℹ️</span><div class="sp"><b>Sin datos para valorarlo</b><div class="sm mute">Este producto no tiene Nutri-Score ni información nutricional completa en Open Food Facts.</div></div></div></div>`;
   return `<div class="hcard" style="--hc:${h.col}"><div class="row"><span style="font-size:20px">${h.icon}</span><div class="sp"><b style="color:${h.col};font-size:16px">${h.label}</b><div class="sm mute">${h.level === 2 ? 'Buena elección para el día a día' : h.level === 1 ? 'Está bien de vez en cuando' : 'Mejor como algo ocasional'}</div></div></div>
   <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:10px">${h.cons.map(c => `<span class="hchip bad">${esc(c)}</span>`).join('')}${h.pros.map(c => `<span class="hchip good">${esc(c)}</span>`).join('')}</div>
+  ${h.est ? '<div class="sm mute" style="margin-top:8px">Sin Nutri-Score: valoración estimada con el azúcar, la sal y la grasa de la etiqueta.</div>' : ''}
   ${h.level < 2 && (f.cats || []).length ? `<button class="btn block" id="qalt" style="margin-top:12px;background:var(--card)">🌿 Ver alternativas más sanas</button>` : ''}</div>`;
 }
 const altCache = {};
@@ -770,8 +781,8 @@ async function offCategorySearch(tag, spain) {
 }
 async function findAlternatives(f) {
   if (altCache[f.id]) return altCache[f.id];
-  const cur = healthInfo(f), rank = x => { const h = healthInfo(x); return h ? h.level * 10 + ('abcde'.length - 'abcde'.indexOf(x.ns || 'e')) - (x.nova === 4 ? 2 : 0) + (x.stores ? 1 : 0) : -99; };
-  const better = x => { const h = healthInfo(x); if (!h || x.code === f.code || !x.name || x.name === 'Producto sin nombre') return false; if (h.level > cur.level) return true; return h.level === cur.level && h.level >= 1 && x.ns && f.ns && x.ns < f.ns; };
+  const cur = healthInfo(f), rank = x => { const h = healthInfo(x); return h && !h.none ? h.level * 10 + ('abcde'.length - 'abcde'.indexOf(x.ns || 'e')) - (x.nova === 4 ? 2 : 0) + (x.stores ? 1 : 0) : -99; };
+  const better = x => { const h = healthInfo(x); if (!h || h.none || x.code === f.code || !x.name || x.name === 'Producto sin nombre') return false; if (h.level > cur.level) return true; return h.level === cur.level && h.level >= 1 && x.ns && f.ns && x.ns < f.ns; };
   const cats = (f.cats || []).slice().reverse().slice(0, 3), seen = new Set(), out = [];
   for (const spain of [true, false]) for (const c of cats) {
     if (out.length >= 8) break;
@@ -799,7 +810,7 @@ function openAlternatives(f, ctx) {
 }
 async function enrichFood(f) {
   if (!f.code || f.src !== 'off' || f.hv === 1) return null;
-  try { const n = await offBarcode(f.code); if (!n) return null; Object.assign(f, { ns: n.ns, nova: n.nova, lv: n.lv, cats: n.cats, stores: n.stores, img: f.img || n.img, hv: 1 }); if (S.foods[f.id]) { S.foods[f.id] = f; save(); } return f; } catch (e) { return null; }
+  try { const n = await offBarcode(f.code); if (!n) return null; Object.assign(f, { ns: n.ns, nova: n.nova, lv: n.lv, cats: n.cats, stores: n.stores, img: f.img || n.img, sat: n.sat, sug: f.sug ?? n.sug, salt: f.salt ?? n.salt, fib: f.fib || n.fib, hv: 1 }); if (S.foods[f.id]) { S.foods[f.id] = f; save(); } return f; } catch (e) { return null; }
 }
 
 /* ---------- cantidad (pesar y añadir) ---------- */
@@ -1502,7 +1513,7 @@ function vAjustes(v) {
   <div class="card"><b>Copia manual</b><p class="sm mute">Exporta o importa todos tus datos como texto.</p>
   <div class="row"><button class="btn sp" onclick="exportData()">Exportar</button><button class="btn sp" onclick="importData()">Importar</button></div></div>
   <div class="card"><button class="btn bad block" onclick="confirmSheet('¿Borrar TODOS los datos de este móvil?', ()=>{localStorage.removeItem(KEY);S=load();render();toast('Datos borrados')}, 'Borrar todo')">Borrar todos los datos</button></div>
-  <p class="sm mute" style="text-align:center">Datos de productos: Open Food Facts (ODbL). Valores de básicos aproximados.</p>`;
+  <p class="sm mute" style="text-align:center">Versión ${APP_VERSION} · Datos de productos: Open Food Facts (ODbL). Valores de básicos aproximados.</p>`;
   const hint = () => { const k = (+$('#g_p').value) * 4 + (+$('#g_c').value) * 4 + (+$('#g_f').value) * 9; $('#g_hint').textContent = `Tus macros suman ${r0(k)} kcal (objetivo: ${$('#g_k').value || 0}).`; };
   ['#g_p', '#g_c', '#g_f', '#g_k'].forEach(id => $(id).oninput = hint); hint();
   $('#g_ok').onclick = () => { const n = id => Math.max(0, parseInt($(id).value) || 0); S.goals = { kcal: n('#g_k') || 2000, p: n('#g_p') || 1, c: n('#g_c') || 1, f: n('#g_f') || 1, water: n('#g_w') || 2000 }; save(); toast('Objetivos guardados'); };
