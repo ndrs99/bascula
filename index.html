@@ -494,21 +494,33 @@ const fmtNum = g => String(Math.max(0, S.settings.decimals ? r1(g) : Math.round(
 function doTare(silent) { scale.tare = scale.raw ?? 0; subMode = false; if (!silent) toast('Tara hecha'); emit(); }
 function clearTare() { scale.tare = 0; toast('Tara quitada'); emit(); }
 
+const SVC_UUID = '0000ffb0-0000-1000-8000-00805f9b34fb', CHR_UUID = '0000ffb2-0000-1000-8000-00805f9b34fb';
+function btError(e) {
+  const name = (e && e.name) || '', msg = (e && e.message) || (typeof e === 'string' ? e : '');
+  if (name === 'NotFoundError' && !/bluetooth|adapter|unavailable/i.test(msg)) { toast('No se eligió ninguna báscula'); return; }
+  openSheet(`<b style="font-size:18px">No se pudo conectar con la báscula</b>
+  <ol style="padding-left:18px;line-height:1.6;margin:12px 0"><li><b>Enciéndela</b>: pulsa su botón o pon algo encima hasta que se ilumine la pantalla.</li>
+  <li><b>Cierra Silvergear Fit</b> del todo (desliza hacia arriba en la multitarea): la báscula solo acepta una conexión.</li>
+  <li>Comprueba que el <b>Bluetooth</b> del iPhone está activado y que Bluefy tiene permiso (Ajustes del iPhone → Bluefy → Bluetooth).</li>
+  <li>Acércate a la báscula y vuelve a pulsar <b>Conectar</b>. En la lista debe salir <b>4454</b>.</li></ol>
+  ${name || msg ? `<p class="sm mute">Detalle técnico: ${esc([name, msg].filter(Boolean).join(' · '))}</p>` : ''}
+  <div class="row"><button class="btn sp" onclick="closeSheet()">Cerrar</button><button class="btn pri sp" onclick="closeSheet();connect()">Reintentar</button></div>`);
+}
 async function connect() {
   if (S.settings.demo) { startDemo(); return; }
   if (!navigator.bluetooth) { openSheet(`<b style="font-size:18px">Bluetooth no disponible aquí</b><p>Safari no permite conectar con la báscula. Abre esta página en la app gratuita <b>Bluefy</b> (App Store).</p><p class="sm mute">También puedes activar el modo demo en Ajustes para probar la app.</p><button class="btn pri block" onclick="closeSheet()">Entendido</button>`); return; }
   try {
-    const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: [0xffb0] }, { namePrefix: '4454' }], optionalServices: [0xffb0] });
+    const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: [SVC_UUID] }, { namePrefix: '4454' }], optionalServices: [SVC_UUID] });
     scale.dev = dev; scale.manual = false;
     dev.addEventListener('gattserverdisconnected', onDisc);
     await attach();
-  } catch (e) { scale.connecting = false; updatePill(); if (e.name !== 'NotFoundError') toast('No se pudo conectar: ' + e.message); }
+  } catch (e) { scale.connecting = false; updatePill(); btError(e); }
 }
 async function attach() {
   scale.connecting = true; updatePill();
   const srv = await scale.dev.gatt.connect();
-  const svc = await srv.getPrimaryService(0xffb0);
-  const ch = await svc.getCharacteristic(0xffb2);
+  const svc = await srv.getPrimaryService(SVC_UUID);
+  const ch = await svc.getCharacteristic(CHR_UUID);
   ch.addEventListener('characteristicvaluechanged', e => { const r = parseFrame(e.target.value); if (r) onReading(r.g, r.unit); });
   await ch.startNotifications();
   scale.connected = true; scale.connecting = false; updatePill(); toast('Báscula conectada'); refreshScaleViews(); emit();
