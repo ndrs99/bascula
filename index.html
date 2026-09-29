@@ -158,7 +158,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 01:25';
+const APP_VERSION = '30-sep · 01:35';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -208,7 +208,7 @@ const EXTRA_RAW = [
 ['Especias variadas',280,12,30,10,30],['Caldo de verduras',5,0.3,0.8,0.1,0],['Pasta integral cruda',350,13,64,2.5,8],['Arroz integral crudo',355,7.5,74,2.7,3.5],
 ['Pan pita integral',260,9,50,1.7,6],['Maicena',350,0.3,87,0.1,0.9],['Levadura química',53,0,28,0,0],['Jengibre fresco',80,1.8,18,0.8,2],
 ['Hierbas frescas',36,3,6,0.8,3],['Semillas de sésamo',573,18,12,50,12],['Salsa sriracha',105,2,20,1,1],
-['Queso cottage',98,11,3.4,4.3,0],['Papel de arroz',330,6,77,0.3,1],['Ñoquis de patata',150,4,32,0.3,1.5],['Copos de maíz sin azúcar',370,7,84,0.9,3],
+['Queso cottage',98,11,3.4,4.3,0],['Arroz integral cocido',123,2.7,25.6,1,1.6],['Quinoa cocida',120,4.4,21.3,1.9,2.8],['Pasta integral cocida',149,6,30,1.7,4],['Papel de arroz',330,6,77,0.3,1],['Ñoquis de patata',150,4,32,0.3,1.5],['Copos de maíz sin azúcar',370,7,84,0.9,3],
 ['Harina de trigo',340,10,71,1.2,3],['Tomates secos',258,14,43,3,12],['Judías verdes',31,1.8,4.5,0.2,3],['Guisantes',80,5.4,10,0.4,5],['Dátiles',280,2.5,66,0.4,8],
 ['Pechuga de pavo en lonchas',100,20,1.5,1.5,0],['Semillas de chía',486,17,8,31,34],['Vinagre de vino',20,0,0.5,0,0],['Caldo de pollo',8,1,0.5,0.3,0],['Tortitas de arroz',380,8,80,3,3]];
 
@@ -756,7 +756,7 @@ const BASE_HEALTH = {
   'Azúcar': [0, [AZ, 'Sin nutrientes'], []], 'Cerveza': [0, ['Alcohol'], []], 'Vino tinto': [0, ['Alcohol'], []],
   'Aceite de oliva': [2, [CAL], [GOOD]], 'Aguacate': [2, [], [GOOD, 'Rico en fibra']], 'Almendras': [2, [CAL], [GOOD, 'Rico en fibra']], 'Nueces': [2, [CAL], [GOOD, 'Omega 3']], 'Cacahuetes': [2, [CAL], [GOOD, 'Rico en proteína']],
   'Tahini': [2, [CAL], [GOOD]], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
-  'Pan integral': [2, [], ['Integral', 'Rico en fibra']], 'Pan pita integral': [2, [], ['Integral']], 'Pasta integral cruda': [2, [], ['Integral', 'Rico en fibra']], 'Arroz integral crudo': [2, [], ['Integral']],
+  'Pan integral': [2, [], ['Integral', 'Rico en fibra']], 'Pan pita integral': [2, [], ['Integral']], 'Pasta integral cruda': [2, [], ['Integral', 'Rico en fibra']], 'Arroz integral crudo': [2, [], ['Integral']], 'Arroz integral cocido': [2, [], ['Integral']], 'Pasta integral cocida': [2, [], ['Integral', 'Rico en fibra']],
   'Hummus': [2, [], ['Legumbre', 'Rico en fibra']], 'Maíz dulce (lata)': [2, [], []], 'Leche entera': [2, [], ['Rico en calcio']], 'Yogur griego': [2, [], ['Fermentado']], 'Yogur natural': [2, [], ['Fermentado']],
   'Levadura química': null, 'Especias variadas': null, 'Hierbas frescas': null, 'Canela molida': null, 'Vinagre balsámico': null, 'Vinagre de vino': null, 'Caldo de verduras': null, 'Caldo de pollo': null, 'Zumo de limón': null, 'Mostaza': null
 };
@@ -803,7 +803,7 @@ function healthCard(f) {
   <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:10px">${h.cons.map(c => `<span class="hchip bad">${esc(c)}</span>`).join('')}${h.pros.map(c => `<span class="hchip good">${esc(c)}</span>`).join('')}</div>
   ${h.base ? '<div class="sm mute" style="margin-top:8px">Valoración general del alimento, no de una marca concreta.</div>' : ''}
   ${h.est ? '<div class="sm mute" style="margin-top:8px">Sin Nutri-Score: valoración estimada con el azúcar, la sal y la grasa de la etiqueta.</div>' : ''}
-  ${h.level < 2 && (f.cats || []).length ? `<button class="btn block" id="qalt" style="margin-top:12px;background:var(--card)">🌿 Ver alternativas más sanas</button>` : ''}</div>`;
+  ${h.level < 2 && ((f.cats || []).length || BASE_SWAPS[f.name] || (f.src === 'off' && f.name)) ? `<button class="btn block" id="qalt" style="margin-top:12px;background:var(--card)">🌿 Ver alternativas más sanas</button>` : ''}</div>`;
 }
 const altCache = {};
 async function offCategorySearch(tag, spain) {
@@ -811,11 +811,28 @@ async function offCategorySearch(tag, spain) {
   const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?${q}`); const j = await r.json();
   return (j.products || []).map(offToFood).filter(Boolean);
 }
+
+const BASE_SWAPS = {
+  'Arroz blanco cocido': ['Arroz integral cocido', 'Quinoa cocida', 'Coliflor'], 'Arroz blanco crudo': ['Arroz integral crudo', 'Quinoa cruda'],
+  'Pasta cocida': ['Pasta integral cocida', 'Calabacín', 'Garbanzos cocidos'], 'Pasta cruda': ['Pasta integral cruda', 'Lentejas rojas crudas'],
+  'Pan blanco': ['Pan integral', 'Pan pita integral', 'Avena en copos'], 'Harina de trigo': ['Harina de avena'], 'Cuscús crudo': ['Quinoa cruda', 'Arroz integral crudo'],
+  'Fideos de arroz (crudos)': ['Pasta integral cruda', 'Quinoa cruda'], 'Papel de arroz': ['Lechuga', 'Tortilla de trigo integral'], 'Maicena': ['Harina de avena'],
+  'Ñoquis de patata': ['Patata cruda', 'Boniato crudo'], 'Copos de maíz sin azúcar': ['Avena en copos'], 'Tortitas de arroz': ['Pan integral', 'Avena en copos'],
+  'Carne picada de vacuno': ['Carne picada de pavo', 'Ternera magra cruda', 'Lentejas cocidas'], 'Jamón serrano': ['Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Atún al natural (escurrido)'],
+  'Pechuga de pavo en lonchas': ['Pavo, pechuga cruda', 'Pechuga de pollo a la plancha'], 'Salmón ahumado': ['Salmón crudo', 'Atún al natural (escurrido)'],
+  'Queso curado': ['Queso fresco batido 0%', 'Queso cottage', 'Queso mozzarella light'], 'Queso parmesano': ['Queso mozzarella light', 'Queso cottage'], 'Queso feta': ['Queso fresco batido 0%', 'Queso cottage'],
+  'Mantequilla': ['Aceite de oliva', 'Aguacate'], 'Mayonesa': ['Skyr o yogur griego 0%', 'Hummus', 'Mostaza'], 'Crema de cacahuete': ['Cacahuetes', 'Almendras'],
+  'Chocolate negro 70%': ['Cacao puro en polvo', 'Fresas', 'Frutos rojos congelados'], 'Miel': ['Canela molida', 'Plátano', 'Frutos rojos congelados'], 'Dátiles': ['Manzana', 'Plátano', 'Fresas'],
+  'Salsa de soja': ['Especias variadas', 'Zumo de limón'], 'Salsa sriracha': ['Especias variadas'], 'Tomates secos': ['Tomate', 'Tomate triturado'], 'Leche de coco light': ['Skyr o yogur griego 0%', 'Leche desnatada'],
+  'Azúcar': ['Canela molida', 'Plátano', 'Dátiles']
+};
+function whereBuy(n) { const c = cheapest(n); if (c) return `💶 Más barato en <b>${storeName(c.store)}</b> · ${eur(c.perKg)}/kg`; return WHERE[n] ? '🛒 ' + esc(WHERE[n]) : ''; }
 async function findAlternatives(f) {
   if (altCache[f.id]) return altCache[f.id];
   const cur = healthInfo(f), rank = x => { const h = healthInfo(x); return h && !h.none && !h.incomplete ? h.level * 10 + ('abcde'.length - 'abcde'.indexOf(x.ns || 'e')) - (x.nova === 4 ? 2 : 0) + (x.stores ? 1 : 0) : -99; };
   const better = x => { const h = healthInfo(x); if (!h || h.none || h.incomplete || x.code === f.code || !x.name || x.name === 'Producto sin nombre') return false; if (h.level > cur.level) return true; return h.level === cur.level && h.level >= 1 && x.ns && f.ns && x.ns < f.ns; };
   const cats = (f.cats || []).slice().reverse().slice(0, 3), seen = new Set(), out = [];
+  if (!cats.length) { try { const q = f.name.split(/\s+/).filter(w => w.length > 2).slice(0, 2).join(' '); (await offSearch(q)).filter(better).forEach(x => { if (!seen.has(x.code)) { seen.add(x.code); out.push(x); } }); } catch (e) {} }
   for (const spain of [true, false]) for (const c of cats) {
     if (out.length >= 8) break;
     try { (await offCategorySearch(c, spain)).filter(better).forEach(x => { if (!seen.has(x.code)) { seen.add(x.code); out.push(x); } }); } catch (e) {}
@@ -824,16 +841,29 @@ async function findAlternatives(f) {
   const res = out.sort((a, b) => rank(b) - rank(a)).slice(0, 10); altCache[f.id] = res; return res;
 }
 function openAlternatives(f, ctx) {
-  const back = () => openQty(f, ctx);
+  const back = () => openQty(f, ctx), gr = ctx.grams > 0 ? ctx.grams : 100;
+  const diff = x => { const d = Math.round((x.kcal - f.kcal) * gr / 100); return d <= -5 ? `<span style="color:var(--acc);font-weight:700">${d} kcal</span> con ${fmtW(gr)} g` : d >= 5 ? `<span class="mute">+${d} kcal con ${fmtW(gr)} g</span>` : '<span class="mute">Mismas calorías</span>'; };
+  if (f.src === 'base' || BASE_SWAPS[f.name]) {
+    const list = (BASE_SWAPS[f.name] || []).map(n => BASE_FOODS.find(b => b.name === n)).filter(Boolean);
+    openSheet(`<div class="row"><button class="btn round" style="width:36px;height:36px;font-size:18px" id="altb">‹</button><b class="sp" style="font-size:19px">🌿 Alternativas más sanas</b></div>
+    <p class="sm mute" style="margin:8px 0">Cambios sencillos para <b style="color:var(--ink)">${esc(f.name)}</b>.</p>
+    ${list.length ? list.map((x, i) => { const h = healthInfo(x), w = whereBuy(x.name); return `<div class="altit" data-a="${i}"><div class="qimg" style="width:52px;height:52px;border-radius:14px;background:var(--soft)"><span style="font-size:24px">${h ? h.icon : '🥗'}</span></div>
+      <div class="sp" style="min-width:0"><div class="nm">${esc(x.name)}</div><div class="sm mute">${r0(x.kcal)} kcal/100 g · ${diff(x)}</div>
+      ${h ? `<div class="row" style="gap:6px;margin-top:5px;flex-wrap:wrap"><span class="hchip" style="color:${h.col}">${h.label}</span>${h.pros.slice(0, 2).map(p => `<span class="hchip good">${esc(p)}</span>`).join('')}</div>` : ''}
+      ${w ? `<div class="sm" style="margin-top:5px">${w}</div>` : ''}</div><span class="mute">›</span></div>`; }).join('') : '<div class="altload">No tengo alternativas para este alimento.</div>'}`);
+    $('#altb').onclick = back;
+    $('#sheet').onclick = e => { const it = e.target.closest('[data-a]'); if (it) openQty(list[+it.dataset.a], { ...ctx, entry: undefined }); };
+    return;
+  }
   openSheet(`<div class="row"><button class="btn round" style="width:36px;height:36px;font-size:18px" id="altb">‹</button><b class="sp" style="font-size:19px">🌿 Alternativas más sanas</b></div>
-  <p class="sm mute" style="margin:8px 0">Productos de la misma categoría que <b style="color:var(--ink)">${esc(f.name)}</b> con mejor valoración.</p><div id="altl"><div class="altload">Buscando alternativas…</div></div>`);
+  <p class="sm mute" style="margin:8px 0">Productos parecidos a <b style="color:var(--ink)">${esc(f.name)}</b> con mejor valoración.</p><div id="altl"><div class="altload">Buscando alternativas…</div></div>`);
   $('#altb').onclick = back;
   findAlternatives(f).then(list => {
     const el = $('#altl'); if (!el) return;
     if (!list.length) { el.innerHTML = `<div class="altload">No he encontrado alternativas mejores con datos suficientes para esta categoría.<br><span class="sm">La base de datos la completa la gente y en algunos productos faltan datos.</span></div>`; return; }
     el.innerHTML = list.map((x, i) => { const h = healthInfo(x), st = (x.stores || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
       return `<div class="altit" data-a="${i}"><div class="qimg" style="width:60px;height:60px;border-radius:14px">${x.img ? `<img src="${esc(x.img)}" alt="">` : '<span style="font-size:26px">🥫</span>'}</div>
-      <div class="sp" style="min-width:0"><div class="nm" style="line-height:1.25">${esc(x.name)}</div><div class="sm mute">${esc(x.brand || '')}${x.brand ? ' · ' : ''}${r0(x.kcal)} kcal/100 g</div>
+      <div class="sp" style="min-width:0"><div class="nm" style="line-height:1.25">${esc(x.name)}</div><div class="sm mute">${esc(x.brand || '')}${x.brand ? ' · ' : ''}${r0(x.kcal)} kcal/100 g · ${diff(x)}</div>
       <div class="row" style="gap:6px;margin-top:5px;flex-wrap:wrap">${x.ns ? `<span class="nsb" style="background:${NS_COL[x.ns]}">${x.ns.toUpperCase()}</span>` : ''}<span class="hchip" style="color:${h.col}">${h.icon} ${h.label}</span></div>
       <div class="sm" style="margin-top:5px;color:${st.length ? 'var(--ink)' : 'var(--mute)'}">🛒 ${st.length ? esc(st.join(', ')) : 'Tienda no indicada'}</div></div><span class="mute">›</span></div>`; }).join('')
       + `<p class="sm mute" style="margin-top:12px">Las tiendas las indican los usuarios de Open Food Facts: pueden faltar o no estar al día.</p>`;
@@ -1588,6 +1618,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 01:35', short: 'Alternativas más sanas también para los alimentos básicos, con las calorías que te ahorras.', items: ['🌿 <b>Alternativas más sanas</b> también en los básicos: arroz blanco → integral o quinoa, pan blanco → integral, mantequilla → aceite de oliva o aguacate, mayonesa → yogur griego o hummus…', '🔥 Cada alternativa te dice <b>cuántas calorías ahorras</b> con el mismo peso.', '🔎 En productos envasados sin categoría, busca alternativas por el nombre.'] },
   { v: '30-sep · 01:25', short: 'Ahora la valoración 🟢🟡🔴 también sale en los alimentos básicos (fruta, arroz, pollo…) y en los creados a mano.', items: ['🟢🟡🔴 La valoración <b>¿Es saludable?</b> sale también en los <b>alimentos básicos</b>, con sus motivos ("Cereal refinado", "Mucha sal", "Grasas saludables"…).', '✏️ Los alimentos creados a mano sin azúcar o sal te piden completarlos para poder valorarlos.'] },
   { v: '30-sep · 01:15', short: '¿Es saludable? y alternativas más sanas, cenas de madrugada, mover comidas de día y más.', items: ['🌿 <b>¿Es saludable?</b>: veredicto 🟢🟡🔴 en cada producto envasado, con los motivos (azúcar, sal, ultraprocesado…).', '🌿 <b>Alternativas más sanas</b> de la misma categoría, con dónde se venden.', '🌙 <b>El día termina a las 4:00</b>: las cenas de madrugada cuentan para el día anterior.', '📅 <b>Mover una comida</b> a otro día u otra comida desde su ficha.', '🍽️ <b>Ficha de alimento y escáner rediseñados</b>.', '☁️ La copia en GitHub <b>reintenta sola</b> si se corta la conexión, con estado en colores.', '🆕 Esta sección de novedades y el número de versión en Ajustes.'] },
   { v: '29-sep', items: ['Recetas a tu medida, menú semanal, lista de la compra compartida, despensa, batch cooking, comidas habituales, calculadora de objetivos y guía de uso.'] }
@@ -1611,7 +1642,7 @@ const HELP = [
 <p>Al abrir cualquier alimento aparece una tarjeta con un veredicto (en los productos envasados, con sus datos de Open Food Facts; en los básicos como fruta, pollo o arroz, con una valoración general del alimento):</p>
 <ul><li>🟢 <b>Saludable</b>: Nutri-Score A o B y no es ultraprocesado.</li><li>🟡 <b>Con moderación</b>: Nutri-Score C, o A/B pero ultraprocesado.</li><li>🔴 <b>Poco saludable</b>: Nutri-Score D o E.</li></ul>
 <p>Debajo te dice por qué: "Mucho azúcar", "Ultraprocesado", "Poca sal", "Rico en fibra"…</p>
-<p>Si no es saludable, pulsa <b>🌿 Ver alternativas más sanas</b>: busca productos de la misma categoría con mejor valoración y te dice en qué tiendas se venden. Toca uno para ver su ficha y apuntarlo.</p>
+<p>Si no es saludable, pulsa <b>🌿 Ver alternativas más sanas</b>. En productos envasados busca otros de la misma categoría con mejor valoración y te dice en qué tiendas se venden. En los básicos te propone cambios sencillos (arroz blanco → integral o quinoa, mantequilla → aceite de oliva…). En todas verás cuántas calorías te ahorras con el mismo peso. Toca uno para ver su ficha y apuntarlo.</p>
 <p>El puntito de color junto a cada producto en las búsquedas te da el veredicto de un vistazo. Es una guía orientativa basada en Open Food Facts, no un consejo médico; las tiendas las indican los usuarios y pueden faltar.</p>`},
 {id:'escanear',icon:'📷',title:'Escanear productos',tabs:['pesar'],body:`
 <p>En <b>Pesar → 📷 Escanear producto</b> (o con el botón ▥ al buscar un alimento) lees el código de barras de cualquier producto envasado.</p>
