@@ -9,6 +9,13 @@ UA = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Appl
 def get(u):
     with urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=30) as x: return json.loads(x.read().decode('utf-8', 'replace'))
 def norm(s): return ''.join(c for c in unicodedata.normalize('NFD', (s or '').lower()) if unicodedata.category(c) != 'Mn')
+def stem(w): return w[:-2] if w.endswith('es') and len(w) > 5 else w[:-1] if w.endswith('s') and len(w) > 3 else w
+def ok_head(name, s):
+    """En Dia y Consum no hay secciones: el nombre tiene que empezar por el producto (evita 'Refresco de limón' para limones)."""
+    words = [w for w in norm(name).replace(',', ' ').split() if w.isalpha()]
+    if not words: return False
+    heads = {stem(t) for f in ('q', 'o', 'b', 'h') for t in norm(s.get(f, '')).split()}
+    return stem(words[0]) in heads
 def ok_name(name, s):
     n = norm(name)
     if not all(t in n for t in norm(s['q']).split()): return False
@@ -52,7 +59,7 @@ def dia_offers(s):
     out = []
     for it in d.get('search_items', [])[:40]:
         pr = it.get('prices') or {}; p, ppu, mu = pr.get('price'), pr.get('price_per_unit'), (pr.get('measure_unit') or '').upper()
-        if not p or not ppu or not ok_name(it.get('display_name', ''), s): continue
+        if not p or not ppu or not ok_name(it.get('display_name', ''), s) or not ok_head(it.get('display_name', ''), s): continue
         if mu in ('KILO', 'KILOGRAMO', 'LITRO', 'KG', 'L'): g = p / ppu * 1000
         elif s.get('u'): g = p / ppu * s['u']
         else: continue
@@ -70,7 +77,7 @@ def consum_offers(s):
         name = f"{pd.get('name', '')} {name}".strip()
         full = f"{pd.get('name', '')} {pd.get('description', '')}"
         prices = pr.get('prices') or []
-        if not prices or not ok_name(full, s): continue
+        if not prices or not ok_name(full, s) or not ok_head(pd.get('name', ''), s): continue
         v = prices[-1].get('value', {}); p, pu, ut = v.get('centAmount'), v.get('centUnitAmount'), norm(pr.get('unitPriceUnitType', ''))
         if not p or not pu: continue
         if 'kg' in ut or ut.endswith(' l') or ut == 'l' or '1 l' in ut: g = p / pu * 1000

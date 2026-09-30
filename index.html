@@ -162,7 +162,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 23:05';
+const APP_VERSION = '30-sep · 23:50';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1327,10 +1327,27 @@ function viewRecipe(id) {
 }
 
 /* ---------- PRECIOS ---------- */
-const STORES = [['mercadona', 'Mercadona'], ['lidl', 'Lidl'], ['carrefour', 'Carrefour'], ['dia', 'Dia'], ['aldi', 'Aldi'], ['alcampo', 'Alcampo'], ['otro', 'Otra tienda']];
+const STORES = [['mercadona', 'Mercadona'], ['lidl', 'Lidl'], ['carrefour', 'Carrefour'], ['dia', 'Dia'], ['consum', 'Consum'], ['aldi', 'Aldi'], ['alcampo', 'Alcampo'], ['otro', 'Otra tienda']];
+const AUTO_STORES = ['mercadona', 'dia', 'consum'];
+/* precios automáticos: los descarga cada lunes un proceso de GitHub desde las webs de los súper (precios-auto.json) */
+let AUTO = (() => { try { return JSON.parse(localStorage.getItem('bascula.auto')) || null; } catch (e) { return null; } })();
+async function pullAuto() {
+  try { const r = await fetch('precios-auto.json?v=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return; const d = await r.json();
+    if (d && d.precios) { const chg = !AUTO || AUTO.fecha !== d.fecha; AUTO = d; try { localStorage.setItem('bascula.auto', JSON.stringify(d)); } catch (e) {} if (chg) render(); } } catch (e) {}
+}
+/* €/kg aproximados para lo que no está en las webs de los súper */
+const EST_KG = { 'Bulgur crudo': 3.5, 'Harina de avena': 3, 'Lentejas rojas crudas': 3.2, 'Papel de arroz': 14, 'Quinoa cruda': 7, 'Quinoa cocida': 2.6, 'Fideos de arroz (crudos)': 6, 'Salsa sriracha': 12 };
+function autoDate() { if (!AUTO || !AUTO.fecha) return ''; const [y, m, d] = AUTO.fecha.split('-'); return `${+d}/${+m}`; }
 const storeName = k => (STORES.find(s => s[0] === k) || [k, k])[1];
 const eur = x => (x || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
-function priceEntries(n) { const p = S.prices[n] || {}; return Object.entries(p).filter(([, e]) => e && e.p > 0 && e.g > 0).map(([s, e]) => ({ store: s, p: e.p, g: e.g, d: e.d, perKg: e.p / e.g * 1000 })); }
+function priceEntries(n) {
+  const p = S.prices[n] || {}, out = Object.entries(p).filter(([, e]) => e && e.p > 0 && e.g > 0).map(([s, e]) => ({ store: s, p: e.p, g: e.g, d: e.d, perKg: e.p / e.g * 1000 }));
+  const a = AUTO && AUTO.precios && AUTO.precios[n];
+  if (a) for (const [s, e] of Object.entries(a)) if (!p[s] && e && e.p > 0 && e.g > 0) out.push({ store: s, p: e.p, g: e.g, perKg: e.k || e.p / e.g * 1000, auto: 1, name: e.n });
+  return out;
+}
+function storePrice(n, k) { return priceEntries(n).find(e => e.store === k) || null; }
+function estimateCost(n, g) { const c = cheapest(n); if (c) return c.perKg * g / 1000; return EST_KG[n] ? EST_KG[n] * g / 1000 : null; }
 function cheapest(n) { const es = priceEntries(n); return es.length ? es.sort((a, b) => a.perKg - b.perKg)[0] : null; }
 function priceLine(n) { const c = cheapest(n); if (c) return `💶 Más barato: <b style="color:var(--acc)">${storeName(c.store)}</b> · ${eur(c.perKg)}/kg`; return WHERE[n] ? `🛒 ${esc(WHERE[n])} · <span style="color:var(--acc)">añadir precio</span>` : '<span style="color:var(--acc)">💶 Añadir precio</span>'; }
 function mergePrices(a, b) {
@@ -1343,8 +1360,8 @@ function editPrice(n, back) {
   priceBack = back || null; const cur = S.prices[n] || {};
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">${esc(n)}</b><button class="btn ghost" id="pcl">${back ? '‹ Volver' : 'Cerrar'}</button></div>
   <p class="sm mute" style="margin:4px 0 10px">Apunta el precio del paquete y lo que pesa. La app calcula el €/kg y elige la tienda más barata. Los precios se comparten entre los móviles si activas la copia en GitHub.</p>
-  ${STORES.map(([k, l]) => { const e = cur[k] && cur[k].p > 0 ? cur[k] : null; return `<div class="row" style="margin:8px 0"><b style="width:92px;font-size:14px">${l}</b><input id="pp_${k}" type="number" inputmode="decimal" step="0.01" placeholder="€" value="${e ? e.p : ''}" style="padding:10px"><input id="pg_${k}" type="number" inputmode="numeric" placeholder="g" value="${e ? e.g : ''}" style="padding:10px"></div>`; }).join('')}
-  <p class="sm mute">€ = precio del paquete · g = gramos del paquete (1 kg = 1000, 1 L ≈ 1000, 1 docena de huevos ≈ 700).</p>
+  ${STORES.map(([k, l]) => { const e = cur[k] && cur[k].p > 0 ? cur[k] : null, au = !cur[k] && AUTO && AUTO.precios && (AUTO.precios[n] || {})[k]; return `<div class="row" style="margin:8px 0 ${au ? 0 : 8}px"><b style="width:92px;flex:none;font-size:14px">${l}</b><input id="pp_${k}" type="number" inputmode="decimal" step="0.01" placeholder="${au ? au.p : '€'}" value="${e ? e.p : ''}" style="padding:10px"><input id="pg_${k}" type="number" inputmode="numeric" placeholder="${au ? au.g : 'g'}" value="${e ? e.g : ''}" style="padding:10px"></div>${au ? `<div class="sm mute" style="margin:2px 0 10px 100px">🤖 ${esc(au.n)} · ${eur(au.p)} · ${eur(au.k)}/kg</div>` : ''}`; }).join('')}
+  <p class="sm mute">€ = precio del paquete · g = gramos del paquete (1 kg = 1000, 1 L ≈ 1000, 1 docena de huevos ≈ 700).${AUTO ? `<br>🤖 = precio automático de la web del súper (actualizado el ${autoDate()}). Si escribes tu precio, se usa el tuyo.` : ''}</p>
   <button class="btn pri block" id="psave">Guardar precios</button>`);
   $('#pcl').onclick = () => back ? back() : closeSheet();
   $('#psave').onclick = () => {
@@ -1668,24 +1685,26 @@ function openShopping(keep) {
   const need = {}, inPantry = []; names.forEach(n => { const rest = all[n] - pantryCovers(n, all[n]); if (rest < 0.5) inPantry.push(n); else need[n] = rest; });
   const buy = Object.keys(need), chk = (S.shopChecked[wk] = S.shopChecked[wk] || {}), on = n => isOn(chk[n]);
   const view = S.settings.shopView || 'sec';
-  let best = 0, missing = 0, done = 0;
+  let best = 0, used = 0, missing = 0, done = 0, estN = 0;
   const items = buy.map(n => { const c = cheapest(n); let line = ''; if (on(n)) done++;
-    if (c) { const packs = Math.max(1, Math.ceil(need[n] / c.g)), cost = packs * c.p; if (!on(n)) best += cost; line = `${storeName(c.store)} · ${packs} × ${Math.round(c.g)} g · ${eur(cost)}`; } else if (!on(n)) missing++;
+    if (c) { const packs = Math.max(1, Math.ceil(need[n] / c.g)), cost = packs * c.p; if (!on(n)) { best += cost; used += c.perKg * need[n] / 1000; } line = `${storeName(c.store)} · ${packs} × ${Math.round(c.g)} g · ${eur(cost)}`; }
+    else if (EST_KG[n]) { const cost = EST_KG[n] * need[n] / 1000; if (!on(n)) { best += cost; used += cost; estN++; } line = `≈ ${eur(cost)} (estimado)`; }
+    else if (!on(n)) missing++;
     return { n, g: need[n], line, store: c ? c.store : '_none', sec: sectionOf(n) }; });
   let groups;
   if (view === 'store') { const order = STORES.map(s => s[0]).concat(['_none']); groups = order.map(k => [k === '_none' ? 'Sin precio todavía' : 'En ' + storeName(k), items.filter(x => x.store === k)]); }
   else if (view === 'az') groups = [['', items]];
   else groups = SECTIONS.map(([k, l]) => [l, items.filter(x => x.sec === k)]);
   groups = groups.filter(g => g[1].length).map(([l, arr]) => [l, arr.sort((a, b) => (on(a.n) - on(b.n)) || a.n.localeCompare(b.n, 'es'))]);
-  const storeTotals = STORES.map(([k, l]) => { let tot = 0, miss = 0; buy.forEach(n => { if (on(n)) return; const e = (S.prices[n] || {})[k]; if (e && e.p > 0 && e.g > 0) tot += Math.max(1, Math.ceil(need[n] / e.g)) * e.p; else miss++; }); return { k, l, tot, miss }; }).filter(x => x.tot > 0).sort((a, b) => a.tot - b.tot);
+  const storeTotals = STORES.map(([k, l]) => { let tot = 0, miss = 0; buy.forEach(n => { if (on(n)) return; const e = storePrice(n, k); if (e) tot += Math.max(1, Math.ceil(need[n] / e.g)) * e.p; else miss++; }); return { k, l, tot, miss }; }).filter(x => x.tot > 0).sort((a, b) => (a.miss - b.miss) || (a.tot - b.tot));
   const who = n => { const x = chk[n]; return x && x.by && x.by !== SY.profile && isOn(x) ? ` <span class="tag">${esc(x.by)}</span>` : ''; };
   const itemHtml = x => `<div class="item" style="${on(x.n) ? 'opacity:.45' : ''}"><input type="checkbox" data-c="${esc(x.n)}" ${on(x.n) ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--acc);flex:none"><div class="sp" data-p="${esc(x.n)}"><div class="nm" style="${on(x.n) ? 'text-decoration:line-through' : ''}">${esc(x.n)}${who(x.n)}</div><div class="sm mute">${qtyText(x.n, x.g)}${view !== 'store' && x.line ? ' · ' + x.line : x.line ? ' · ' + x.line.split(' · ').slice(1).join(' · ') : ' · <span style="color:var(--acc)">añadir precio</span>'}</div></div>${on(x.n) ? '' : `<button class="btn small" data-h="${esc(x.n)}" title="Ya lo tengo">🥫</button>`}</div>`;
   openSheet(`<div id="shlist"></div><div class="row"><b class="sp" style="font-size:19px">🛒 Lista de la compra</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="sm mute">${days[0].slice(8)}/${days[0].slice(5, 7)} – ${days[6].slice(8)}/${days[6].slice(5, 7)} · ${done}/${buy.length} en el carro${shopWithOthers && otherMenus ? ' · incluye ' + Object.keys(otherMenus).join(', ') : ''}</div>
   ${sh ? `<div class="row" style="margin-top:10px"><span class="stat" style="color:var(--acc)"><span class="dot on"></span>Menú compartido · ${Object.keys(house()).map(cap).join(' + ')}</span></div>` : syncReady() ? `<div class="row" style="margin-top:10px"><span class="stat" style="color:var(--acc)"><span class="dot on"></span>En tiempo real</span><div class="sp"></div><button class="btn small" id="sho">${shopWithOthers ? '👤 Solo mi menú' : '👥 Sumar los demás'}</button></div>` : ''}
   <button class="btn pri block" id="shn" style="margin-top:12px;padding:14px">📝 Enviar a Notas</button>
-  <div class="card hero" style="margin-top:12px"><div class="sm mute" style="font-weight:600">Comprando cada cosa donde es más barato</div><div style="font-size:32px;font-weight:800">${eur(best)}</div><div class="sm mute">${missing ? `${missing} productos sin precio · tócalos para añadirlo` : 'Todos los productos tienen precio'}</div></div>
-  ${storeTotals.length ? `<div class="h">Si lo compras todo en una tienda</div>${storeTotals.map(x => `<div class="row sm" style="margin:6px 0"><span class="sp">${x.l}</span><b>${eur(x.tot)}</b><span class="mute" style="width:92px;text-align:right">${x.miss ? 'faltan ' + x.miss : 'completo'}</span></div>`).join('')}` : ''}
+  <div class="card hero" style="margin-top:12px"><div class="sm mute" style="font-weight:600">Comprando cada cosa donde es más barato</div><div style="font-size:32px;font-weight:800">${missing || estN ? '≈ ' : ''}${eur(best)}</div><div class="sm" style="font-weight:600;margin-bottom:4px">en caja, comprando paquetes enteros · lo que se usa esta semana ≈ ${eur(used)}</div><div class="sm mute">${missing ? `${missing} productos sin precio · tócalos para añadirlo` : estN ? `${estN} con precio estimado` : 'Todos los productos tienen precio'}${AUTO ? ` · 🤖 precios de las webs del ${autoDate()}` : ''}</div></div>
+  ${storeTotals.length ? `<div class="h">Si lo compras todo en una tienda</div>${storeTotals.map(x => `<div class="row sm" style="margin:6px 0"><span class="sp">${x.l}</span><b>${eur(x.tot)}</b><span class="mute" style="width:92px;text-align:right">${x.miss ? 'sin precio ' + x.miss : 'completo'}</span></div>`).join('')}` : ''}
   <div class="seg" style="margin-top:16px" id="shv"><button data-v="sec" class="${view === 'sec' ? 'on' : ''}">Por sección</button><button data-v="store" class="${view === 'store' ? 'on' : ''}">Por tienda</button><button data-v="az" class="${view === 'az' ? 'on' : ''}">A-Z</button></div>
   ${groups.map(([l, arr]) => `${l ? `<div class="h" style="font-size:13px">${l} <span style="font-weight:600">· ${arr.length}</span></div>` : '<div style="height:8px"></div>'}${arr.map(itemHtml).join('')}`).join('')}
   ${inPantry.length ? `<div class="h">Ya en tu despensa</div><p class="sm mute" style="margin:4px 0">${inPantry.map(esc).join(', ')}</p>` : ''}
@@ -1998,6 +2017,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 23:50', short: 'Precios automáticos de Mercadona, Dia y Consum, y cuánto te sale la compra.', items: ['🤖 <b>Precios automáticos</b>: cada lunes la app consulta las webs de Mercadona, Dia y Consum y pone precio a casi todos los ingredientes. Los que apuntes tú siguen mandando.', '🛒 La lista de la compra enseña lo que pagarás <b>en caja</b> y lo que <b>se usa esta semana</b>, y cuánto costaría todo en cada súper.', '🏪 Añadido <b>Consum</b> a la lista de tiendas.'] },
   { v: '30-sep · 23:05', short: 'La guía explica mejor qué hace Guardar receta al cocinar con la báscula.', items: ['📖 En la guía, <b>👨‍🍳 Cocinar con la báscula</b> explica qué guarda Guardar receta, para qué sirve el peso cocinado y cómo apuntarte tu ración. También está en Preguntas frecuentes.'] },
   { v: '30-sep · 21:45', short: '14 recetas virales nuevas de comida y cena.', items: ['🔥 <b>14 recetas virales</b> de comida y cena: ensalada "Jennifer Aniston", dense bean salad, pizza bowl de cottage, bowl de atún picante con arroz crujiente, sándwich de pimiento, pasta al limón con burrata, bocaditos de salmón con la ensalada de pepino viral, orzo de pollo al limón, alubias cremosas, pollo hasselback, sopa anti-resfriado, garbanzos "marry me", wrap de pan de cottage y crema de tomate asado con sándwich.', '🛒 Nuevos ingredientes con dónde comprarlos: bulgur, pistachos y burrata.'] },
   { v: '30-sep · 21:30', short: 'Ajustes reorganizado en secciones, y buscador en Mis alimentos.', items: ['⚙️ <b>Ajustes</b> ahora es un menú de secciones (Objetivos, Báscula, Mis alimentos, Copia en GitHub, Buzón de mejoras…). Pulsa una para entrar y ‹ para volver.', '🔎 <b>Mis alimentos</b> tiene buscador y filtros (escaneados o creados por ti), para que no sea una lista interminable.'] },
@@ -2098,7 +2118,8 @@ const HELP = [
 <li>La <b>lista de la compra</b> suma automáticamente las cantidades de los dos.</li></ol>`},
 {id:'compra',icon:'🛒',title:'Lista de la compra',tabs:['menu'],body:`
 <p><b>🛒 Lista compra</b> suma todos los ingredientes del menú de la semana, en las cantidades de cada uno.</p>
-<ul><li>Agrupa cada producto en el súper donde es <b>más barato</b> (según los precios que hayáis apuntado) y calcula cuántos paquetes comprar y el total.</li>
+<ul><li>Agrupa cada producto en el súper donde es <b>más barato</b> y calcula cuántos paquetes comprar y el total.</li>
+<li>Arriba verás dos cifras: lo que pagarás <b>en caja</b> (paquetes enteros: una botella de aceite te dura semanas) y <b>lo que se usa esta semana</b> (solo los gramos del menú). Debajo, cuánto te costaría todo en un solo súper.</li>
 <li>Marca las casillas según lo metes en el carro.</li>
 <li><b>🥫</b> significa "ya lo tengo en casa": pasa a la despensa y deja de salir.</li>
 <li><b>👥 Sumar los demás</b> junta en una sola lista tu menú y el de tu pareja, cada uno con sus cantidades.</li>
@@ -2106,11 +2127,14 @@ const HELP = [
 <li><b>Por sección, por tienda o A-Z:</b> elige cómo ordenarla. Por sección sigue el orden de los pasillos (fruta y verdura, carne y pescado, lácteos…), y las cantidades salen en unidades cuando tiene sentido (6 huevos, 2 cebollas).</li>
 <li><b>📝 Enviar a Notas</b>: la manda a la app Notas. Allí selecciona todo y pulsa el botón de lista (☑️) para que cada producto tenga su casilla. <b>📋 Copiar lista</b> la copia para WhatsApp.</li></ul>`},
 {id:'precios',icon:'💶',title:'Precios y súper más barato',tabs:['menu'],body:`
-<p>Los supermercados no publican sus precios, así que los apuntáis vosotros y la app hace las cuentas.</p>
-<ul><li>Toca cualquier producto en la lista o en una receta, o entra en <b>Menú → 💶 Precios</b>.</li>
+<p>🤖 <b>Precios automáticos:</b> cada lunes la app consulta las webs de <b>Mercadona, Dia y Consum</b> y guarda el precio de cada ingrediente (el más barato por kilo que encaja). No tienes que hacer nada.</p>
+<ul><li>Lidl, Aldi, Carrefour y Alcampo no dejan consultar sus precios desde fuera, así que esos los podéis apuntar vosotros.</li>
+<li>Si un precio automático no te cuadra (por ejemplo, compras otra marca), escribe el tuyo: siempre manda el que apuntas tú.</li>
+<li>Los pocos ingredientes que no venden online (como el bulgur) salen con un <b>precio estimado</b> (≈).</li>
+<li>Toca cualquier producto en la lista o en una receta, o entra en <b>Menú → 💶 Precios</b>.</li>
 <li>Para cada súper escribe el <b>precio del paquete</b> y lo que <b>pesa</b> (1 kg = 1000 g, 1 L ≈ 1000 g, docena de huevos ≈ 700 g).</li>
 <li>La app calcula el €/kg y elige la tienda más barata.</li>
-<li>Con GitHub, los precios se comparten: lo que apunta uno le sirve al otro. En dos o tres compras tendréis casi todo.</li></ul>`},
+<li>Con GitHub, los precios que apuntáis se comparten: lo que apunta uno le sirve al otro.</li></ul>`},
 {id:'despensa',icon:'🥫',title:'Despensa',tabs:['menu'],body:`
 <ul><li>En <b>Menú → 🥫 Despensa</b> apuntas lo que tienes en casa. Si pones una cantidad, se descuenta; si la dejas vacía, significa "tengo de sobra".</li>
 <li><b>+ Básicos de cocina</b> añade de golpe aceite, especias, ajo, sal…</li>
@@ -2301,6 +2325,7 @@ function refreshIdeas() { const el = $('#ideas'); if (el) { el.outerHTML = ideas
 /* ---------- inicio ---------- */
 render();
 pullPrices();
+pullAuto();
 pullSharedAtStart();
 if (SY.pending && syncReady()) setTimeout(() => syncPush(true), 3000);
 if (!S.onboarded) { if (Object.keys(S.diary).length || S.body) { S.onboarded = 1; save(true); } else startTour(); }
