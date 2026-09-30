@@ -159,7 +159,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 02:20';
+const APP_VERSION = '30-sep · 20:30';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1522,6 +1522,42 @@ function openBatch(withBreakfast) {
 /* ---------- LISTA DE LA COMPRA (compartida) ---------- */
 let shopWithOthers = false, shopPoll = null, shopBusy = false;
 const isOn = x => x === 1 || !!(x && x.v);
+const SECTIONS = [['fruver', '🥬 Frutas y verduras'], ['carne', '🥩 Carne y pescado'], ['lacteos', '🥛 Lácteos y huevos'], ['pan', '🍞 Pan, cereales y pasta'], ['legum', '🫘 Legumbres y conservas'],
+  ['secos', '🥜 Frutos secos y semillas'], ['aceite', '🫒 Aceites, salsas y especias'], ['congel', '❄️ Congelados'], ['dulce', '🍫 Dulces y bebidas'], ['otros', '🛒 Otros']];
+const SEC_OF = {
+  fruver: ['Aguacate', 'Ajo', 'Berenjena', 'Boniato crudo', 'Brócoli', 'Calabacín', 'Calabaza', 'Cebolla', 'Champiñones', 'Coliflor', 'Espinacas', 'Fresas', 'Hierbas frescas', 'Jengibre fresco', 'Judías verdes', 'Kiwi', 'Lechuga', 'Mango', 'Manzana', 'Naranja', 'Patata cruda', 'Pepino', 'Pimiento rojo', 'Pimiento verde', 'Plátano', 'Rúcula', 'Tomate', 'Uvas', 'Zanahoria', 'Zumo de limón', 'Remolacha cocida', 'Dátiles'],
+  carne: ['Bacalao desalado', 'Carne picada de pavo', 'Carne picada de vacuno', 'Cerdo, lomo crudo', 'Gambas peladas', 'Jamón serrano', 'Merluza cruda', 'Pavo, pechuga cruda', 'Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Pechuga de pollo cruda', 'Salmón ahumado', 'Salmón crudo', 'Ternera magra cruda', 'Atún al natural (escurrido)'],
+  lacteos: ['Clara de huevo', 'Huevo entero', 'Leche desnatada', 'Leche entera', 'Leche semidesnatada', 'Mantequilla', 'Queso cottage', 'Queso curado', 'Queso feta', 'Queso fresco', 'Queso fresco batido 0%', 'Queso mozzarella light', 'Queso parmesano', 'Skyr o yogur griego 0%', 'Yogur griego', 'Yogur natural', 'Bebida de almendras sin azúcar', 'Tofu', 'Hummus', 'Ñoquis de patata'],
+  pan: ['Arroz blanco cocido', 'Arroz blanco crudo', 'Arroz integral cocido', 'Arroz integral crudo', 'Avena en copos', 'Copos de maíz sin azúcar', 'Cuscús crudo', 'Fideos de arroz (crudos)', 'Harina de avena', 'Harina de trigo', 'Maicena', 'Pan blanco', 'Pan integral', 'Pan pita integral', 'Papel de arroz', 'Pasta cocida', 'Pasta cruda', 'Pasta integral cocida', 'Pasta integral cruda', 'Quinoa cocida', 'Quinoa cruda', 'Tortilla de trigo integral', 'Tortitas de arroz', 'Galletas integrales', 'Levadura química', 'Maíz para palomitas'],
+  legum: ['Alubias cocidas', 'Garbanzos cocidos', 'Lentejas cocidas', 'Lentejas rojas crudas', 'Maíz dulce (lata)', 'Tomate triturado', 'Tomates secos', 'Leche de coco light', 'Caldo de pollo', 'Caldo de verduras'],
+  secos: ['Almendras', 'Cacahuetes', 'Crema de cacahuete', 'Nueces', 'Semillas de chía', 'Semillas de sésamo', 'Tahini'],
+  aceite: ['Aceite de oliva', 'Canela molida', 'Especias variadas', 'Mayonesa', 'Mostaza', 'Salsa de soja', 'Salsa sriracha', 'Vinagre balsámico', 'Vinagre de vino', 'Miel', 'Azúcar'],
+  congel: ['Frutos rojos congelados', 'Guisantes', 'Edamame'],
+  dulce: ['Cacao puro en polvo', 'Chocolate negro 70%', 'Café solo', 'Cerveza', 'Vino tinto']
+};
+const SEC_MAP = Object.fromEntries(Object.entries(SEC_OF).flatMap(([k, ns]) => ns.map(n => [n, k])));
+function sectionOf(n) {
+  if (SEC_MAP[n]) return SEC_MAP[n];
+  const s = norm(n);
+  if (/fruta|verdura|lechuga|tomate|cebolla|manzana|platano|naranja|limon|pimiento|zanahoria|patata|ensalada|seta|champi/.test(s)) return 'fruver';
+  if (/pollo|pavo|ternera|cerdo|carne|jamon|salmon|atun|merluza|bacalao|gamba|pescado|lomo|hamburg|burger|chorizo|fiambre/.test(s)) return 'carne';
+  if (/leche|yogur|queso|huevo|nata|mantequilla|skyr|kefir|requeson|cottage|batido/.test(s)) return 'lacteos';
+  if (/pan|arroz|pasta|avena|harina|cereal|galleta|tortilla|wrap|quinoa|cuscus|fideo|tortita/.test(s)) return 'pan';
+  if (/garbanzo|lenteja|alubia|judia|conserva|lata|tomate frito|caldo/.test(s)) return 'legum';
+  if (/almendra|nuez|nueces|cacahuete|anacardo|pistacho|semilla|chia/.test(s)) return 'secos';
+  if (/aceite|salsa|vinagre|especia|sal |pimienta|mostaza|ketchup|mayonesa|miel|azucar/.test(s)) return 'aceite';
+  if (/congelad/.test(s)) return 'congel';
+  if (/chocolate|cacao|cafe|te |refresco|zumo|cerveza|vino|bebida/.test(s)) return 'dulce';
+  return 'otros';
+}
+const UNIT_G = { 'Huevo entero': [55, 'huevo', 'huevos'], 'Clara de huevo': [33, 'clara', 'claras'], 'Plátano': [120, 'plátano', 'plátanos'], 'Manzana': [180, 'manzana', 'manzanas'], 'Naranja': [200, 'naranja', 'naranjas'], 'Kiwi': [75, 'kiwi', 'kiwis'],
+  'Aguacate': [150, 'aguacate', 'aguacates'], 'Mango': [300, 'mango', 'mangos'], 'Cebolla': [150, 'cebolla', 'cebollas'], 'Pimiento rojo': [180, 'pimiento', 'pimientos'], 'Pimiento verde': [120, 'pimiento', 'pimientos'], 'Calabacín': [250, 'calabacín', 'calabacines'],
+  'Berenjena': [300, 'berenjena', 'berenjenas'], 'Zanahoria': [80, 'zanahoria', 'zanahorias'], 'Pepino': [300, 'pepino', 'pepinos'], 'Boniato crudo': [300, 'boniato', 'boniatos'], 'Patata cruda': [200, 'patata', 'patatas'], 'Tomate': [120, 'tomate', 'tomates'],
+  'Ajo': [5, 'diente de ajo', 'dientes de ajo'], 'Zumo de limón': [40, 'limón', 'limones'], 'Tortilla de trigo integral': [40, 'tortilla', 'tortillas'], 'Pan pita integral': [80, 'pan de pita', 'panes de pita'], 'Lechuga': [300, 'lechuga', 'lechugas'], 'Brócoli': [400, 'brócoli', 'brócolis'], 'Coliflor': [800, 'coliflor', 'coliflores'] };
+function qtyText(n, g) {
+  const u = UNIT_G[n], w = g >= 1000 ? (Math.round(g / 100) / 10).toString().replace('.', ',') + ' kg' : Math.round(g) + ' g';
+  if (!u) return w; const k = Math.max(1, Math.ceil(g / u[0] - 0.15)); return `${k} ${k === 1 ? u[1] : u[2]} (${w})`;
+}
 function openShopping(keep) {
   const sc = keep ? $('#sheet').scrollTop : 0;
   const days = weekDays(), wk = days[0], menus = [{ menu: S.menu, goals: S.goals }];
@@ -1530,36 +1566,66 @@ function openShopping(keep) {
   if (!names.length) { openSheet(`<b style="font-size:18px">🛒 Lista de la compra</b><p class="mute">Primero añade recetas al menú de esta semana (o pulsa Autorellenar).</p><button class="btn pri block" onclick="closeSheet()">Vale</button>`); return; }
   const need = {}, inPantry = []; names.forEach(n => { const rest = all[n] - pantryCovers(n, all[n]); if (rest < 0.5) inPantry.push(n); else need[n] = rest; });
   const buy = Object.keys(need), chk = (S.shopChecked[wk] = S.shopChecked[wk] || {}), on = n => isOn(chk[n]);
-  const groups = {}; let best = 0, missing = 0, done = 0;
-  buy.forEach(n => { const c = cheapest(n), key = c ? c.store : '_none'; let line = ''; if (on(n)) done++;
-    if (c) { const packs = Math.max(1, Math.ceil(need[n] / c.g)), cost = packs * c.p; if (!on(n)) best += cost; line = `${packs} × ${Math.round(c.g)} g · ${eur(cost)}`; } else if (!on(n)) missing++;
-    (groups[key] = groups[key] || []).push({ n, g: need[n], line }); });
+  const view = S.settings.shopView || 'sec';
+  let best = 0, missing = 0, done = 0;
+  const items = buy.map(n => { const c = cheapest(n); let line = ''; if (on(n)) done++;
+    if (c) { const packs = Math.max(1, Math.ceil(need[n] / c.g)), cost = packs * c.p; if (!on(n)) best += cost; line = `${storeName(c.store)} · ${packs} × ${Math.round(c.g)} g · ${eur(cost)}`; } else if (!on(n)) missing++;
+    return { n, g: need[n], line, store: c ? c.store : '_none', sec: sectionOf(n) }; });
+  let groups;
+  if (view === 'store') { const order = STORES.map(s => s[0]).concat(['_none']); groups = order.map(k => [k === '_none' ? 'Sin precio todavía' : 'En ' + storeName(k), items.filter(x => x.store === k)]); }
+  else if (view === 'az') groups = [['', items]];
+  else groups = SECTIONS.map(([k, l]) => [l, items.filter(x => x.sec === k)]);
+  groups = groups.filter(g => g[1].length).map(([l, arr]) => [l, arr.sort((a, b) => (on(a.n) - on(b.n)) || a.n.localeCompare(b.n, 'es'))]);
   const storeTotals = STORES.map(([k, l]) => { let tot = 0, miss = 0; buy.forEach(n => { if (on(n)) return; const e = (S.prices[n] || {})[k]; if (e && e.p > 0 && e.g > 0) tot += Math.max(1, Math.ceil(need[n] / e.g)) * e.p; else miss++; }); return { k, l, tot, miss }; }).filter(x => x.tot > 0).sort((a, b) => a.tot - b.tot);
-  const order = STORES.map(s => s[0]).filter(k => groups[k]).concat(groups._none ? ['_none'] : []);
   const who = n => { const x = chk[n]; return x && x.by && x.by !== SY.profile && isOn(x) ? ` <span class="tag">${esc(x.by)}</span>` : ''; };
+  const itemHtml = x => `<div class="item" style="${on(x.n) ? 'opacity:.45' : ''}"><input type="checkbox" data-c="${esc(x.n)}" ${on(x.n) ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--acc);flex:none"><div class="sp" data-p="${esc(x.n)}"><div class="nm" style="${on(x.n) ? 'text-decoration:line-through' : ''}">${esc(x.n)}${who(x.n)}</div><div class="sm mute">${qtyText(x.n, x.g)}${view !== 'store' && x.line ? ' · ' + x.line : x.line ? ' · ' + x.line.split(' · ').slice(1).join(' · ') : ' · <span style="color:var(--acc)">añadir precio</span>'}</div></div>${on(x.n) ? '' : `<button class="btn small" data-h="${esc(x.n)}" title="Ya lo tengo">🥫</button>`}</div>`;
   openSheet(`<div id="shlist"></div><div class="row"><b class="sp" style="font-size:19px">🛒 Lista de la compra</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="sm mute">${days[0].slice(8)}/${days[0].slice(5, 7)} – ${days[6].slice(8)}/${days[6].slice(5, 7)} · ${done}/${buy.length} en el carro${shopWithOthers && otherMenus ? ' · incluye ' + Object.keys(otherMenus).join(', ') : ''}</div>
   ${syncReady() ? `<div class="row" style="margin-top:10px"><span class="stat" style="color:var(--acc)"><span class="dot on"></span>En tiempo real</span><div class="sp"></div><button class="btn small" id="sho">${shopWithOthers ? '👤 Solo mi menú' : '👥 Sumar los demás'}</button></div>` : ''}
+  <button class="btn pri block" id="shn" style="margin-top:12px;padding:14px">📝 Enviar a Notas</button>
   <div class="card hero" style="margin-top:12px"><div class="sm mute" style="font-weight:600">Comprando cada cosa donde es más barato</div><div style="font-size:32px;font-weight:800">${eur(best)}</div><div class="sm mute">${missing ? `${missing} productos sin precio · tócalos para añadirlo` : 'Todos los productos tienen precio'}</div></div>
   ${storeTotals.length ? `<div class="h">Si lo compras todo en una tienda</div>${storeTotals.map(x => `<div class="row sm" style="margin:6px 0"><span class="sp">${x.l}</span><b>${eur(x.tot)}</b><span class="mute" style="width:92px;text-align:right">${x.miss ? 'faltan ' + x.miss : 'completo'}</span></div>`).join('')}` : ''}
-  ${order.map(k => `<div class="h">${k === '_none' ? 'Sin precio todavía' : 'En ' + storeName(k)}</div>${groups[k].map(x => `<div class="item" style="${on(x.n) ? 'opacity:.45' : ''}"><input type="checkbox" data-c="${esc(x.n)}" ${on(x.n) ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--acc);flex:none"><div class="sp" data-p="${esc(x.n)}"><div class="nm" style="${on(x.n) ? 'text-decoration:line-through' : ''}">${esc(x.n)}${who(x.n)}</div><div class="sm mute">${Math.round(x.g)} g${x.line ? ' · ' + x.line : ' · <span style="color:var(--acc)">añadir precio</span>'}</div></div>${on(x.n) ? '' : `<button class="btn small" data-h="${esc(x.n)}" title="Ya lo tengo">🥫</button>`}</div>`).join('')}`).join('')}
+  <div class="seg" style="margin-top:16px" id="shv"><button data-v="sec" class="${view === 'sec' ? 'on' : ''}">Por sección</button><button data-v="store" class="${view === 'store' ? 'on' : ''}">Por tienda</button><button data-v="az" class="${view === 'az' ? 'on' : ''}">A-Z</button></div>
+  ${groups.map(([l, arr]) => `${l ? `<div class="h" style="font-size:13px">${l} <span style="font-weight:600">· ${arr.length}</span></div>` : '<div style="height:8px"></div>'}${arr.map(itemHtml).join('')}`).join('')}
   ${inPantry.length ? `<div class="h">Ya en tu despensa</div><p class="sm mute" style="margin:4px 0">${inPantry.map(esc).join(', ')}</p>` : ''}
   <p class="sm mute">🥫 = ya lo tengo en casa (pasa a la despensa y no vuelve a salir).</p>
   <div class="row" style="margin-top:10px"><button class="btn sp" id="shc">📋 Copiar lista</button><button class="btn sp" id="shr">↺ Desmarcar</button></div>`);
   $('#sheet').scrollTop = sc;
   const stamp = () => ({ d: new Date().toISOString(), by: SY.profile || '' });
   $('#sheet').onclick = e => {
+    const v = e.target.closest('#shv [data-v]'); if (v) { S.settings.shopView = v.dataset.v; save(true); openShopping(true); return; }
     const c = e.target.closest('[data-c]'); if (c) { const n = c.dataset.c; chk[n] = { v: on(n) ? 0 : 1, ...stamp() }; save(true); openShopping(true); syncShop(wk); return; }
     const h = e.target.closest('[data-h]'); if (h) { S.pantry[h.dataset.h] = 0; save(); toast('Añadido a la despensa'); openShopping(true); return; }
     const p = e.target.closest('[data-p]'); if (p) editPrice(p.dataset.p, () => openShopping());
   };
   if ($('#sho')) $('#sho').onclick = async () => { if (!shopWithOthers) { try { toast('Cargando menús…'); await loadOthers(); shopWithOthers = true; } catch (e) { toast('No se pudieron cargar: ' + e.message); } } else shopWithOthers = false; openShopping(); };
   $('#shr').onclick = () => { const s = stamp(); Object.keys(chk).forEach(n => chk[n] = { v: 0, ...s }); save(true); openShopping(true); syncShop(wk); };
-  $('#shc').onclick = async () => { const txt = 'Lista de la compra\n' + order.map(k => `\n${k === '_none' ? 'SIN PRECIO' : storeName(k).toUpperCase()}\n` + groups[k].filter(x => !on(x.n)).map(x => `☐ ${x.n} — ${Math.round(x.g)} g${x.line ? ' (' + x.line + ')' : ''}`).join('\n')).join('\n'); try { await navigator.clipboard.writeText(txt); toast('Lista copiada'); } catch (e) { toast('No se pudo copiar'); } };
+  const listText = (withStore) => {
+    const pend = groups.map(([l, arr]) => [l, arr.filter(x => !on(x.n))]).filter(g => g[1].length);
+    return `Lista de la compra (${days[0].slice(8)}/${days[0].slice(5, 7)} – ${days[6].slice(8)}/${days[6].slice(5, 7)})\n` + pend.map(([l, arr]) => (l ? `\n${l.replace(/^\S+\s/, '').toUpperCase()}\n` : '\n') + arr.map(x => `${x.n} — ${qtyText(x.n, x.g)}${withStore && x.line && view !== 'store' ? ' · ' + x.line.split(' · ')[0] : ''}`).join('\n')).join('\n');
+  };
+  $('#shc').onclick = async () => { try { await navigator.clipboard.writeText(listText(true)); toast('Lista copiada'); } catch (e) { toast('No se pudo copiar'); } };
+  $('#shn').onclick = () => sendToNotes(listText(true));
   if (syncReady() && !shopPoll) {
     const tick = async () => { if (!$('#shlist') || !$('#sheet').classList.contains('on')) { clearInterval(shopPoll); shopPoll = null; return; } if (await syncShop(wk)) openShopping(true); };
     shopPoll = setInterval(tick, 5000); tick();
   }
+}
+async function sendToNotes(text) {
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Lista de la compra', text }); notesHelp(true); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(text); } catch (e) {}
+  notesHelp(false);
+}
+function notesHelp(shared) {
+  openSheet(`<div style="text-align:center;font-size:44px">📝</div><b style="font-size:18px;display:block;text-align:center;margin:6px 0 10px">${shared ? 'Lista enviada' : 'Lista copiada'}</b>
+  <ol style="padding-left:18px;line-height:1.6;margin:0 0 12px">${shared ? '' : '<li>Abre la app <b>Notas</b> y crea una nota nueva.</li><li>Mantén pulsado y elige <b>Pegar</b>.</li>'}
+  <li>Para convertirla en casillas: <b>selecciona todo el texto</b> (mantén pulsado → Seleccionar todo).</li>
+  <li>Pulsa el botón de <b>lista con casillas</b> (☑️) de la barra de arriba del teclado.</li></ol>
+  <p class="sm mute">Cada producto queda con su casilla para ir marcándolo en el súper. Las secciones también saldrán con casilla: puedes dejarlas o borrarlas.</p>
+  <button class="btn pri block" onclick="openShopping()">Volver a la lista</button>`);
 }
 async function syncShop(wk) {
   if (!syncReady() || shopBusy) return false; shopBusy = true;
@@ -1791,6 +1857,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 20:30', short: 'Lista de la compra ordenada por secciones del súper y botón para enviarla a Notas.', items: ['🛒 La lista de la compra se ordena <b>por sección</b> (fruta y verdura, carne y pescado, lácteos…), <b>por tienda</b> o <b>A-Z</b>.', '🥚 Cantidades en unidades cuando tiene sentido: "6 huevos (330 g)", "2 cebollas".', '📝 Botón <b>Enviar a Notas</b>: en Notas, selecciona todo y pulsa ☑️ para tener casillas.'] },
   { v: '30-sep · 02:20', short: 'Más seguridad en la copia de GitHub y arreglos tras una revisión completa de la app.', items: ['🛡️ Al reinstalar, la app <b>ya no puede sobrescribir tu copia</b> de GitHub por error: te pregunta si quieres restaurarla.', '🛡️ "Borrar todos los datos" borra solo el móvil; <b>la copia en GitHub se conserva</b>.', '⚖️ Si pulsas guardar mientras el peso se mueve, la app <b>espera a que se estabilice</b> en vez de dar error.', '🍲 Al comer una receta tuya, botón de <b>"1 ración · X g"</b>.', '📅 Si dejas la app abierta y pasa la hora de fin de día, cambia sola al día nuevo.'] },
   { v: '30-sep · 02:00', short: '37 recetas nuevas (muchas virales) y arreglados los botones de los platos del menú.', items: ['🍽️ Arreglado: en el <b>menú semanal</b> ya funcionan cambiar raciones, Ver receta, Cambiar, Añadir al diario y Quitar del menú.', '📖 <b>37 recetas nuevas</b>, muchas virales: huevos turcos, pancakes de cottage, pasta estilo Gigi Hadid, ensalada de arroz crujiente, pollo hot honey, pizza de tortilla, brownie de alubias, cookie dough proteico, uvas con yogur heladas…'] },
   { v: '30-sep · 01:45', short: 'Arreglado el error 409 al guardar en GitHub: ahora se resuelve solo.', items: ['☁️ Arreglado el <b>error 409</b> al guardar varias cosas seguidas (por ejemplo, en la despensa): la app vuelve a leer y reintenta sola.'] },
@@ -1873,7 +1940,8 @@ const HELP = [
 <li><b>🥫</b> significa "ya lo tengo en casa": pasa a la despensa y deja de salir.</li>
 <li><b>👥 Sumar los demás</b> junta en una sola lista tu menú y el de tu pareja, cada uno con sus cantidades.</li>
 <li>Con GitHub activado es <b>compartida en tiempo real</b>: lo que marca uno le aparece al otro en unos segundos, con su nombre. Ideal para dividiros el súper.</li>
-<li><b>📋 Copiar lista</b> la pasa a WhatsApp o a Notas.</li></ul>`},
+<li><b>Por sección, por tienda o A-Z:</b> elige cómo ordenarla. Por sección sigue el orden de los pasillos (fruta y verdura, carne y pescado, lácteos…), y las cantidades salen en unidades cuando tiene sentido (6 huevos, 2 cebollas).</li>
+<li><b>📝 Enviar a Notas</b>: la manda a la app Notas. Allí selecciona todo y pulsa el botón de lista (☑️) para que cada producto tenga su casilla. <b>📋 Copiar lista</b> la copia para WhatsApp.</li></ul>`},
 {id:'precios',icon:'💶',title:'Precios y súper más barato',tabs:['menu'],body:`
 <p>Los supermercados no publican sus precios, así que los apuntáis vosotros y la app hace las cuentas.</p>
 <ul><li>Toca cualquier producto en la lista o en una receta, o entra en <b>Menú → 💶 Precios</b>.</li>
