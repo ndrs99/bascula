@@ -1,0 +1,21 @@
+name: Precios de supermercados
+on:
+  schedule:
+    - cron: '17 5 * * 1'   # cada lunes por la mañana
+  workflow_dispatch:
+  push:
+    paths: ['tools/precios.py', 'tools/mapa_precios.py', '.github/workflows/precios.yml']
+permissions:
+  contents: write
+concurrency: precios
+jobs:
+  precios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/precios.py
+      - run: |
+          git config user.name "precios-bot"; git config user.email "precios-bot@users.noreply.github.com"
+          git add precios-auto.json
+          git diff --cached --quiet || (git commit -m "Precios de supermercados actualizados" && git pull --rebase && git push)
