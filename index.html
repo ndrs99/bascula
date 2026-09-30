@@ -140,6 +140,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 .helpb{font-size:14px;line-height:1.55;padding:0 0 12px 48px}
 .helpb ul,.helpb ol{padding-left:18px;margin:6px 0}.helpb li{margin:5px 0}.helpb p{margin:6px 0}
 @media (max-width:370px){header{gap:6px;padding-left:12px;padding-right:12px}header h1{font-size:24px}header .sub{font-size:12px}.pill{padding:8px 10px;font-size:13px}header .btn.round{width:36px;height:36px}.qstep{width:42px;height:42px}.qquick button{font-size:12px}main{padding-left:12px;padding-right:12px}}
+.planrow{display:flex;gap:10px;align-items:center;margin-top:10px;padding:10px 12px;border-radius:16px;background:var(--soft);border:1.5px dashed var(--line)}
 .stat{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:var(--soft);font-size:12.5px;font-weight:700;color:var(--mute)}
 </style>
 </head>
@@ -159,7 +160,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 20:30';
+const APP_VERSION = '30-sep · 21:15';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -768,8 +769,11 @@ function vHoy(v) {
 }
 function mealCard(k, l, es) {
   const kc = es.reduce((a, e) => a + e.kcal, 0), prev = (S.diary[addDays(day, -1)] || []).some(e => e.meal === k), [ic, bg] = MEAL_UI[k], tp = S.templates.filter(t => t.meal === k);
+  const plan = (activeMenu()[day] || {})[k], planR = plan && eatsMe(plan) && recipeByRef(plan), planKey = plan && (plan.src === 'lib' ? 'lib_' : '') + plan.id, planDone = planR && es.some(e => e.foodId === planKey);
+  const planHtml = planR && !planDone ? (() => { const p = perRation(plan, k); return `<div class="planrow"><span style="font-size:20px">${planR.emoji}</span><div class="sp" style="min-width:0"><div class="sm mute" style="font-weight:700">📅 En el menú${sharedOn() ? ' compartido' : ''}</div><div class="nm" style="font-size:14px;line-height:1.25">${esc(planR.name)}</div><div class="sm mute">${Math.round(p.g)} g · ${r0(p.kcal)} kcal</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn small pri" onclick="eatPlanned('${k}')">✓ Comido</button><button class="btn small" onclick="eatPlanned('${k}',1)">⚖️ Pesar</button></div></div>`; })() : '';
   return `<div class="card"><div class="row"><div class="mealic" style="background:${bg}">${ic}</div><div class="sp"><b style="font-size:16px">${l}</b><div class="sm mute">${es.length ? es.length + (es.length === 1 ? ' alimento' : ' alimentos') : 'Sin registrar'}</div></div><span class="kc" style="font-size:17px">${r0(kc)}</span><span class="mute sm">kcal</span></div>
   ${es.length ? '<div style="margin-top:6px">' + es.map(e => `<div class="item" onclick="editEntry('${e.id}')"><div class="sp"><div class="nm">${esc(e.name)}</div><div class="sm mute">${fmtW(e.grams)} g · <span style="color:var(--p)">P ${r0(e.p)}</span> · <span style="color:var(--c)">C ${r0(e.c)}</span> · <span style="color:var(--f)">G ${r0(e.f)}</span></div></div><span class="kc">${r0(e.kcal)}</span></div>`).join('') + '</div>' : ''}
+  ${planHtml}
   ${tp.length ? `<div class="row" style="flex-wrap:wrap;gap:6px;margin-top:10px">${tp.map(t => `<button class="chip" onclick="useTpl('${t.id}')">⚡ ${esc(t.name)} · ${r0(tplKcal(t))}</button>`).join('')}</div>` : ''}
   <div class="row" style="gap:8px"><button class="addbtn" onclick="addTo('${k}')">+ Añadir</button>${!es.length && prev ? `<button class="addbtn" style="border-style:solid;color:var(--mute)" onclick="copyMeal('${k}')">↻ Copiar de ayer</button>` : ''}${es.length ? `<button class="addbtn" style="border-style:solid;color:var(--mute);flex:none;width:auto;padding:10px 14px" onclick="saveTpl('${k}')" title="Guardar como habitual">⭐</button>` : ''}</div></div>`;
 }
@@ -1139,7 +1143,8 @@ const ingFood = n => BASE_FOODS.find(f => f.name === n);
 const MEAL_SHARE = { desayuno: .25, comida: .35, merienda: .10, cena: .30 };
 const CAT_SLOT = { desayuno: 'desayuno', principal: 'comida', dulce: 'merienda' };
 const SLOT_NAME = { desayuno: 'el desayuno', comida: 'la comida', merienda: 'la merienda', cena: 'la cena' };
-function fitFactor(kcal, slot, goals) { const tgt = (goals || S.goals).kcal * (MEAL_SHARE[slot] || .3); return kcal > 0 ? Math.min(2.5, Math.max(0.4, tgt / kcal)) : 1; }
+const FIT_MIN = 0.5, FIT_MAX = 1.6;
+function fitFactor(kcal, slot, goals) { const tgt = (goals || S.goals).kcal * (MEAL_SHARE[slot] || .3); return kcal > 0 ? Math.min(FIT_MAX, Math.max(FIT_MIN, tgt / kcal)) : 1; }
 let libFit = true;
 function libTotals(r, serv) { const k = (serv || r.serv) / r.serv; return r.ing.reduce((a, [n, g]) => { const x = calc(ingFood(n), g * k); return { g: a.g + g * k, kcal: a.kcal + x.kcal, p: a.p + x.p, c: a.c + x.c, f: a.f + x.f }; }, { g: 0, kcal: 0, p: 0, c: 0, f: 0 }); }
 function perServ(r) { const t = libTotals(r); return { kcal: t.kcal / r.serv, p: t.p / r.serv, c: t.c / r.serv, f: t.f / r.serv }; }
@@ -1172,7 +1177,7 @@ function recCard(r) {
 }
 function openLib(id, serv, ro, tk) {
   const r = RECIPES.find(x => x.id === id); serv = serv || r.serv;
-  const base = perServ(r), slot = CAT_SLOT[r.cat], fkMe = tk ? Math.min(2.5, Math.max(0.4, tk / base.kcal)) : fitFactor(base.kcal, slot), fk = libFit ? fkMe : 1;
+  const base = perServ(r), slot = CAT_SLOT[r.cat], fkMe = tk ? Math.min(FIT_MAX, Math.max(FIT_MIN, tk / base.kcal)) : fitFactor(base.kcal, slot), fk = libFit ? fkMe : 1;
   const k = serv / r.serv * fk, t = libTotals(r, serv * fk), ps = { kcal: t.kcal / serv, p: t.p / serv, c: t.c / serv, f: t.f / serv };
   openSheet(`<div class="row" style="align-items:flex-start"><div class="mealic" style="width:64px;height:64px;font-size:34px;border-radius:19px;background:${CAT_BG[r.cat]}">${r.emoji}</div>
   <div class="sp"><div style="font-weight:800;font-size:20px;line-height:1.2;letter-spacing:-.02em">${esc(r.name)}</div><div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px"><span class="tag">⏱ ${r.time} min</span>${r.tags.map(tg => `<span class="tag">${esc(tg)}</span>`).join('')}</div></div>
@@ -1306,20 +1311,23 @@ function recipeByRef(ref) {
 function refTotals(ref) { const r = recipeByRef(ref); if (!r) return null; const t = r.ing.reduce((a, i) => { const x = calc(i.per, i.grams); return { g: a.g + i.grams, kcal: a.kcal + x.kcal, p: a.p + x.p, c: a.c + x.c, f: a.f + x.f }; }, { g: 0, kcal: 0, p: 0, c: 0, f: 0 }); t.serv = r.serv; return t; }
 function perRation(ref, slot, goals) { const t = refTotals(ref); if (!t) return null; const b = t.kcal / t.serv, fk = (slot && ref.fit !== false) ? fitFactor(b, slot, goals) : 1; return { kcal: b * fk, p: t.p / t.serv * fk, c: t.c / t.serv * fk, f: t.f / t.serv * fk, g: t.g / t.serv * fk, fk }; }
 function vMenu(v) {
-  const days = weekDays(), g = S.goals, today = todayKey();
+  const days = weekDays(), g = S.goals, today = todayKey(), M = activeMenu(), sh = sharedOn(), H = house();
   const f = k => parseKey(k).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-  v.innerHTML = `${tipCard('menu')}<div class="row" style="margin-top:2px"><button class="btn round" onclick="menuWeek--;render()">‹</button><div class="sp" style="text-align:center"><div style="font-weight:750">${menuWeek === 0 ? 'Esta semana' : menuWeek === 1 ? 'Semana que viene' : menuWeek === -1 ? 'Semana pasada' : 'Semana'}</div><div class="sm mute">${f(days[0])} – ${f(days[6])}</div></div><button class="btn round" onclick="menuWeek++;render()">›</button></div>
+  if (sh) startSharedPoll();
+  v.innerHTML = `${tipCard('menu')}
+  ${syncReady() ? `<div class="card row" style="padding:12px 14px;${sh ? 'border:1.5px solid var(--acc)' : ''}"><span style="font-size:22px">👥</span><div class="sp"><b>Menú compartido</b><div class="sm mute">${sh ? 'Activado · ' + Object.keys(H).map(cap).join(' y ') : shmExists ? 'Hay un menú compartido de la casa' : 'Un solo menú para los dos, con cantidades para cada uno'}</div></div><button class="btn small ${sh ? '' : 'pri'}" onclick="toggleShared()">${sh ? 'Desactivar' : 'Activar'}</button></div>` : ''}
+  <div class="row" style="margin-top:2px"><button class="btn round" onclick="menuWeek--;render()">‹</button><div class="sp" style="text-align:center"><div style="font-weight:750">${menuWeek === 0 ? 'Esta semana' : menuWeek === 1 ? 'Semana que viene' : menuWeek === -1 ? 'Semana pasada' : 'Semana'}</div><div class="sm mute">${f(days[0])} – ${f(days[6])}</div></div><button class="btn round" onclick="menuWeek++;render()">›</button></div>
   <div class="grid2" style="margin-top:14px"><button class="btn" onclick="openAutofill()">✨ Autorellenar</button><button class="btn pri" onclick="openShopping()">🛒 Lista compra</button></div>
   <div class="grid3" style="margin-top:8px"><button class="btn small" onclick="openPantry()">🥫 Despensa</button><button class="btn small" onclick="openBatch()">👩‍🍳 Batch</button><button class="btn small" onclick="openPrices()">💶 Precios</button></div>
   ${days.map((d, i) => {
-    const m = S.menu[d] || {}, kc = SLOTS.reduce((a, [s]) => a + ((m[s] && perRation(m[s], s)) ? perRation(m[s], s).kcal : 0), 0);
+    const m = M[d] || {}, kc = SLOTS.reduce((a, [s]) => a + ((m[s] && eatsMe(m[s]) && perRation(m[s], s)) ? perRation(m[s], s).kcal : 0), 0);
     return `<div class="card" style="${d === today ? 'border:2px solid var(--acc)' : ''}"><div class="row"><b class="sp" style="font-size:16px">${DAYN[i]} <span class="mute" style="font-weight:600">${parseKey(d).getDate()}</span></b>${kc ? `<span class="stat" style="${kc > g.kcal * 1.1 ? 'color:var(--warn)' : ''}">${r0(kc)} / ${g.kcal} kcal</span>` : ''}</div>
     ${SLOTS.map(([s, l, ic]) => { const ref = m[s], r = recipeByRef(ref), pr = r && perRation(ref, s);
-      return r ? `<div class="item" onclick="slotSheet('${d}','${s}')"><div class="mealic" style="width:36px;height:36px;font-size:18px;border-radius:11px;background:var(--soft)">${r.emoji}</div><div class="sp"><div class="sm mute" style="font-weight:600">${l}</div><div class="nm" style="font-size:14px;line-height:1.25">${esc(r.name)}</div></div><div style="text-align:right"><span class="kc">${r0(pr.kcal)}</span><div class="sm mute">${ref.serv} rac.</div></div></div>`
+      return r ? `<div class="item" onclick="slotSheet('${d}','${s}')"><div class="mealic" style="width:36px;height:36px;font-size:18px;border-radius:11px;background:var(--soft)">${r.emoji}</div><div class="sp"><div class="sm mute" style="font-weight:600">${l}</div><div class="nm" style="font-size:14px;line-height:1.25">${esc(r.name)}</div></div><div style="text-align:right"><span class="kc">${eatsMe(ref) ? r0(pr.kcal) : '—'}</span><div class="sm mute">${sh ? '👥 ' + slotEaters(ref).map(e => cap(e.name)[0]).join('·') : ref.serv + ' rac.'}</div></div></div>`
       : `<div class="item" onclick="pickForSlot('${d}','${s}')" style="color:var(--mute)"><div class="mealic" style="width:36px;height:36px;font-size:18px;border-radius:11px;border:1.5px dashed var(--line)">${ic}</div><div class="sp sm" style="font-weight:600">${l}</div><span style="color:var(--acc);font-weight:700;font-size:14px">+ Añadir</span></div>`; }).join('')}</div>`;
   }).join('')}`;
 }
-function setSlot(d, s, ref) { S.menu[d] = S.menu[d] || {}; if (ref) S.menu[d][s] = ref; else { delete S.menu[d][s]; if (!Object.keys(S.menu[d]).length) delete S.menu[d]; } save(); }
+function setSlot(d, s, ref) { if (sharedOn()) return setSharedSlot(d, s, ref); S.menu[d] = S.menu[d] || {}; if (ref) S.menu[d][s] = ref; else { delete S.menu[d][s]; if (!Object.keys(S.menu[d]).length) delete S.menu[d]; } save(); }
 function pickForSlot(d, s) { openRecipePicker(ref => { setSlot(d, s, { ...ref, serv: ref.serv || 1, fit: true }); closeSheet(); render(); toast('Añadido al menú'); }, s); }
 function openRecipePicker(onPick, slot) {
   let cat = slot === 'desayuno' ? 'desayuno' : slot === 'merienda' ? 'dulce' : slot ? 'principal' : 'todas';
@@ -1339,6 +1347,7 @@ function openRecipePicker(onPick, slot) {
   $('#mpq').oninput = draw; draw();
 }
 function slotSheet(d, s) {
+  if (sharedOn()) return slotSheetShared(d, s);
   const ref = S.menu[d][s], r = recipeByRef(ref), pr = perRation(ref, s), sl = SLOTS.find(x => x[0] === s);
   openSheet(`<div class="row"><div class="mealic" style="width:52px;height:52px;font-size:28px;background:var(--soft)">${r.emoji}</div><div class="sp"><div class="sm mute" style="font-weight:600">${sl[1]} · ${DAYN[(parseKey(d).getDay() + 6) % 7]} ${parseKey(d).getDate()}</div><b style="font-size:17px">${esc(r.name)}</b></div><button class="btn ghost" onclick="closeSheet()">✕</button></div>
   <div class="grid4">${nut('kcal/rac.', r0(pr.kcal), 'var(--acc)')}${nut('Proteína', r0(pr.p), 'var(--p)')}${nut('Carbos', r0(pr.c), 'var(--c)')}${nut('Grasa', r0(pr.f), 'var(--f)')}</div>
@@ -1355,15 +1364,40 @@ function slotSheet(d, s) {
   $('#sdel').onclick = () => { setSlot(d, s, null); closeSheet(); render(); };
   $('#seat').onclick = () => { const t = refTotals(ref); openQty({ id: (ref.src === 'lib' ? 'lib_' : '') + ref.id, name: r.name, kcal: t.kcal / t.g * 100, p: t.p / t.g * 100, c: t.c / t.g * 100, f: t.f / t.g * 100 }, { meal: s, date: d, grams: pr.g }); };
 }
+function slotSheetShared(d, s) {
+  const ref = SHM.days[d] && SHM.days[d][s]; if (!ref) return closeSheet();
+  const r = recipeByRef(ref), sl = SLOTS.find(x => x[0] === s), H = house(), names = Object.keys(H), who = ref.who && ref.who.length ? ref.who : names, mine = eatsMe(ref), pr = perRation(ref, s);
+  openSheet(`<div class="row"><div class="mealic" style="width:52px;height:52px;font-size:28px;background:var(--soft)">${r.emoji}</div><div class="sp"><div class="sm mute" style="font-weight:600">${sl[1]} · ${DAYN[(parseKey(d).getDay() + 6) % 7]} ${parseKey(d).getDate()} · 👥 compartido</div><b style="font-size:17px">${esc(r.name)}</b></div><button class="btn ghost" onclick="closeSheet()">✕</button></div>
+  <div class="h">¿Quién come?</div><div class="row" style="gap:8px;flex-wrap:wrap">${names.map(n => `<button class="chip ${who.includes(n) ? 'on' : ''}" data-w="${esc(n)}">${who.includes(n) ? '✓ ' : ''}${esc(cap(n))}</button>`).join('')}</div>
+  <div class="card" style="background:var(--soft);box-shadow:none;margin-top:12px">${slotEaters(ref).map(e => { const p = perRation(ref, s, e.goals); return `<div class="row" style="margin:5px 0"><b class="sp">${esc(cap(e.name))}</b><span class="sm mute">${r0(p.p)} g prot ·</span><span class="kc">${r0(p.kcal)} kcal</span></div>`; }).join('')}</div>
+  <button class="btn pri block" style="margin-top:10px;padding:14px" id="scook">👩‍🍳 Cocinar para ${who.length === 1 ? esc(cap(who[0])) : 'los ' + who.length}: cantidades</button>
+  <div class="grid2" style="margin-top:8px"><button class="btn" id="sview">📖 Ver receta</button><button class="btn" id="schg">🔄 Cambiar</button></div>
+  ${mine ? '<button class="btn block" style="margin-top:8px" id="seat">+ Añadir mi ración al diario</button>' : ''}
+  <button class="btn bad block" style="margin-top:4px" id="sdel">Quitar del menú</button>`);
+  $('#sheet').onclick = e => { const w = e.target.closest('[data-w]'); if (!w) return; let nw = who.includes(w.dataset.w) ? who.filter(x => x !== w.dataset.w) : who.concat(w.dataset.w); if (!nw.length) return toast('Tiene que comer alguien'); setSharedSlot(d, s, { ...ref, who: nw.length === names.length ? undefined : nw }); render(); slotSheetShared(d, s); };
+  $('#scook').onclick = () => openSharedCook(d, s);
+  $('#sview').onclick = () => ref.src === 'lib' ? openLib(ref.id, who.length, true) : viewRecipe(ref.id);
+  $('#schg').onclick = () => pickForSlot(d, s);
+  $('#sdel').onclick = () => { setSlot(d, s, null); closeSheet(); render(); };
+  if ($('#seat')) $('#seat').onclick = () => openQty(plannedFood(ref), { meal: s, date: d, grams: pr.g });
+}
+function plannedFood(ref) { if (ref.src !== 'lib' && S.foods[ref.id]) return S.foods[ref.id]; const r = recipeByRef(ref), t = refTotals(ref); return { id: (ref.src === 'lib' ? 'lib_' : '') + ref.id, name: r.name, kcal: t.kcal / t.g * 100, p: t.p / t.g * 100, c: t.c / t.g * 100, f: t.f / t.g * 100 }; }
+function eatPlanned(k, weigh) {
+  const ref = (activeMenu()[day] || {})[k]; if (!ref) return;
+  const food = plannedFood(ref), g = perRation(ref, k).g;
+  if (weigh) return openQty(food, { meal: k, date: day, grams: scale.connected ? undefined : Math.round(g) });
+  const x = calc(food, g); (S.diary[day] = S.diary[day] || []).push({ id: uid(), foodId: food.id, name: food.name, grams: Math.round(g), meal: k, ...x, per: { kcal: food.kcal, p: food.p, c: food.c, f: food.f } });
+  save(); render(); toast(`Apuntado: ${Math.round(g)} g · ${r0(x.kcal)} kcal`);
+}
 function openAutofill() {
   openSheet(`<b style="font-size:18px">✨ Autorellenar semana</b><p class="sm mute">Elige recetas variadas del recetario sin repetir: desayunos para el desayuno, platos principales para comida y cena y algo dulce para la merienda.</p>
   <label class="chk" style="margin:10px 0"><input type="checkbox" id="afm" checked> Incluir merienda</label>
   <button class="btn pri block" id="af1">Rellenar solo los huecos vacíos</button><button class="btn block" style="margin-top:8px" id="af2">Rehacer toda la semana</button><button class="btn ghost block" onclick="closeSheet()">Cancelar</button>`);
   const run = all => {
     const merienda = $('#afm').checked, used = new Set(), pools = { desayuno: 'desayuno', comida: 'principal', cena: 'principal', merienda: 'dulce' };
-    const days = weekDays(); if (!all) days.forEach(d => Object.values(S.menu[d] || {}).forEach(r => used.add(r.id)));
+    const days = weekDays(), M = activeMenu(); if (!all) days.forEach(d => Object.values(M[d] || {}).forEach(r => used.add(r.id)));
     const pick = cat => { let pool = RECIPES.filter(r => r.cat === cat && !used.has(r.id)); if (!pool.length) pool = RECIPES.filter(r => r.cat === cat); const r = pool[Math.floor(Math.random() * pool.length)]; used.add(r.id); return { src: 'lib', id: r.id, serv: 1, fit: true }; };
-    days.forEach(d => { if (all) delete S.menu[d]; SLOTS.forEach(([s]) => { if (s === 'merienda' && !merienda) return; if (!(S.menu[d] && S.menu[d][s])) setSlot(d, s, pick(pools[s])); }); });
+    days.forEach(d => { if (all) SLOTS.forEach(([s]) => { if (M[d] && M[d][s]) setSlot(d, s, null); }); SLOTS.forEach(([s]) => { if (s === 'merienda' && !merienda) return; if (!(M[d] && M[d][s])) setSlot(d, s, pick(pools[s])); }); });
     save(); closeSheet(); render(); toast('Semana lista');
   };
   $('#af1').onclick = () => run(false); $('#af2').onclick = () => run(true);
@@ -1390,7 +1424,7 @@ function openSuggest(meal) {
   const low = left < 150;
   let list;
   if (low) list = RECIPES.map(r => ({ r, fk: 1, ps: perServ(r) })).sort((a, b) => a.ps.kcal - b.ps.kcal).slice(0, 4);
-  else list = RECIPES.filter(r => r.cat === SUG_CAT[meal]).map(r => { const ps = perServ(r), fk = Math.min(2.5, Math.max(0.4, target / ps.kcal)), kcal = ps.kcal * fk, p = ps.p * fk;
+  else list = RECIPES.filter(r => r.cat === SUG_CAT[meal]).map(r => { const ps = perServ(r), fk = Math.min(FIT_MAX, Math.max(FIT_MIN, target / ps.kcal)), kcal = ps.kcal * fk, p = ps.p * fk;
     return { r, fk, ps, score: (p * 4 / kcal) * 100 * (pLeft > 20 ? 1.5 : 1) - Math.abs(kcal - target) / target * 60 }; }).sort((a, b) => b.score - a.score).slice(0, 10);
   openSheet(`<div class="row"><b class="sp" style="font-size:19px">✨ ¿Qué como ahora?</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="row" style="flex-wrap:wrap;gap:6px;margin:10px 0">${MEALS.map(([k, l]) => `<button class="chip ${k === meal ? 'on' : ''}" onclick="openSuggest('${k}')">${l}</button>`).join('')}</div>
@@ -1487,11 +1521,11 @@ const PROTS = ['Pechuga de pollo cruda', 'Ternera magra cruda', 'Carne picada de
 const FRESH = ['poke', 'quinoa-feta', 'cesar', 'salmorejo', 'pizza-pita', 'tacos', 'smash-tacos', 'salmon-rice', 'bulgogi-lechuga', 'fajitas-bandeja', 'burger', 'nuggets', 'huevos-rotos', 'gambas-ajillo', 'pizza-pollo', 'dumplings-arroz'];
 function openBatch(withBreakfast) {
   const days = weekDays(), recs = {}, taper = [];
-  days.forEach((d, i) => Object.entries(S.menu[d] || {}).forEach(([slot, ref]) => {
+  days.forEach((d, i) => Object.entries(activeMenu()[d] || {}).forEach(([slot, ref]) => {
     if ((slot === 'desayuno' || slot === 'merienda') && !withBreakfast) return;
     const r = ref.src === 'lib' ? RECIPES.find(x => x.id === ref.id) : null; if (!r) return;
-    const pr = perRation(ref, slot), k = (ref.serv || 1) / r.serv * (pr ? pr.fk : 1), fresh = FRESH.includes(r.id);
-    const e = recs[r.id] = recs[r.id] || { r, k: 0, rac: 0, fresh }; e.k += k; e.rac += ref.serv || 1;
+    const eaters = slotEaters(ref), k = eaters.reduce((a, e) => { const pr = perRation(ref, slot, e.goals); return a + e.serv / r.serv * (pr ? pr.fk : 1); }, 0), fresh = FRESH.includes(r.id);
+    const e = recs[r.id] = recs[r.id] || { r, k: 0, rac: 0, fresh }; e.k += k; e.rac += eaters.reduce((a, x) => a + x.serv, 0);
     taper.push({ i, slot, r, fresh });
   }));
   const list = Object.values(recs), batch = list.filter(e => !e.fresh), fresh = list.filter(e => e.fresh);
@@ -1560,8 +1594,10 @@ function qtyText(n, g) {
 }
 function openShopping(keep) {
   const sc = keep ? $('#sheet').scrollTop : 0;
-  const days = weekDays(), wk = days[0], menus = [{ menu: S.menu, goals: S.goals }];
-  if (shopWithOthers && otherMenus) Object.values(otherMenus).forEach(m => menus.push(m));
+  const days = weekDays(), wk = days[0], sh = sharedOn();
+  let menus = [{ menu: S.menu, goals: S.goals }];
+  if (sh) menus = Object.entries(house()).map(([n, g]) => ({ goals: g, menu: Object.fromEntries(Object.entries(SHM.days).map(([d, sl]) => [d, Object.fromEntries(Object.entries(sl).filter(([, ref]) => !ref.who || !ref.who.length || ref.who.includes(n)).map(([k, ref]) => [k, { ...ref, serv: 1 }]))])) }));
+  else if (shopWithOthers && otherMenus) Object.values(otherMenus).forEach(m => menus.push(m));
   const all = weekNeeds(menus, days), names = Object.keys(all).sort((a, b) => a.localeCompare(b, 'es'));
   if (!names.length) { openSheet(`<b style="font-size:18px">🛒 Lista de la compra</b><p class="mute">Primero añade recetas al menú de esta semana (o pulsa Autorellenar).</p><button class="btn pri block" onclick="closeSheet()">Vale</button>`); return; }
   const need = {}, inPantry = []; names.forEach(n => { const rest = all[n] - pantryCovers(n, all[n]); if (rest < 0.5) inPantry.push(n); else need[n] = rest; });
@@ -1581,7 +1617,7 @@ function openShopping(keep) {
   const itemHtml = x => `<div class="item" style="${on(x.n) ? 'opacity:.45' : ''}"><input type="checkbox" data-c="${esc(x.n)}" ${on(x.n) ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--acc);flex:none"><div class="sp" data-p="${esc(x.n)}"><div class="nm" style="${on(x.n) ? 'text-decoration:line-through' : ''}">${esc(x.n)}${who(x.n)}</div><div class="sm mute">${qtyText(x.n, x.g)}${view !== 'store' && x.line ? ' · ' + x.line : x.line ? ' · ' + x.line.split(' · ').slice(1).join(' · ') : ' · <span style="color:var(--acc)">añadir precio</span>'}</div></div>${on(x.n) ? '' : `<button class="btn small" data-h="${esc(x.n)}" title="Ya lo tengo">🥫</button>`}</div>`;
   openSheet(`<div id="shlist"></div><div class="row"><b class="sp" style="font-size:19px">🛒 Lista de la compra</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="sm mute">${days[0].slice(8)}/${days[0].slice(5, 7)} – ${days[6].slice(8)}/${days[6].slice(5, 7)} · ${done}/${buy.length} en el carro${shopWithOthers && otherMenus ? ' · incluye ' + Object.keys(otherMenus).join(', ') : ''}</div>
-  ${syncReady() ? `<div class="row" style="margin-top:10px"><span class="stat" style="color:var(--acc)"><span class="dot on"></span>En tiempo real</span><div class="sp"></div><button class="btn small" id="sho">${shopWithOthers ? '👤 Solo mi menú' : '👥 Sumar los demás'}</button></div>` : ''}
+  ${sh ? `<div class="row" style="margin-top:10px"><span class="stat" style="color:var(--acc)"><span class="dot on"></span>Menú compartido · ${Object.keys(house()).map(cap).join(' + ')}</span></div>` : syncReady() ? `<div class="row" style="margin-top:10px"><span class="stat" style="color:var(--acc)"><span class="dot on"></span>En tiempo real</span><div class="sp"></div><button class="btn small" id="sho">${shopWithOthers ? '👤 Solo mi menú' : '👥 Sumar los demás'}</button></div>` : ''}
   <button class="btn pri block" id="shn" style="margin-top:12px;padding:14px">📝 Enviar a Notas</button>
   <div class="card hero" style="margin-top:12px"><div class="sm mute" style="font-weight:600">Comprando cada cosa donde es más barato</div><div style="font-size:32px;font-weight:800">${eur(best)}</div><div class="sm mute">${missing ? `${missing} productos sin precio · tócalos para añadirlo` : 'Todos los productos tienen precio'}</div></div>
   ${storeTotals.length ? `<div class="h">Si lo compras todo en una tienda</div>${storeTotals.map(x => `<div class="row sm" style="margin:6px 0"><span class="sp">${x.l}</span><b>${eur(x.tot)}</b><span class="mute" style="width:92px;text-align:right">${x.miss ? 'faltan ' + x.miss : 'completo'}</span></div>`).join('')}` : ''}
@@ -1807,6 +1843,7 @@ function vAjustes(v) {
   <p class="sm mute">La báscula envía miligramos, pero el sensor es fiable al gramo aproximadamente. La app promedia las lecturas cuando el peso está quieto para dar un valor más estable; el decimal es orientativo.</p>
   <label class="chk" style="margin-top:8px"><input type="checkbox" id="s_demo" ${S.settings.demo ? 'checked' : ''}> Modo demo (simula la báscula)</label>
   <button class="btn block" style="margin-top:10px" onclick="${scale.connected ? 'disconnect()' : 'connect()'}">${scale.connected ? 'Desconectar' : 'Conectar'}</button></div>
+  ${ideasCard()}
   <div class="card"><b>Comidas habituales</b>${S.templates.length ? S.templates.map(t => `<div class="item" style="cursor:default"><div class="sp"><div class="nm">⚡ ${esc(t.name)}</div><div class="sm mute">${t.items.length} alimentos · ${r0(tplKcal(t))} kcal</div></div><button class="btn bad small" onclick="S.templates=S.templates.filter(x=>x.id!=='${t.id}');save();render()">✕</button></div>`).join('') : '<p class="sm mute">Toca ⭐ en una comida del diario para guardarla.</p>'}</div>
   <div class="card"><b>Recipientes guardados</b>${S.containers.length ? S.containers.map(c => `<div class="item" style="cursor:default"><div class="sp">${esc(c.name)}</div><span class="mute">${fmtW(c.grams)} g</span><button class="btn bad small" onclick="delContainer('${c.id}')">✕</button></div>`).join('') : '<p class="sm mute">Se guardan desde Pesar → Recipiente.</p>'}</div>
   <div class="card"><div class="row"><b class="sp">Mis alimentos (${mine.length})</b><button class="btn ghost small" onclick="openFoodForm()">+ Crear</button></div>
@@ -1820,7 +1857,7 @@ function vAjustes(v) {
   ['#g_p', '#g_c', '#g_f', '#g_k'].forEach(id => $(id).oninput = hint); hint();
   $('#g_ok').onclick = () => { const n = id => Math.max(0, parseInt($(id).value) || 0); S.goals = { kcal: n('#g_k') || 2000, p: n('#g_p') || 1, c: n('#g_c') || 1, f: n('#g_f') || 1, water: n('#g_w') || 2000 }; save(); toast('Objetivos guardados'); };
   $('#s_de').onchange = e => { S.settings.dayEnd = +e.target.value; save(); day = todayKey(); toast('Guardado'); };
-  bindSyncCard();
+  bindSyncCard(); bindIdeas(); if (syncReady()) syncIdeas().then(refreshIdeas).catch(() => {});
   $('#s_demo').onchange = e => { S.settings.demo = e.target.checked; save(); if (!e.target.checked && scale.demo) stopDemo(); render(); };
 }
 function wipeLocal() {
@@ -1857,6 +1894,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 21:15', short: 'Menú compartido para los dos, lo del menú aparece en el Diario para apuntarlo de un toque, y buzón de mejoras.', items: ['👥 <b>Menú compartido</b>: un solo menú para los dos, con cantidades para cada uno, total a cocinar y reparto de lo cocinado. La lista de la compra suma los dos.', '📅 En el <b>Diario</b> aparece lo que tenías en el menú, con <b>✓ Comido</b> y <b>⚖️ Pesar</b>.', '💡 <b>Buzón de mejoras</b> en Ajustes para apuntar ideas.', '🍽️ Las recetas "a tu medida" ya no se agrandan ni encogen de forma exagerada (como mucho ×1,6 o ×0,5).'] },
   { v: '30-sep · 20:30', short: 'Lista de la compra ordenada por secciones del súper y botón para enviarla a Notas.', items: ['🛒 La lista de la compra se ordena <b>por sección</b> (fruta y verdura, carne y pescado, lácteos…), <b>por tienda</b> o <b>A-Z</b>.', '🥚 Cantidades en unidades cuando tiene sentido: "6 huevos (330 g)", "2 cebollas".', '📝 Botón <b>Enviar a Notas</b>: en Notas, selecciona todo y pulsa ☑️ para tener casillas.'] },
   { v: '30-sep · 02:20', short: 'Más seguridad en la copia de GitHub y arreglos tras una revisión completa de la app.', items: ['🛡️ Al reinstalar, la app <b>ya no puede sobrescribir tu copia</b> de GitHub por error: te pregunta si quieres restaurarla.', '🛡️ "Borrar todos los datos" borra solo el móvil; <b>la copia en GitHub se conserva</b>.', '⚖️ Si pulsas guardar mientras el peso se mueve, la app <b>espera a que se estabilice</b> en vez de dar error.', '🍲 Al comer una receta tuya, botón de <b>"1 ración · X g"</b>.', '📅 Si dejas la app abierta y pasa la hora de fin de día, cambia sola al día nuevo.'] },
   { v: '30-sep · 02:00', short: '37 recetas nuevas (muchas virales) y arreglados los botones de los platos del menú.', items: ['🍽️ Arreglado: en el <b>menú semanal</b> ya funcionan cambiar raciones, Ver receta, Cambiar, Añadir al diario y Quitar del menú.', '📖 <b>37 recetas nuevas</b>, muchas virales: huevos turcos, pancakes de cottage, pasta estilo Gigi Hadid, ensalada de arroz crujiente, pollo hot honey, pizza de tortilla, brownie de alubias, cookie dough proteico, uvas con yogur heladas…'] },
@@ -1867,6 +1905,9 @@ const NEWS = [
   { v: '29-sep', items: ['Recetas a tu medida, menú semanal, lista de la compra compartida, despensa, batch cooking, comidas habituales, calculadora de objetivos y guía de uso.'] }
 ];
 const HELP = [
+{id:'buzon',icon:'💡',title:'Buzón de mejoras',tabs:['ajustes'],body:`
+<p>En <b>Ajustes → 💡 Buzón de mejoras</b> los dos podéis apuntar ideas o cosas que no funcionan. Se guardan en vuestro repositorio de GitHub.</p>
+<p>Cuando quieras, dile a Claude "mira el buzón de mejoras": las leerá, te las resumirá y tú decides cuáles se hacen. Cada idea muestra su estado: 🕓 pendiente, 👍 aceptada, ✅ hecha o ✖️ descartada.</p>`},
 {id:'novedades',icon:'🆕',title:'Novedades',tabs:[],body:`${NEWS.map(n => `<p style="margin-top:12px"><b>${n.v}</b></p><ul>${n.items.map(i => `<li>${i}</li>`).join('')}</ul>`).join('')}`},
 {id:'empezar',icon:'🚀',title:'Primeros pasos',tabs:['hoy'],body:`
 <p>La app vive en una página web que se abre con <b>Bluefy</b> (gratis en la App Store), porque Safari no deja conectar con la báscula por Bluetooth.</p>
@@ -1901,6 +1942,10 @@ const HELP = [
 <li>Con las flechas ‹ › cambias de día. Puedes copiar un día entero o una comida de ayer.</li>
 <li><b>Cenas de madrugada:</b> el día termina a las <b>4:00</b>, no a medianoche. Si cenas a la 1:00, se apunta en la cena del día anterior. La hora se cambia en Ajustes → "El día termina a las".</li>
 <li>El agua se suma de vaso en vaso (250 ml).</li></ul>`},
+{id:'planificado',icon:'📅',title:'Del menú al diario',tabs:['hoy'],body:`
+<p>El menú es el <b>plan</b> y el diario es <b>lo que realmente comes</b>, por eso no se apunta solo. En cada comida del Diario aparece lo que tenías en el menú:</p>
+<ul><li><b>✓ Comido</b>: apunta tu ración tal cual, de un toque.</li><li><b>⚖️ Pesar</b>: abre la ficha para pesar lo que te has servido (con la báscula en vivo).</li></ul>
+<p>Cuando lo apuntas, desaparece la sugerencia de esa comida.</p>`},
 {id:'habituales',icon:'⭐',title:'Comidas habituales',tabs:['hoy'],body:`
 <p>Si desayunas casi siempre lo mismo, apúntalo una vez y pulsa <b>⭐</b> en esa comida para guardarlo como habitual.</p>
 <p>A partir de ahí aparece un botón <b>⚡</b> en esa comida: un toque y queda todo apuntado con sus cantidades. Las borras desde Ajustes → Comidas habituales.</p>`},
@@ -1933,6 +1978,13 @@ const HELP = [
 <li>Toca un plato del menú para cambiar cuántas <b>raciones</b> vas a cocinar, cambiar la receta, apuntarlo al diario o quitarlo.</li>
 <li>Cada plato viene <b>ajustado a tus calorías</b>. Se puede desactivar plato a plato.</li>
 <li>Con ‹ › preparas la semana que viene.</li></ul>`},
+{id:'compartido',icon:'👥',title:'Menú compartido',tabs:['menu'],body:`
+<p>Un solo menú para los dos, que veis y editáis a la vez. Necesita la copia en GitHub configurada en los dos móviles.</p>
+<ol><li>En <b>Menú</b>, pulsa <b>Activar</b> en la tarjeta 👥 Menú compartido. El primero que lo active puede copiar su menú actual; el menú personal de cada uno <b>no se borra</b> y vuelve si lo desactivas.</li>
+<li>Toca un plato para elegir <b>quién come</b> (los dos por defecto, o solo uno si el otro come fuera). Verás las calorías de la ración de cada uno.</li>
+<li><b>👩‍🍳 Cocinar para los 2</b>: por cada ingrediente, el <b>total</b> que hay que preparar y lo que corresponde a cada uno según sus calorías.</li>
+<li><b>Repartir lo cocinado</b>: pesa todo lo cocinado (sin la olla) y te dice cuántos gramos servir a cada uno.</li>
+<li>La <b>lista de la compra</b> suma automáticamente las cantidades de los dos.</li></ol>`},
 {id:'compra',icon:'🛒',title:'Lista de la compra',tabs:['menu'],body:`
 <p><b>🛒 Lista compra</b> suma todos los ingredientes del menú de la semana, en las cantidades de cada uno.</p>
 <ul><li>Agrupa cada producto en el súper donde es <b>más barato</b> (según los precios que hayáis apuntado) y calcula cuántos paquetes comprar y el total.</li>
@@ -2023,9 +2075,121 @@ function startTour(i = 0) {
     : `<div class="row">${i ? `<button class="btn sp" onclick="startTour(${i - 1})">‹ Atrás</button>` : `<button class="btn sp" onclick="S.onboarded=1;S.seenVersion=APP_VERSION;save();closeSheet();render()">Saltar</button>`}<button class="btn pri sp" onclick="startTour(${i + 1})">Siguiente ›</button></div>`}</div>`);
 }
 
+/* ---------- MENÚ COMPARTIDO ---------- */
+const SHM_PATH = 'menu/compartido.json';
+let SHM = (() => { try { return JSON.parse(localStorage.getItem('bascula.shmenu')) || { days: {}, ts: {} }; } catch (e) { return { days: {}, ts: {} }; } })();
+let HOUSE = (() => { try { return JSON.parse(localStorage.getItem('bascula.house')) || {}; } catch (e) { return {}; } })();
+let shmExists = !!Object.keys(SHM.ts || {}).length, shmBusy = false, shmTimer = null, shmPoll = null;
+const me = () => SY.profile || 'yo';
+const cap = n => n ? n[0].toUpperCase() + n.slice(1) : n;
+const sharedOn = () => !!(S.settings.sharedMenu && syncReady());
+const activeMenu = () => sharedOn() ? SHM.days : S.menu;
+function house() { const h = { ...HOUSE }; h[me()] = S.goals; return h; }
+function saveSHM() { try { localStorage.setItem('bascula.shmenu', JSON.stringify(SHM)); } catch (e) {} }
+function slotEaters(ref) {
+  if (!sharedOn()) return [{ name: me(), goals: S.goals, serv: ref.serv || 1 }];
+  const h = house(), who = (ref.who && ref.who.length ? ref.who : Object.keys(h)).filter(n => h[n]);
+  return who.map(n => ({ name: n, goals: h[n], serv: 1 }));
+}
+function eatsMe(ref) { return !sharedOn() || !ref.who || !ref.who.length || ref.who.includes(me()); }
+async function loadHouse() {
+  const list = await gh('perfiles'), h = {};
+  for (const f of (list || [])) { const n = f.name.replace(/\.json$/, ''); if (n === me()) continue; try { const d = await ghGet(`perfiles/${f.name}`); if (d.data) h[n] = d.data.goals || { kcal: 2000, p: 100, c: 220, f: 65 }; } catch (e) {} }
+  HOUSE = h; try { localStorage.setItem('bascula.house', JSON.stringify(h)); } catch (e) {}
+}
+function mergeSHM(a, b) {
+  const out = { days: {}, ts: {} }, keys = new Set([...Object.keys(a.ts || {}), ...Object.keys(b.ts || {})]);
+  for (const k of keys) {
+    const ta = (a.ts || {})[k], tb = (b.ts || {})[k], useB = tb && (!ta || (tb.d || '') > (ta.d || '')), t = useB ? tb : ta, src = useB ? b : a;
+    out.ts[k] = t; if (t.del) continue;
+    const [d, sl] = k.split('|'), ref = ((src.days || {})[d] || {})[sl];
+    if (ref) { out.days[d] = out.days[d] || {}; out.days[d][sl] = ref; }
+  }
+  return out;
+}
+async function syncShared() {
+  if (!syncReady() || shmBusy) return false; shmBusy = true;
+  try {
+    const before = JSON.stringify(SHM.days); let merged = SHM;
+    await ghUpdate(SHM_PATH, remote => { merged = mergeSHM(remote || { days: {}, ts: {} }, SHM); shmExists = !!Object.keys(merged.ts).length; return JSON.stringify(merged) === JSON.stringify(remote || {}) ? null : merged; }, 'Menú compartido');
+    SHM = merged; saveSHM();
+    return JSON.stringify(SHM.days) !== before;
+  } catch (e) { return false; } finally { shmBusy = false; }
+}
+function pushSharedSoon() { clearTimeout(shmTimer); shmTimer = setTimeout(() => syncShared().then(ch => { if (ch && (tab === 'menu' || tab === 'hoy')) render(); }), 1200); }
+function setSharedSlot(d, s, ref) {
+  const k = d + '|' + s; SHM.ts[k] = { d: new Date().toISOString(), by: me(), ...(ref ? {} : { del: 1 }) };
+  if (ref) { SHM.days[d] = SHM.days[d] || {}; SHM.days[d][s] = ref; } else if (SHM.days[d]) { delete SHM.days[d][s]; if (!Object.keys(SHM.days[d]).length) delete SHM.days[d]; }
+  saveSHM(); pushSharedSoon();
+}
+function startSharedPoll() {
+  if (shmPoll || !sharedOn()) return;
+  shmPoll = setInterval(async () => { if (!sharedOn() || (tab !== 'menu' && tab !== 'hoy')) { clearInterval(shmPoll); shmPoll = null; return; } if (document.visibilityState === 'visible' && !$('#sheet').classList.contains('on') && await syncShared()) render(); }, 10000);
+}
+async function toggleShared() {
+  if (!syncReady()) { openSheet(`<b style="font-size:18px">👥 Menú compartido</b><p style="line-height:1.5">Para compartir el menú, primero configurad los dos la <b>copia en GitHub</b> en Ajustes, con el mismo repositorio y cada uno con su nombre.</p><button class="btn pri block" onclick="closeSheet();go('ajustes')">Ir a Ajustes</button>`); return; }
+  if (S.settings.sharedMenu) { S.settings.sharedMenu = false; save(); render(); toast('Usando tu menú personal (el compartido se conserva)'); return; }
+  toast('Conectando con el menú compartido…');
+  try { await loadHouse(); await syncShared(); } catch (e) { return toast('No se pudo conectar: ' + e.message); }
+  S.settings.sharedMenu = true; save();
+  const future = Object.keys(S.menu).filter(d => d >= weekDays(0)[0]);
+  if (!Object.keys(SHM.days).length && future.length) {
+    openSheet(`<b style="font-size:18px">👥 Menú compartido activado</b><p style="line-height:1.5">El menú compartido está vacío. ¿Quieres copiar en él tu menú actual (${future.length} días)? Tu menú personal no se borra.</p>
+    <button class="btn pri block" id="shc1">Copiar mi menú</button><button class="btn block" style="margin-top:8px" onclick="closeSheet();render()">Empezar vacío</button>`);
+    $('#shc1').onclick = () => { future.forEach(d => Object.entries(S.menu[d]).forEach(([s, ref]) => setSharedSlot(d, s, { src: ref.src, id: ref.id, fit: true }))); closeSheet(); render(); toast('Menú copiado al compartido'); };
+  } else { render(); toast('Menú compartido activado'); }
+  startSharedPoll();
+}
+function openSharedCook(d, s) {
+  const ref = activeMenu()[d][s], r = recipeByRef(ref), t = refTotals(ref), base = t.kcal / t.serv, eaters = slotEaters(ref);
+  const parts = eaters.map(e => { const fk = ref.fit !== false ? fitFactor(base, s, e.goals) : 1; return { ...e, k: fk / t.serv, kcal: base * fk }; }), K = parts.reduce((a, p) => a + p.k, 0) || 1;
+  const cols = parts.map(p => `<th style="text-align:right;padding:6px 4px">${esc(cap(p.name))}</th>`).join('');
+  openSheet(`<div class="row"><div class="mealic" style="width:48px;height:48px;font-size:26px;background:var(--soft)">${r.emoji}</div><div class="sp"><div class="sm mute" style="font-weight:600">Cocinar para ${parts.map(p => cap(p.name)).join(' y ')}</div><b style="font-size:17px">${esc(r.name)}</b></div><button class="btn ghost" onclick="slotSheet('${d}','${s}')">‹</button></div>
+  <div class="row" style="gap:8px;margin:12px 0;flex-wrap:wrap">${parts.map(p => `<span class="stat">${esc(cap(p.name))}: <b style="color:var(--acc);margin-left:4px">${r0(p.kcal)} kcal</b></span>`).join('')}</div>
+  <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr class="mute sm"><th style="text-align:left;padding:6px 0">Ingrediente</th><th style="text-align:right;padding:6px 4px">Total</th>${parts.length > 1 ? cols : ''}</tr></thead>
+  <tbody>${r.ing.map(i => `<tr style="border-top:1px solid var(--line)"><td style="padding:8px 0">${esc(i.name)}</td><td style="text-align:right;padding:8px 4px;font-weight:800">${Math.round(i.grams * K)} g</td>${parts.length > 1 ? parts.map(p => `<td style="text-align:right;padding:8px 4px" class="mute">${Math.round(i.grams * p.k)}</td>`).join('') : ''}</tr>`).join('')}</tbody></table></div>
+  <div class="card" style="background:var(--soft);box-shadow:none;margin-top:14px"><b>⚖️ Repartir lo cocinado</b><p class="sm mute" style="margin:4px 0 8px">Pesa todo lo cocinado (sin la olla) y te digo cuánto servir a cada uno.</p>
+  <div class="row"><input id="sck" type="number" inputmode="decimal" placeholder="Peso total cocinado (g)"><button class="btn" id="sckr" style="white-space:nowrap">Leer báscula</button></div><div id="sckout" style="margin-top:10px"></div></div>
+  <div class="grid2" style="margin-top:10px"><button class="btn" id="scsteps">📖 Pasos</button><button class="btn pri" id="scscale">⚖️ Pesar ingredientes</button></div>`);
+  const out = () => { const w = parseFloat($('#sck').value) || 0; $('#sckout').innerHTML = w > 0 ? parts.map(p => `<div class="row" style="margin:6px 0"><b class="sp">${esc(cap(p.name))}</b><span class="kc" style="font-size:20px">${Math.round(w * p.k / K)} g</span><span class="sm mute" style="width:70px;text-align:right">${Math.round(p.k / K * 100)} %</span></div>`).join('') : ''; };
+  $('#sck').oninput = out;
+  $('#sckr').onclick = async () => { if (scale.net() == null) return toast('Conecta la báscula'); if (!(await waitStable())) return; $('#sck').value = Math.round(scale.net()); out(); };
+  $('#scsteps').onclick = () => ref.src === 'lib' ? openLib(ref.id, parts.length, true) : viewRecipe(ref.id);
+  $('#scscale').onclick = () => { closeSheet(); recipeDraft = { libId: ref.src === 'lib' ? ref.id : undefined, name: r.name, items: [], cooked: null, plan: r.ing.map(i => ({ name: i.name, grams: i.grams * K })).filter(p => ingFood(p.name)), idx: 0, serv: parts.length }; tab = 'recetas'; doTare(true); render(); window.scrollTo(0, 0); };
+}
+async function pullSharedAtStart() { if (!syncReady()) return; try { const ch = await syncShared(); if (!HOUSE || !Object.keys(HOUSE).length || sharedOn()) await loadHouse(); if (ch || tab === 'menu') render(); startSharedPoll(); } catch (e) {} }
+
+/* ---------- BUZÓN DE MEJORAS ---------- */
+const IDEAS_PATH = 'mejoras.json';
+let IDEAS = (() => { try { return JSON.parse(localStorage.getItem('bascula.ideas')) || { items: {} }; } catch (e) { return { items: {} }; } })();
+const IDEA_ST = { pendiente: ['🕓', 'Pendiente', 'var(--mute)'], aceptada: ['👍', 'Aceptada', 'var(--acc2)'], hecha: ['✅', 'Hecha', 'var(--acc)'], descartada: ['✖️', 'Descartada', 'var(--bad)'] };
+async function syncIdeas() {
+  if (!syncReady()) return;
+  let merged = IDEAS;
+  await ghUpdate(IDEAS_PATH, remote => {
+    const r = (remote && remote.items) || {}, all = { ...r };
+    for (const [id, it] of Object.entries(IDEAS.items)) if (!all[id] || (it.u || '') > (all[id].u || '')) all[id] = it;
+    merged = { items: all }; return JSON.stringify(merged) === JSON.stringify(remote || {}) ? null : merged;
+  }, 'Buzón de mejoras');
+  IDEAS = merged; try { localStorage.setItem('bascula.ideas', JSON.stringify(IDEAS)); } catch (e) {}
+}
+function ideasCard() {
+  const list = Object.entries(IDEAS.items).filter(([, i]) => !i.del).sort((a, b) => (b[1].d || '').localeCompare(a[1].d || ''));
+  return `<div class="card" id="ideas"><div class="row"><b class="sp">💡 Buzón de mejoras</b><span class="sm mute">${list.length}</span></div>
+  <p class="sm mute" style="margin:6px 0 10px">Apuntad aquí ideas o cosas que no funcionan bien. Se guardan en vuestro GitHub y Claude las puede leer cuando se lo pidáis.</p>
+  ${syncReady() ? `<textarea id="idt" rows="2" placeholder="Ej.: que la lista de la compra agrupe por pasillos de Mercadona"></textarea><button class="btn pri block" id="ida" style="margin-top:8px">Añadir idea</button>` : '<p class="sm" style="color:var(--warn)">Configura la copia en GitHub (más abajo) para usar el buzón.</p>'}
+  <div id="idl">${list.length ? list.map(([id, i]) => { const st = IDEA_ST[i.st || 'pendiente'] || IDEA_ST.pendiente; return `<div class="item" style="cursor:default;align-items:flex-start"><span style="font-size:18px">${st[0]}</span><div class="sp"><div style="line-height:1.4">${esc(i.t)}</div><div class="sm mute" style="margin-top:3px">${esc(cap(i.by || ''))} · ${new Date(i.d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} · <span style="color:${st[2]};font-weight:700">${st[1]}</span>${i.nota ? ' · ' + esc(i.nota) : ''}</div></div>${i.by === me() && (i.st || 'pendiente') === 'pendiente' ? `<button class="btn bad small" data-idd="${id}">✕</button>` : ''}</div>`; }).join('') : '<p class="sm mute" style="margin-top:10px">Todavía no hay ideas.</p>'}</div></div>`;
+}
+function bindIdeas() {
+  if ($('#ida')) $('#ida').onclick = async () => { const t = $('#idt').value.trim(); if (!t) return toast('Escribe la idea'); const id = uid(), now = new Date().toISOString(); IDEAS.items[id] = { t, by: me(), d: now, u: now, st: 'pendiente' }; $('#idt').value = ''; refreshIdeas(); try { await syncIdeas(); toast('Idea guardada'); } catch (e) { toast('Guardada en el móvil; se subirá luego'); } refreshIdeas(); };
+  if ($('#idl')) $('#idl').onclick = e => { const b = e.target.closest('[data-idd]'); if (!b) return; confirmSheet('¿Borrar esta idea?', async () => { const it = IDEAS.items[b.dataset.idd]; it.del = 1; it.u = new Date().toISOString(); render(); try { await syncIdeas(); } catch (er) {} render(); }, 'Borrar'); };
+}
+function refreshIdeas() { const el = $('#ideas'); if (el) { el.outerHTML = ideasCard(); bindIdeas(); } }
+
 /* ---------- inicio ---------- */
 render();
 pullPrices();
+pullSharedAtStart();
 if (SY.pending && syncReady()) setTimeout(() => syncPush(true), 3000);
 if (!S.onboarded) { if (Object.keys(S.diary).length || S.body) { S.onboarded = 1; save(true); } else startTour(); }
 </script>
