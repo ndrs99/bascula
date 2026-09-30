@@ -162,7 +162,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 21:30';
+const APP_VERSION = '30-sep · 21:45';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -214,7 +214,8 @@ const EXTRA_RAW = [
 ['Hierbas frescas',36,3,6,0.8,3],['Semillas de sésamo',573,18,12,50,12],['Salsa sriracha',105,2,20,1,1],
 ['Queso cottage',98,11,3.4,4.3,0],['Café solo',2,0.1,0,0,0],['Edamame',121,11.9,8.9,5.2,5.2],['Maíz para palomitas',375,11,74,4.3,15],['Remolacha cocida',44,1.7,10,0.2,2],['Galletas integrales',440,7,68,15,6],['Arroz integral cocido',123,2.7,25.6,1,1.6],['Quinoa cocida',120,4.4,21.3,1.9,2.8],['Pasta integral cocida',149,6,30,1.7,4],['Papel de arroz',330,6,77,0.3,1],['Ñoquis de patata',150,4,32,0.3,1.5],['Copos de maíz sin azúcar',370,7,84,0.9,3],
 ['Harina de trigo',340,10,71,1.2,3],['Tomates secos',258,14,43,3,12],['Judías verdes',31,1.8,4.5,0.2,3],['Guisantes',80,5.4,10,0.4,5],['Dátiles',280,2.5,66,0.4,8],
-['Pechuga de pavo en lonchas',100,20,1.5,1.5,0],['Semillas de chía',486,17,8,31,34],['Vinagre de vino',20,0,0.5,0,0],['Caldo de pollo',8,1,0.5,0.3,0],['Tortitas de arroz',380,8,80,3,3]];
+['Pechuga de pavo en lonchas',100,20,1.5,1.5,0],['Semillas de chía',486,17,8,31,34],['Vinagre de vino',20,0,0.5,0,0],['Caldo de pollo',8,1,0.5,0.3,0],['Tortitas de arroz',380,8,80,3,3],
+['Bulgur crudo',342,12.3,69,1.3,12.5],['Pistachos',562,20,17,45,10],['Burrata',240,11,2,21,0]];
 
 const WHERE = {
 'Queso fresco batido 0%':'Mercadona, Lidl, Carrefour, Dia (lácteos)',
@@ -259,7 +260,10 @@ const WHERE = {
 'Maíz para palomitas':'Pasillo de legumbres o aperitivos (maíz en grano para palomitas)',
 'Remolacha cocida':'Verduras envasadas de Mercadona, Lidl, Carrefour (ya cocida al vacío)',
 'Galletas integrales':'Pasillo de galletas (elige las que tengan menos azúcar)',
-'Café solo':'Cualquier súper o tu cafetera'};
+'Café solo':'Cualquier súper o tu cafetera',
+'Bulgur crudo':'Mercadona, Carrefour, Alcampo (pasillo de arroces y legumbres) o tiendas árabes',
+'Pistachos':'Pasillo de frutos secos (mejor pelados y sin sal)',
+'Burrata':'Mercadona, Lidl, Carrefour, Aldi (quesos frescos italianos)'};
 
 /* ---------- recetario ---------- */
 const RECIPES = [
@@ -618,6 +622,64 @@ steps:['Tritura los garbanzos con la remolacha, el tahini, el limón, el ajo, el
 ing:[['Café solo',120,'frío'],['Leche desnatada',100],['Skyr o yogur griego 0%',80],['Miel',8],['Canela molida',1]],
 steps:['Congela el café en cubitera la noche antes.','Tritura los cubitos de café con la leche, el skyr, la miel y la canela hasta tener textura de granizado.','Sirve enseguida.']}
 );
+RECIPES.push(
+{id:'aniston-salad',name:'Ensalada "Jennifer Aniston" de bulgur, garbanzos y feta',emoji:'🥗',cat:'principal',time:25,serv:3,tags:['Viral en redes','Para llevar'],
+ing:[['Bulgur crudo',150],['Garbanzos cocidos',240,'1 bote escurrido'],['Pepino',250],['Cebolla',60,'mejor morada'],['Hierbas frescas',20,'perejil y menta'],['Pistachos',30,'pelados'],['Queso feta',80],['Zumo de limón',30],['Aceite de oliva',20]],
+steps:['Cuece el bulgur en el doble de agua con sal unos 10 minutos (o hidrátalo tapado con agua hirviendo 15 minutos). Escúrrelo y deja que se enfríe.','Mientras, lava y escurre los garbanzos y corta el pepino en dados pequeños y la cebolla muy picada.','Pica las hierbas y los pistachos.','Mezcla el limón y el aceite con sal y pimienta.','Junta todo en un bol grande, desmenuza el feta por encima y remueve con el aliño.'],
+tip:'Es la ensalada que se dice que comía cada día en el rodaje de Friends. Aguanta 3 días en la nevera: mejor al día siguiente.'},
+{id:'dense-bean',name:'Dense bean salad mediterránea con atún',emoji:'🫘',cat:'principal',time:15,serv:2,tags:['Viral en redes','Sin cocinar'],
+ing:[['Alubias cocidas',400,'1 bote escurrido'],['Atún al natural (escurrido)',120,'2 latas'],['Tomate',200,'cherry'],['Pepino',150],['Pimiento rojo',100],['Cebolla',40,'morada'],['Hierbas frescas',15,'perejil y albahaca'],['Queso feta',40],['Aceite de oliva',15],['Vinagre de vino',10],['Mostaza',5]],
+steps:['Lava y escurre muy bien las alubias.','Corta los tomates por la mitad y el pepino, el pimiento y la cebolla en dados pequeños, del tamaño de una alubia.','Bate el aceite, el vinagre y la mostaza con sal y pimienta.','Mezcla todo con el atún desmigado y las hierbas picadas, y desmenuza el feta por encima.','Deja reposar 10 minutos para que las alubias cojan el aliño.'],
+tip:'"Dense" porque lleva más legumbre que hoja: llena muchísimo. Cámbiala cada semana: garbanzos, lentejas o pollo en lugar de atún.'},
+{id:'pizza-bowl',name:'Pizza bowl de queso cottage',emoji:'🍕',cat:'principal',time:12,serv:1,tags:['Viral en redes','Alto en proteína'],
+ing:[['Queso cottage',200],['Tomate triturado',60],['Especias variadas',2,'orégano y ajo en polvo'],['Pechuga de pavo en lonchas',50],['Champiñones',60],['Queso mozzarella light',40],['Pan integral',40,'para mojar']],
+steps:['Mezcla el cottage con el tomate y la mitad del orégano en un recipiente apto para horno o microondas.','Pon por encima el pavo en tiras y los champiñones laminados.','Cubre con la mozzarella y el resto del orégano.','Gratina en el horno a 220 °C 8-10 minutos (o 2-3 minutos en microondas y 3 en la freidora de aire) hasta que burbujee.','Cómelo con el pan tostado cortado en tiras para mojar.'],
+tip:'Sabe a pizza pero con unos 40 g de proteína. Si te gusta, añade aceitunas o pimiento.'},
+{id:'spicy-tuna-bowl',name:'Bowl de atún picante con arroz crujiente',emoji:'🌶️',cat:'principal',time:20,serv:2,tags:['Viral en redes','Estilo sushi'],
+ing:[['Arroz blanco cocido',300,'del día anterior'],['Aceite de oliva',10],['Atún al natural (escurrido)',160,'2 latas grandes'],['Skyr o yogur griego 0%',40],['Salsa sriracha',15],['Salsa de soja',15],['Aguacate',100],['Pepino',150],['Edamame',80,'pelado'],['Semillas de sésamo',6]],
+steps:['Extiende el arroz frío en una sartén grande con el aceite, aplástalo y déjalo sin tocar 6-8 minutos a fuego medio-alto hasta que se dore por debajo. Rómpelo en trozos crujientes.','Mezcla el atún con el skyr, la sriracha y la mitad de la soja.','Cuece el edamame 3 minutos si es congelado.','Corta el aguacate y el pepino en dados.','Monta los boles con el arroz crujiente, el atún picante, las verduras, el resto de la soja y el sésamo.'],
+tip:'Si tienes hojas de alga nori, córtalas en cuadrados y úsalas para coger cada bocado, como en el vídeo.'},
+{id:'sandwich-pimiento',name:'Sándwich de pimiento (sin pan) de pavo y hummus',emoji:'🫑',cat:'principal',time:8,serv:1,tags:['Viral en redes','Bajo en carbohidratos'],
+ing:[['Pimiento rojo',200,'1 grande'],['Hummus',50],['Pechuga de pavo en lonchas',80],['Queso fresco',50],['Lechuga',20],['Pepino',50],['Tomate',50]],
+steps:['Corta el pimiento por la mitad a lo largo y quítale las semillas y los nervios: cada mitad es una "rebanada".','Unta el interior de las dos mitades con el hummus.','Rellena una mitad con la lechuga, el pavo, el queso fresco en lonchas, el pepino y el tomate en rodajas finas.','Tapa con la otra mitad, aprieta y corta por la mitad con un cuchillo bien afilado.'],
+tip:'Envuelto en papel de horno aguanta perfecto en el táper hasta la hora de comer.'},
+{id:'pasta-limon-burrata',name:'Pasta al limón con burrata y pistachos (ligera)',emoji:'🍋',cat:'principal',time:20,serv:2,tags:['Viral en redes','Rápido'],
+ing:[['Pasta cruda',160],['Aceite de oliva',15],['Ajo',4],['Zumo de limón',25,'y la ralladura del limón'],['Queso parmesano',20],['Espinacas',100],['Burrata',100,'1 pequeña'],['Pistachos',15,'picados']],
+steps:['Cuece la pasta en agua con sal. Antes de escurrirla guarda un vaso del agua de cocción.','En una sartén calienta el aceite con el ajo laminado 1 minuto sin que se queme.','Añade la pasta, las espinacas, la ralladura y el zumo de limón, el parmesano y un chorro del agua de cocción. Remueve fuerte 1-2 minutos hasta que quede una salsa cremosa.','Sirve en los platos, rompe la burrata por encima y termina con los pistachos y pimienta negra.'],
+tip:'El truco de la cremosidad es el agua de la pasta con el parmesano: no hace falta nata ni mantequilla.'},
+{id:'salmon-bites-pepino',name:'Bocaditos de salmón en freidora con ensalada de pepino viral',emoji:'🥒',cat:'principal',time:20,serv:2,tags:['Viral en redes','Freidora de aire'],
+ing:[['Salmón crudo',300,'sin piel'],['Salsa de soja',25],['Miel',8],['Especias variadas',2,'ajo en polvo y pimentón'],['Pepino',300,'2 pepinos'],['Vinagre de vino',10,'mejor de arroz'],['Aceite de oliva',5],['Semillas de sésamo',6],['Salsa sriracha',8],['Arroz blanco crudo',100]],
+steps:['Pon el arroz a cocer.','Corta el salmón en dados de 3 cm y mézclalo con 15 g de soja, la miel y las especias.','Cocínalo en la freidora de aire a 200 °C 7-8 minutos (o en el horno a 220 °C 10 minutos), hasta que esté dorado por fuera.','Corta el pepino en rodajas muy finas (vale un pelador o mandolina), ponlo en un táper con el resto de la soja, el vinagre, el aceite, la sriracha y el sésamo, tápalo y agítalo fuerte.','Sirve el arroz con los bocaditos de salmón y la ensalada de pepino.'],
+tip:'La ensalada de pepino "agitada en un táper" es una de las recetas más vistas de TikTok: hazla también de guarnición para cualquier cena.'},
+{id:'orzo-pollo-limon',name:'Orzo cremoso de pollo al limón en una olla',emoji:'🍲',cat:'principal',time:30,serv:3,tags:['Viral en redes','Una sola olla'],
+ing:[['Pechuga de pollo cruda',400],['Especias variadas',4,'orégano, pimentón y ajo'],['Aceite de oliva',10],['Cebolla',100],['Ajo',6],['Pasta cruda',180,'orzo (pasta con forma de arroz)'],['Caldo de pollo',700],['Espinacas',100],['Zumo de limón',25],['Queso parmesano',25]],
+steps:['Corta el pollo en dados, sazónalo con las especias y sal y dóralo con el aceite en una olla 5 minutos. Sácalo.','En la misma olla pocha la cebolla picada 4 minutos y añade el ajo 1 minuto.','Echa el orzo, remueve 1 minuto y añade el caldo caliente. Cuece 10-12 minutos a fuego medio, removiendo de vez en cuando, hasta que quede meloso.','Vuelve a meter el pollo, añade las espinacas y deja que se ablanden 1 minuto.','Apaga el fuego y termina con el limón, el parmesano y pimienta.'],
+tip:'Si no encuentras orzo usa fideos gruesos o arroz (con arroz, 18 minutos y algo más de caldo).'},
+{id:'alubias-cremosas',name:'Alubias cremosas con tomate, espinacas y huevo',emoji:'🍅',cat:'principal',time:20,serv:2,tags:['Viral en redes','Vegetariana'],
+ing:[['Aceite de oliva',10],['Cebolla',80],['Ajo',6],['Especias variadas',3,'pimentón ahumado y comino'],['Tomates secos',20],['Tomate triturado',250],['Alubias cocidas',400,'1 bote escurrido, mejor judión o blanca grande'],['Queso fresco batido 0%',80],['Espinacas',100],['Huevo entero',110,'2 huevos'],['Pan integral',60]],
+steps:['Sofríe la cebolla picada en el aceite 5 minutos. Añade el ajo, las especias y los tomates secos picados, 1 minuto.','Echa el tomate y cocina 5 minutos.','Añade las alubias y el queso batido y remueve: la salsa se vuelve cremosa y rosada. Incorpora las espinacas.','Haz dos huecos, casca los huevos, tapa y deja 5-6 minutos hasta que cuaje la clara.','Sirve con el pan tostado para mojar.'],
+tip:'Son las "marry me beans" de TikTok en versión ligera: el queso batido sustituye a la nata.'},
+{id:'hasselback-pollo',name:'Pollo hasselback relleno de espinacas y queso',emoji:'🐔',cat:'principal',time:35,serv:2,tags:['Viral en redes','Horno'],
+ing:[['Pechuga de pollo cruda',400,'2 pechugas'],['Espinacas',60],['Queso fresco batido 0%',60],['Queso mozzarella light',50],['Tomates secos',20],['Especias variadas',3,'pimentón, ajo y orégano'],['Aceite de oliva',10],['Judías verdes',300]],
+steps:['Precalienta el horno a 200 °C.','Haz cortes profundos cada 1,5 cm en cada pechuga, sin llegar a cortar hasta abajo (como un acordeón).','Mezcla las espinacas picadas, el queso batido, la mozzarella y los tomates secos picados, con sal.','Rellena cada corte con la mezcla, pinta el pollo con la mitad del aceite y espolvorea las especias.','Pon las judías verdes alrededor con el resto del aceite y sal, y hornea 25 minutos, hasta que el pollo esté hecho por dentro.'],
+tip:'Con termómetro de cocina, el pollo está en su punto a 74 °C en el centro: así queda jugoso.'},
+{id:'sopa-pollo-jengibre',name:'Sopa de pollo "anti-resfriado" con jengibre y cúrcuma',emoji:'🍜',cat:'principal',time:35,serv:3,tags:['Viral en redes','Reconfortante'],
+ing:[['Aceite de oliva',10],['Cebolla',100],['Zanahoria',150],['Ajo',10],['Jengibre fresco',15],['Especias variadas',4,'cúrcuma y pimienta'],['Caldo de pollo',1200],['Pechuga de pollo cruda',350],['Cuscús crudo',90,'o pasta pequeña'],['Espinacas',80],['Zumo de limón',20],['Hierbas frescas',10,'perejil']],
+steps:['Sofríe en una olla la cebolla y la zanahoria picadas con el aceite 5 minutos.','Añade el ajo y el jengibre rallados y la cúrcuma, 1 minuto.','Echa el caldo y las pechugas enteras y cuece 15 minutos a fuego suave.','Saca el pollo, desmígalo con dos tenedores y devuélvelo a la olla con el cuscús. Cuece 5 minutos.','Apaga, añade las espinacas, el limón y el perejil, y ajusta de sal.'],
+tip:'Se congela muy bien sin el cuscús: añádelo al recalentar.'},
+{id:'garbanzos-marry-me',name:'Garbanzos "marry me" con cuscús',emoji:'💛',cat:'principal',time:20,serv:2,tags:['Viral en redes','Vegetariana'],
+ing:[['Aceite de oliva',10],['Ajo',6],['Tomates secos',30],['Especias variadas',3,'pimentón, orégano y guindilla'],['Garbanzos cocidos',400,'1 bote escurrido'],['Caldo de verduras',150],['Leche de coco light',100],['Queso parmesano',20],['Espinacas',100],['Hierbas frescas',8,'albahaca'],['Cuscús crudo',80]],
+steps:['Hidrata el cuscús con 80 ml de agua hirviendo con sal, tapado, 5 minutos, y suéltalo con un tenedor.','Sofríe el ajo y los tomates secos picados en el aceite 1 minuto; añade las especias.','Echa los garbanzos, el caldo y la leche de coco y cuece 6-8 minutos hasta que espese un poco. Aplasta algunos garbanzos con la cuchara para que quede más cremoso.','Añade el parmesano y las espinacas y remueve hasta que se ablanden.','Sirve sobre el cuscús con la albahaca por encima.'],
+tip:'Versión vegetariana del famoso pollo "marry me". Ahorra tiempo con garbanzos de bote bien lavados.'},
+{id:'flatbread-cottage',name:'Wrap de pan de queso cottage con pollo',emoji:'🌯',cat:'principal',time:40,serv:2,tags:['Viral en redes','Sin harina'],
+ing:[['Queso cottage',250],['Huevo entero',110,'2 huevos'],['Especias variadas',2,'ajo en polvo y orégano'],['Pechuga de pollo a la plancha',200],['Lechuga',40],['Tomate',100],['Pepino',80],['Skyr o yogur griego 0%',60],['Zumo de limón',5]],
+steps:['Precalienta el horno a 180 °C.','Tritura el cottage con los huevos y las especias hasta que quede liso.','Extiende la mezcla fina y uniforme sobre papel de horno (un rectángulo grande o dos redondos) y hornea 30-35 minutos, hasta que esté dorada y seca al tacto.','Deja templar 5 minutos: así se despega sin romperse.','Mezcla el skyr con el limón y sal, úntalo en el "pan" y rellénalo con el pollo en tiras, la lechuga, el tomate y el pepino. Enróllalo y córtalo por la mitad.'],
+tip:'Sale mejor con papel de horno de calidad (o una esterilla de silicona). Aguanta 3 días en la nevera.'},
+{id:'sopa-tomate-sandwich',name:'Crema de tomate asado con sándwich de queso fit',emoji:'🥪',cat:'principal',time:40,serv:2,tags:['Viral en redes','Reconfortante'],
+ing:[['Tomate',700],['Pimiento rojo',150],['Cebolla',100],['Ajo',10],['Aceite de oliva',10],['Caldo de verduras',250],['Queso fresco batido 0%',60],['Hierbas frescas',8,'albahaca'],['Pan integral',120,'4 rebanadas'],['Queso mozzarella light',60]],
+steps:['Precalienta el horno a 200 °C. Pon en una bandeja los tomates partidos, el pimiento y la cebolla en trozos y los ajos con piel, con el aceite y sal. Asa 30 minutos.','Pela los ajos y tritura todas las verduras con el caldo, el queso batido y la albahaca hasta que quede muy fina.','Mientras, haz los sándwiches con el pan y la mozzarella y tuéstalos en una sartén sin aceite, apretando, 2-3 minutos por lado.','Sirve la crema caliente con el sándwich cortado en tiras para mojar.'],
+tip:'Sale más crema de la que parece: congela la mitad en raciones para otra cena.'}
+);
 
 const BASE_FOODS = BASE_RAW.concat(EXTRA_RAW).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([name, kcal, p, c, f, fib]) => ({ id: 'b_' + norm(name).replace(/[^a-z0-9]+/g, '_'), name, kcal, p, c, f, fib, src: 'base' }));
 
@@ -887,11 +949,11 @@ const BASE_HEALTH = {
   'Salmón ahumado': [1, [SAL], ['Omega 3', 'Rico en proteína']], 'Queso curado': [1, [SAL, GS], ['Rico en calcio']], 'Queso parmesano': [1, [SAL, GS], ['Rico en calcio']], 'Queso feta': [1, [SAL, GS], []],
   'Mantequilla': [1, [GS, CAL], []], 'Mayonesa': [1, ['Mucha grasa', CAL, PROC], []], 'Crema de cacahuete': [1, [CAL], [GOOD, 'Rico en proteína']], 'Chocolate negro 70%': [1, [CAL, 'Azúcar añadido'], ['Rico en fibra']],
   'Miel': [1, [AZ], []], 'Dátiles': [1, ['Mucho azúcar natural'], ['Rico en fibra']], 'Salsa de soja': [1, [SAL], []], 'Salsa sriracha': [1, [SAL, 'Azúcar añadido'], []], 'Tomates secos': [1, [SAL], ['Rico en fibra']],
-  'Leche de coco light': [1, [GS], []], 'Tortilla de trigo integral': [2, [PROC], ['Integral']],
+  'Leche de coco light': [1, [GS], []], 'Burrata': [1, [GS, CAL], ['Rico en calcio']], 'Tortilla de trigo integral': [2, [PROC], ['Integral']],
   'Galletas integrales': [1, ['Azúcar añadido', PROC], ['Integral']], 'Café solo': null,
   'Azúcar': [0, [AZ, 'Sin nutrientes'], []], 'Cerveza': [0, ['Alcohol'], []], 'Vino tinto': [0, ['Alcohol'], []],
   'Aceite de oliva': [2, [CAL], [GOOD]], 'Aguacate': [2, [], [GOOD, 'Rico en fibra']], 'Almendras': [2, [CAL], [GOOD, 'Rico en fibra']], 'Nueces': [2, [CAL], [GOOD, 'Omega 3']], 'Cacahuetes': [2, [CAL], [GOOD, 'Rico en proteína']],
-  'Tahini': [2, [CAL], [GOOD]], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
+  'Tahini': [2, [CAL], [GOOD]], 'Pistachos': [2, [CAL], [GOOD, 'Rico en fibra']], 'Bulgur crudo': [2, [], ['Integral', 'Rico en fibra']], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
   'Pan integral': [2, [], ['Integral', 'Rico en fibra']], 'Pan pita integral': [2, [], ['Integral']], 'Pasta integral cruda': [2, [], ['Integral', 'Rico en fibra']], 'Arroz integral crudo': [2, [], ['Integral']], 'Arroz integral cocido': [2, [], ['Integral']], 'Pasta integral cocida': [2, [], ['Integral', 'Rico en fibra']],
   'Hummus': [2, [], ['Legumbre', 'Rico en fibra']], 'Maíz dulce (lata)': [2, [], []], 'Leche entera': [2, [], ['Rico en calcio']], 'Yogur griego': [2, [], ['Fermentado']], 'Yogur natural': [2, [], ['Fermentado']],
   'Levadura química': null, 'Especias variadas': null, 'Hierbas frescas': null, 'Canela molida': null, 'Vinagre balsámico': null, 'Vinagre de vino': null, 'Caldo de verduras': null, 'Caldo de pollo': null, 'Zumo de limón': null, 'Mostaza': null
@@ -957,7 +1019,7 @@ const BASE_SWAPS = {
   'Carne picada de vacuno': ['Carne picada de pavo', 'Ternera magra cruda', 'Lentejas cocidas'], 'Jamón serrano': ['Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Atún al natural (escurrido)'],
   'Pechuga de pavo en lonchas': ['Pavo, pechuga cruda', 'Pechuga de pollo a la plancha'], 'Salmón ahumado': ['Salmón crudo', 'Atún al natural (escurrido)'],
   'Queso curado': ['Queso fresco batido 0%', 'Queso cottage', 'Queso mozzarella light'], 'Queso parmesano': ['Queso mozzarella light', 'Queso cottage'], 'Queso feta': ['Queso fresco batido 0%', 'Queso cottage'],
-  'Mantequilla': ['Aceite de oliva', 'Aguacate'], 'Mayonesa': ['Skyr o yogur griego 0%', 'Hummus', 'Mostaza'], 'Crema de cacahuete': ['Cacahuetes', 'Almendras'],
+  'Burrata': ['Queso mozzarella light', 'Queso cottage'], 'Mantequilla': ['Aceite de oliva', 'Aguacate'], 'Mayonesa': ['Skyr o yogur griego 0%', 'Hummus', 'Mostaza'], 'Crema de cacahuete': ['Cacahuetes', 'Almendras'],
   'Chocolate negro 70%': ['Cacao puro en polvo', 'Fresas', 'Frutos rojos congelados'], 'Miel': ['Canela molida', 'Plátano', 'Frutos rojos congelados'], 'Dátiles': ['Manzana', 'Plátano', 'Fresas'],
   'Salsa de soja': ['Especias variadas', 'Zumo de limón'], 'Salsa sriracha': ['Especias variadas'], 'Tomates secos': ['Tomate', 'Tomate triturado'], 'Leche de coco light': ['Skyr o yogur griego 0%', 'Leche desnatada'],
   'Azúcar': ['Canela molida', 'Plátano', 'Dátiles']
@@ -1564,10 +1626,10 @@ const SECTIONS = [['fruver', '🥬 Frutas y verduras'], ['carne', '🥩 Carne y 
 const SEC_OF = {
   fruver: ['Aguacate', 'Ajo', 'Berenjena', 'Boniato crudo', 'Brócoli', 'Calabacín', 'Calabaza', 'Cebolla', 'Champiñones', 'Coliflor', 'Espinacas', 'Fresas', 'Hierbas frescas', 'Jengibre fresco', 'Judías verdes', 'Kiwi', 'Lechuga', 'Mango', 'Manzana', 'Naranja', 'Patata cruda', 'Pepino', 'Pimiento rojo', 'Pimiento verde', 'Plátano', 'Rúcula', 'Tomate', 'Uvas', 'Zanahoria', 'Zumo de limón', 'Remolacha cocida', 'Dátiles'],
   carne: ['Bacalao desalado', 'Carne picada de pavo', 'Carne picada de vacuno', 'Cerdo, lomo crudo', 'Gambas peladas', 'Jamón serrano', 'Merluza cruda', 'Pavo, pechuga cruda', 'Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Pechuga de pollo cruda', 'Salmón ahumado', 'Salmón crudo', 'Ternera magra cruda', 'Atún al natural (escurrido)'],
-  lacteos: ['Clara de huevo', 'Huevo entero', 'Leche desnatada', 'Leche entera', 'Leche semidesnatada', 'Mantequilla', 'Queso cottage', 'Queso curado', 'Queso feta', 'Queso fresco', 'Queso fresco batido 0%', 'Queso mozzarella light', 'Queso parmesano', 'Skyr o yogur griego 0%', 'Yogur griego', 'Yogur natural', 'Bebida de almendras sin azúcar', 'Tofu', 'Hummus', 'Ñoquis de patata'],
-  pan: ['Arroz blanco cocido', 'Arroz blanco crudo', 'Arroz integral cocido', 'Arroz integral crudo', 'Avena en copos', 'Copos de maíz sin azúcar', 'Cuscús crudo', 'Fideos de arroz (crudos)', 'Harina de avena', 'Harina de trigo', 'Maicena', 'Pan blanco', 'Pan integral', 'Pan pita integral', 'Papel de arroz', 'Pasta cocida', 'Pasta cruda', 'Pasta integral cocida', 'Pasta integral cruda', 'Quinoa cocida', 'Quinoa cruda', 'Tortilla de trigo integral', 'Tortitas de arroz', 'Galletas integrales', 'Levadura química', 'Maíz para palomitas'],
+  lacteos: ['Clara de huevo', 'Huevo entero', 'Leche desnatada', 'Leche entera', 'Leche semidesnatada', 'Mantequilla', 'Queso cottage', 'Queso curado', 'Queso feta', 'Queso fresco', 'Queso fresco batido 0%', 'Queso mozzarella light', 'Queso parmesano', 'Skyr o yogur griego 0%', 'Yogur griego', 'Yogur natural', 'Bebida de almendras sin azúcar', 'Tofu', 'Hummus', 'Ñoquis de patata', 'Burrata'],
+  pan: ['Arroz blanco cocido', 'Arroz blanco crudo', 'Arroz integral cocido', 'Arroz integral crudo', 'Avena en copos', 'Copos de maíz sin azúcar', 'Cuscús crudo', 'Fideos de arroz (crudos)', 'Harina de avena', 'Harina de trigo', 'Maicena', 'Pan blanco', 'Pan integral', 'Pan pita integral', 'Papel de arroz', 'Pasta cocida', 'Pasta cruda', 'Pasta integral cocida', 'Pasta integral cruda', 'Quinoa cocida', 'Quinoa cruda', 'Tortilla de trigo integral', 'Tortitas de arroz', 'Galletas integrales', 'Levadura química', 'Maíz para palomitas', 'Bulgur crudo'],
   legum: ['Alubias cocidas', 'Garbanzos cocidos', 'Lentejas cocidas', 'Lentejas rojas crudas', 'Maíz dulce (lata)', 'Tomate triturado', 'Tomates secos', 'Leche de coco light', 'Caldo de pollo', 'Caldo de verduras'],
-  secos: ['Almendras', 'Cacahuetes', 'Crema de cacahuete', 'Nueces', 'Semillas de chía', 'Semillas de sésamo', 'Tahini'],
+  secos: ['Almendras', 'Cacahuetes', 'Crema de cacahuete', 'Nueces', 'Semillas de chía', 'Semillas de sésamo', 'Tahini', 'Pistachos'],
   aceite: ['Aceite de oliva', 'Canela molida', 'Especias variadas', 'Mayonesa', 'Mostaza', 'Salsa de soja', 'Salsa sriracha', 'Vinagre balsámico', 'Vinagre de vino', 'Miel', 'Azúcar'],
   congel: ['Frutos rojos congelados', 'Guisantes', 'Edamame'],
   dulce: ['Cacao puro en polvo', 'Chocolate negro 70%', 'Café solo', 'Cerveza', 'Vino tinto']
@@ -1936,6 +1998,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 21:45', short: '14 recetas virales nuevas de comida y cena.', items: ['🔥 <b>14 recetas virales</b> de comida y cena: ensalada "Jennifer Aniston", dense bean salad, pizza bowl de cottage, bowl de atún picante con arroz crujiente, sándwich de pimiento, pasta al limón con burrata, bocaditos de salmón con la ensalada de pepino viral, orzo de pollo al limón, alubias cremosas, pollo hasselback, sopa anti-resfriado, garbanzos "marry me", wrap de pan de cottage y crema de tomate asado con sándwich.', '🛒 Nuevos ingredientes con dónde comprarlos: bulgur, pistachos y burrata.'] },
   { v: '30-sep · 21:30', short: 'Ajustes reorganizado en secciones, y buscador en Mis alimentos.', items: ['⚙️ <b>Ajustes</b> ahora es un menú de secciones (Objetivos, Báscula, Mis alimentos, Copia en GitHub, Buzón de mejoras…). Pulsa una para entrar y ‹ para volver.', '🔎 <b>Mis alimentos</b> tiene buscador y filtros (escaneados o creados por ti), para que no sea una lista interminable.'] },
   { v: '30-sep · 21:15', short: 'Menú compartido para los dos, lo del menú aparece en el Diario para apuntarlo de un toque, y buzón de mejoras.', items: ['👥 <b>Menú compartido</b>: un solo menú para los dos, con cantidades para cada uno, total a cocinar y reparto de lo cocinado. La lista de la compra suma los dos.', '📅 En el <b>Diario</b> aparece lo que tenías en el menú, con <b>✓ Comido</b> y <b>⚖️ Pesar</b>.', '💡 <b>Buzón de mejoras</b> en Ajustes para apuntar ideas.', '🍽️ Las recetas "a tu medida" ya no se agrandan ni encogen de forma exagerada (como mucho ×1,6 o ×0,5).'] },
   { v: '30-sep · 20:30', short: 'Lista de la compra ordenada por secciones del súper y botón para enviarla a Notas.', items: ['🛒 La lista de la compra se ordena <b>por sección</b> (fruta y verdura, carne y pescado, lácteos…), <b>por tienda</b> o <b>A-Z</b>.', '🥚 Cantidades en unidades cuando tiene sentido: "6 huevos (330 g)", "2 cebollas".', '📝 Botón <b>Enviar a Notas</b>: en Notas, selecciona todo y pulsa ☑️ para tener casillas.'] },
