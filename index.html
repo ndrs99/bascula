@@ -14,7 +14,8 @@ html{background:var(--bg)}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent;font-size:15px;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 75%,transparent);padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto}
 header .ttl{flex:1;min-width:0}
-header h1{font-size:30px;margin:0;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+header h1{font-size:30px;margin:0;font-weight:800;letter-spacing:-.03em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header h1.long{font-size:23px}
 header .sub{font-size:13px;color:var(--mute);margin-top:2px;font-weight:500}
 main{padding:0 16px calc(120px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;animation:fade .25s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -141,11 +142,12 @@ details.help[open] .chev{transform:rotate(90deg)}
 .helpb ul,.helpb ol{padding-left:18px;margin:6px 0}.helpb li{margin:5px 0}.helpb p{margin:6px 0}
 @media (max-width:370px){header{gap:6px;padding-left:12px;padding-right:12px}header h1{font-size:24px}header .sub{font-size:12px}.pill{padding:8px 10px;font-size:13px}header .btn.round{width:36px;height:36px}.qstep{width:42px;height:42px}.qquick button{font-size:12px}main{padding-left:12px;padding-right:12px}}
 .planrow{display:flex;gap:10px;align-items:center;margin-top:10px;padding:10px 12px;border-radius:16px;background:var(--soft);border:1.5px dashed var(--line)}
+.ajrow{padding:12px 0}
 .stat{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:var(--soft);font-size:12.5px;font-weight:700;color:var(--mute)}
 </style>
 </head>
 <body>
-<header><button class="btn round" id="back" onclick="go('hoy')" style="display:none;flex:none">‹</button><div class="ttl"><h1 id="title">Hoy</h1><div class="sub" id="sub"></div></div><button class="pill" id="pill" onclick="pillTap()"><span class="dot" id="pdot"></span><span id="ptxt">Conectar</span></button><button class="btn round" id="helpb" onclick="openHelp(TAB_HELP[tab])" aria-label="Ayuda" style="flex:none;font-weight:800;font-size:18px">?</button><button class="btn round" id="gear" onclick="go('ajustes')" aria-label="Ajustes" style="flex:none"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button></header>
+<header><button class="btn round" id="back" onclick="goBack()" style="display:none;flex:none">‹</button><div class="ttl"><h1 id="title">Hoy</h1><div class="sub" id="sub"></div></div><button class="pill" id="pill" onclick="pillTap()"><span class="dot" id="pdot"></span><span id="ptxt">Conectar</span></button><button class="btn round" id="helpb" onclick="openHelp(TAB_HELP[tab])" aria-label="Ayuda" style="flex:none;font-weight:800;font-size:18px">?</button><button class="btn round" id="gear" onclick="go('ajustes')" aria-label="Ajustes" style="flex:none"><svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button></header>
 <main id="view"></main>
 <nav class="tabs">
   <button data-t="hoy" onclick="go('hoy')"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Diario</button>
@@ -160,7 +162,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 21:15';
+const APP_VERSION = '30-sep · 21:30';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -728,11 +730,12 @@ function confirmSheet(msg, yes, label = 'Borrar') { openSheet(`<p style="font-si
 /* ---------- navegación ---------- */
 let tab = 'hoy', day = todayKey(), progN = 7, recipeDraft = null;
 const TITLES = { hoy: 'Diario',pesar: 'Pesar', recetas: 'Recetas', menu: 'Menú', progreso: 'Progreso', ajustes: 'Ajustes' };
-function go(t) { tab = t; render(); window.scrollTo(0, 0); }
+function go(t) { if (t === 'ajustes' && tab !== 'ajustes') ajSec = null; tab = t; render(); window.scrollTo(0, 0); }
 function render() {
   viewHook = null; const v = $('#view');
   ({ hoy: vHoy, pesar: vPesar, recetas: vRecetas, menu: vMenu, progreso: vProg, ajustes: vAjustes })[tab](v);
-  $('#title').textContent = TITLES[tab];
+  const _t = tab === 'ajustes' && ajSec ? (AJ_SECS.find(x => x[0] === ajSec) || [0, 0, 'Ajustes'])[2] : TITLES[tab]; $('#title').classList.toggle('long', _t.length > 9);
+  $('#title').textContent = tab === 'ajustes' && ajSec ? (AJ_SECS.find(x => x[0] === ajSec) || [0, 0, 'Ajustes'])[2] : TITLES[tab];
   const sd = parseKey(todayKey()).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); $('#sub').textContent = sd[0].toUpperCase() + sd.slice(1);
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
   $('#back').style.display = (tab === 'ajustes' || tab === 'progreso') ? '' : 'none'; $('#gear').style.display = tab === 'ajustes' ? 'none' : '';
@@ -1827,38 +1830,77 @@ function vProg(v) {
 }
 
 /* ---------- AJUSTES ---------- */
+let ajSec = null, foodQ = '', foodN = 40;
+const AJ_SECS = [
+  ['objetivos', '🎯', 'Objetivos', () => `${S.goals.kcal} kcal · ${S.goals.p} g proteína`, 'rgba(18,184,134,.16)'],
+  ['diario', '📅', 'Diario', () => `El día termina a las ${String(S.settings.dayEnd ?? 4).padStart(2, '0')}:00`, 'rgba(245,159,0,.16)'],
+  ['bascula', '⚖️', 'Báscula', () => scale.connected ? (scale.demo ? 'Modo demo' : 'Conectada') : 'Desconectada', 'rgba(59,158,255,.15)'],
+  ['alimentos', '🥫', 'Mis alimentos', () => { const n = Object.values(S.foods).filter(f => f.src !== 'recipe').length; return n ? `${n} guardados` : 'Ninguno todavía'; }, 'rgba(160,120,70,.16)'],
+  ['habituales', '⭐', 'Comidas habituales', () => S.templates.length ? `${S.templates.length} guardadas` : 'Ninguna todavía', 'rgba(245,159,0,.16)'],
+  ['recipientes', '🍽️', 'Recipientes', () => S.containers.length ? `${S.containers.length} guardados` : 'Ninguno todavía', 'rgba(121,80,242,.15)'],
+  ['github', '☁️', 'Copia en GitHub', () => syncReady() ? (SY.msg || 'Configurada').split(' · ')[0] : 'Sin configurar', 'rgba(59,158,255,.15)'],
+  ['mejoras', '💡', 'Buzón de mejoras', () => { const n = Object.values(IDEAS.items).filter(i => !i.del && (i.st || 'pendiente') === 'pendiente').length; return n ? `${n} ideas pendientes` : 'Apunta ideas para la app'; }, 'rgba(245,159,0,.16)'],
+  ['ayuda', '📖', 'Ayuda y novedades', () => `Versión ${APP_VERSION}`, 'rgba(18,184,134,.16)'],
+  ['datos', '💾', 'Copia y borrado', () => 'Exportar, importar o empezar de cero', 'rgba(240,62,62,.12)']
+];
+function ajGo(sec) { ajSec = sec; foodQ = ''; foodN = 40; render(); window.scrollTo(0, 0); }
+function goBack() { if (tab === 'ajustes' && ajSec) return ajGo(null); go('hoy'); }
 function vAjustes(v) {
-  const g = S.goals, mine = Object.values(S.foods).filter(f => f.src !== 'recipe');
-  const numI = (id, l, val) => `<label>${l}<input id="${id}" type="number" inputmode="numeric" value="${val}"></label>`;
-  v.innerHTML = `<div class="card row" style="background:var(--grad);color:#fff;border:0"><span style="font-size:28px">📖</span><div class="sp"><b>Guía de uso</b><div class="sm" style="opacity:.85">Para qué sirve cada cosa y cómo usarla</div></div><button class="btn small" style="background:#fff;color:#0c8f68" onclick="openHelp()">Abrir</button></div>
-  <div class="row" style="gap:8px;margin:-4px 0 4px"><button class="btn small sp" onclick="openHelp('novedades')">🆕 Novedades</button><button class="btn small sp" onclick="startTour()">▶️ Repetir tour</button><button class="btn small sp" onclick="S.tipsSeen={};save();toast('Consejos activados de nuevo')">💡 Ver consejos otra vez</button></div>
-  <div class="card"><div class="row"><b class="sp">Objetivos diarios</b><button class="btn small pri" onclick="openCalc()">🧮 Calcular</button></div>
-  <div class="grid2">${numI('g_k', 'Calorías (kcal)', g.kcal)}${numI('g_w', 'Agua (ml)', g.water)}${numI('g_p', 'Proteína (g)', g.p)}${numI('g_c', 'Carbohidratos (g)', g.c)}${numI('g_f', 'Grasa (g)', g.f)}</div>
-  <p class="sm mute" id="g_hint"></p><p class="sm mute">Las recetas "a tu medida" reparten tu objetivo así: desayuno 25%, comida 35%, merienda 10% y cena 30%.</p><button class="btn pri block" id="g_ok">Guardar objetivos</button></div>
-  <div class="card"><div class="row"><div class="sp"><b>El día termina a las</b><div class="sm mute">Lo que comas antes de esa hora cuenta para el día anterior (cenar a la 1:00 sigue siendo la cena de ayer).</div></div>
-  <select id="s_de" style="width:auto">${[0, 2, 3, 4, 5, 6].map(h => `<option value="${h}" ${h === (S.settings.dayEnd ?? 4) ? 'selected' : ''}>${String(h).padStart(2, '0')}:00</option>`).join('')}</select></div></div>
-  <div class="card"><b>Báscula</b>
-  <div class="row" style="margin-top:8px"><span class="sp">Estado</span><span class="mute">${scale.connected ? (scale.demo ? 'Modo demo' : 'Conectada') : 'Desconectada'}</span></div>
-  <div class="row" style="margin-top:8px"><span class="sp">Precisión en pantalla</span><div class="seg"><button class="${S.settings.decimals ? '' : 'on'}" onclick="setDec(0)">1 g</button><button class="${S.settings.decimals ? 'on' : ''}" onclick="setDec(1)">0,1 g</button></div></div>
-  <p class="sm mute">La báscula envía miligramos, pero el sensor es fiable al gramo aproximadamente. La app promedia las lecturas cuando el peso está quieto para dar un valor más estable; el decimal es orientativo.</p>
-  <label class="chk" style="margin-top:8px"><input type="checkbox" id="s_demo" ${S.settings.demo ? 'checked' : ''}> Modo demo (simula la báscula)</label>
-  <button class="btn block" style="margin-top:10px" onclick="${scale.connected ? 'disconnect()' : 'connect()'}">${scale.connected ? 'Desconectar' : 'Conectar'}</button></div>
-  ${ideasCard()}
-  <div class="card"><b>Comidas habituales</b>${S.templates.length ? S.templates.map(t => `<div class="item" style="cursor:default"><div class="sp"><div class="nm">⚡ ${esc(t.name)}</div><div class="sm mute">${t.items.length} alimentos · ${r0(tplKcal(t))} kcal</div></div><button class="btn bad small" onclick="S.templates=S.templates.filter(x=>x.id!=='${t.id}');save();render()">✕</button></div>`).join('') : '<p class="sm mute">Toca ⭐ en una comida del diario para guardarla.</p>'}</div>
-  <div class="card"><b>Recipientes guardados</b>${S.containers.length ? S.containers.map(c => `<div class="item" style="cursor:default"><div class="sp">${esc(c.name)}</div><span class="mute">${fmtW(c.grams)} g</span><button class="btn bad small" onclick="delContainer('${c.id}')">✕</button></div>`).join('') : '<p class="sm mute">Se guardan desde Pesar → Recipiente.</p>'}</div>
-  <div class="card"><div class="row"><b class="sp">Mis alimentos (${mine.length})</b><button class="btn ghost small" onclick="openFoodForm()">+ Crear</button></div>
-  ${mine.map(f => `<div class="item" onclick="editFood('${f.id}')"><div class="sp"><div>${esc(f.name)}</div><div class="sm mute">${esc(f.brand || '')} ${r0(f.kcal)} kcal/100 g</div></div><span class="tag">${f.src === 'off' ? 'OFF' : 'propio'}</span></div>`).join('')}</div>
-  ${syncCard()}
-  <div class="card"><b>Copia manual</b><p class="sm mute">Exporta o importa todos tus datos como texto.</p>
-  <div class="row"><button class="btn sp" onclick="exportData()">Exportar</button><button class="btn sp" onclick="importData()">Importar</button></div></div>
-  <div class="card"><button class="btn bad block" onclick="wipeLocal()">Borrar todos los datos</button></div>
-  <p class="sm mute" style="text-align:center">Versión ${APP_VERSION} · Datos de productos: Open Food Facts (ODbL). Valores de básicos aproximados.</p>`;
-  const hint = () => { const k = (+$('#g_p').value) * 4 + (+$('#g_c').value) * 4 + (+$('#g_f').value) * 9; $('#g_hint').textContent = `Tus macros suman ${r0(k)} kcal (objetivo: ${$('#g_k').value || 0}).`; };
-  ['#g_p', '#g_c', '#g_f', '#g_k'].forEach(id => $(id).oninput = hint); hint();
-  $('#g_ok').onclick = () => { const n = id => Math.max(0, parseInt($(id).value) || 0); S.goals = { kcal: n('#g_k') || 2000, p: n('#g_p') || 1, c: n('#g_c') || 1, f: n('#g_f') || 1, water: n('#g_w') || 2000 }; save(); toast('Objetivos guardados'); };
-  $('#s_de').onchange = e => { S.settings.dayEnd = +e.target.value; save(); day = todayKey(); toast('Guardado'); };
-  bindSyncCard(); bindIdeas(); if (syncReady()) syncIdeas().then(refreshIdeas).catch(() => {});
-  $('#s_demo').onchange = e => { S.settings.demo = e.target.checked; save(); if (!e.target.checked && scale.demo) stopDemo(); render(); };
+  if (!ajSec) {
+    v.innerHTML = `<div class="card" style="padding:4px 16px">${AJ_SECS.map(([k, ic, t, sub, bg]) => `<div class="item ajrow" onclick="ajGo('${k}')"><div class="mealic" style="width:38px;height:38px;font-size:19px;border-radius:11px;background:${bg}">${ic}</div><div class="sp" style="min-width:0"><div class="nm">${t}</div><div class="sm mute" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(sub())}</div></div><span class="mute" style="font-size:20px">›</span></div>`).join('')}</div>
+    <p class="sm mute" style="text-align:center">Versión ${APP_VERSION} · Datos de productos: Open Food Facts (ODbL). Valores de básicos aproximados.</p>`;
+    return;
+  }
+  const g = S.goals, numI = (id, l, val) => `<label>${l}<input id="${id}" type="number" inputmode="numeric" value="${val}"></label>`;
+  const S_ = {
+    objetivos: () => `<div class="card"><div class="row"><b class="sp">Objetivos diarios</b><button class="btn small pri" onclick="openCalc()">🧮 Calcular</button></div>
+      <div class="grid2">${numI('g_k', 'Calorías (kcal)', g.kcal)}${numI('g_w', 'Agua (ml)', g.water)}${numI('g_p', 'Proteína (g)', g.p)}${numI('g_c', 'Carbohidratos (g)', g.c)}${numI('g_f', 'Grasa (g)', g.f)}</div>
+      <p class="sm mute" id="g_hint"></p><p class="sm mute">Las recetas "a tu medida" reparten tu objetivo así: desayuno 25%, comida 35%, merienda 10% y cena 30%.</p><button class="btn pri block" id="g_ok">Guardar objetivos</button></div>`,
+    diario: () => `<div class="card"><div class="row"><div class="sp"><b>El día termina a las</b><div class="sm mute">Lo que comas antes de esa hora cuenta para el día anterior (cenar a la 1:00 sigue siendo la cena de ayer).</div></div>
+      <select id="s_de" style="width:auto">${[0, 2, 3, 4, 5, 6].map(h => `<option value="${h}" ${h === (S.settings.dayEnd ?? 4) ? 'selected' : ''}>${String(h).padStart(2, '0')}:00</option>`).join('')}</select></div></div>`,
+    bascula: () => `<div class="card"><div class="row"><span class="sp">Estado</span><span class="mute">${scale.connected ? (scale.demo ? 'Modo demo' : 'Conectada') : 'Desconectada'}</span></div>
+      <button class="btn block ${scale.connected ? '' : 'pri'}" style="margin-top:10px" onclick="${scale.connected ? 'disconnect()' : 'connect()'}">${scale.connected ? 'Desconectar' : 'Conectar'}</button></div>
+      <div class="card"><div class="row"><span class="sp"><b>Precisión en pantalla</b></span><div class="seg"><button class="${S.settings.decimals ? '' : 'on'}" onclick="setDec(0)">1 g</button><button class="${S.settings.decimals ? 'on' : ''}" onclick="setDec(1)">0,1 g</button></div></div>
+      <p class="sm mute">La báscula envía miligramos, pero el sensor es fiable al gramo aproximadamente. La app promedia las lecturas cuando el peso está quieto para dar un valor más estable; el decimal es orientativo.</p></div>
+      <div class="card"><label class="chk"><input type="checkbox" id="s_demo" ${S.settings.demo ? 'checked' : ''}> <span><b>Modo demo</b><br><span class="sm mute">Simula la báscula para probar la app sin ella.</span></span></label></div>`,
+    alimentos: () => `<div class="card"><div class="row"><input id="fq" placeholder="Buscar en mis alimentos…" value="${esc(foodQ)}" autocomplete="off"><button class="btn pri" onclick="openFoodForm()" style="white-space:nowrap">+ Crear</button></div>
+      <div class="chips qwrap" id="fsrc"></div><div id="fl"></div></div>`,
+    habituales: () => `<div class="card">${S.templates.length ? S.templates.map(t => `<div class="item" style="cursor:default"><div class="sp"><div class="nm">⚡ ${esc(t.name)}</div><div class="sm mute">${t.items.length} alimentos · ${r0(tplKcal(t))} kcal</div></div><button class="btn bad small" onclick="S.templates=S.templates.filter(x=>x.id!=='${t.id}');save();render()">✕</button></div>`).join('') : '<p class="sm mute">Toca ⭐ en una comida del diario para guardarla.</p>'}</div>`,
+    recipientes: () => `<div class="card">${S.containers.length ? S.containers.map(c => `<div class="item" style="cursor:default"><div class="sp">${esc(c.name)}</div><span class="mute">${fmtW(c.grams)} g</span><button class="btn bad small" onclick="delContainer('${c.id}')">✕</button></div>`).join('') : '<p class="sm mute">Se guardan desde Pesar → Recipiente.</p>'}</div>`,
+    github: () => syncCard(),
+    mejoras: () => ideasCard(),
+    ayuda: () => `<div class="card row" style="background:var(--grad);color:#fff;border:0"><span style="font-size:28px">📖</span><div class="sp"><b>Guía de uso</b><div class="sm" style="opacity:.85">Para qué sirve cada cosa y cómo usarla</div></div><button class="btn small" style="background:#fff;color:#0c8f68" onclick="openHelp()">Abrir</button></div>
+      <div class="card" style="padding:4px 16px"><div class="item" onclick="openHelp('novedades')"><span style="font-size:20px">🆕</span><div class="sp nm">Novedades</div><span class="mute">›</span></div>
+      <div class="item" onclick="startTour()"><span style="font-size:20px">▶️</span><div class="sp nm">Repetir el tour de bienvenida</div><span class="mute">›</span></div>
+      <div class="item" onclick="S.tipsSeen={};save();toast('Consejos activados de nuevo')"><span style="font-size:20px">💡</span><div class="sp nm">Ver los consejos otra vez</div></div></div>
+      <p class="sm mute" style="text-align:center">Versión ${APP_VERSION}</p>`,
+    datos: () => `<div class="card"><b>Copia manual</b><p class="sm mute">Exporta o importa todos tus datos como texto.</p>
+      <div class="row"><button class="btn sp" onclick="exportData()">Exportar</button><button class="btn sp" onclick="importData()">Importar</button></div></div>
+      <div class="card"><b>Borrar datos</b><p class="sm mute">Borra todo lo de este móvil. La copia en GitHub, si la tienes, no se toca.</p><button class="btn bad block" onclick="wipeLocal()">Borrar todos los datos</button></div>`
+  };
+  v.innerHTML = S_[ajSec] ? S_[ajSec]() : '';
+  if ($('#g_ok')) {
+    const hint = () => { const k = (+$('#g_p').value) * 4 + (+$('#g_c').value) * 4 + (+$('#g_f').value) * 9; $('#g_hint').textContent = `Tus macros suman ${r0(k)} kcal (objetivo: ${$('#g_k').value || 0}).`; };
+    ['#g_p', '#g_c', '#g_f', '#g_k'].forEach(id => $(id).oninput = hint); hint();
+    $('#g_ok').onclick = () => { const n = id => Math.max(0, parseInt($(id).value) || 0); S.goals = { kcal: n('#g_k') || 2000, p: n('#g_p') || 1, c: n('#g_c') || 1, f: n('#g_f') || 1, water: n('#g_w') || 2000 }; save(); toast('Objetivos guardados'); };
+  }
+  if ($('#s_de')) $('#s_de').onchange = e => { S.settings.dayEnd = +e.target.value; save(); day = todayKey(); toast('Guardado'); };
+  if ($('#s_demo')) $('#s_demo').onchange = e => { S.settings.demo = e.target.checked; save(); if (!e.target.checked && scale.demo) stopDemo(); render(); };
+  if ($('#sy_r')) bindSyncCard();
+  if ($('#ideas')) { bindIdeas(); if (syncReady()) syncIdeas().then(refreshIdeas).catch(() => {}); }
+  if ($('#fl')) drawMyFoods();
+}
+let foodSrc = 'all';
+function drawMyFoods() {
+  const all = Object.values(S.foods).filter(f => f.src !== 'recipe'), q = norm(foodQ);
+  const cnt = { all: all.length, off: all.filter(f => f.src === 'off').length, custom: all.filter(f => f.src !== 'off').length };
+  $('#fsrc').innerHTML = [['all', 'Todos'], ['off', 'Escaneados'], ['custom', 'Creados por mí']].map(([k, l]) => `<button class="chip ${foodSrc === k ? 'on' : ''}" data-fs="${k}">${l} · ${cnt[k]}</button>`).join('');
+  const list = all.filter(f => (foodSrc === 'all' || (foodSrc === 'off' ? f.src === 'off' : f.src !== 'off')) && (!q || norm(f.name + ' ' + (f.brand || '')).includes(q))).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  $('#fl').innerHTML = (list.length ? list.slice(0, foodN).map(f => `<div class="item" data-fid="${esc(f.id)}"><div class="sp" style="min-width:0"><div class="nm">${esc(f.name)}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal/100 g</div></div><span class="tag">${f.src === 'off' ? 'OFF' : 'propio'}</span></div>`).join('') : `<p class="sm mute" style="margin-top:12px">${all.length ? 'No hay alimentos con esa búsqueda.' : 'Aquí aparecen los productos que escanees o crees tú.'}</p>`)
+    + (list.length > foodN ? `<button class="btn block" style="margin-top:10px" id="fmore">Ver ${Math.min(40, list.length - foodN)} más (${list.length - foodN} restantes)</button>` : '');
+  $('#fq').oninput = e => { foodQ = e.target.value; foodN = 40; drawMyFoods(); };
+  $('#fsrc').onclick = e => { const b = e.target.closest('[data-fs]'); if (b) { foodSrc = b.dataset.fs; foodN = 40; drawMyFoods(); } };
+  $('#fl').onclick = e => { if (e.target.closest('#fmore')) { foodN += 40; return drawMyFoods(); } const it = e.target.closest('[data-fid]'); if (it) editFood(it.dataset.fid); };
 }
 function wipeLocal() {
   const has = syncReady() && SY.linked === SY.profile;
@@ -1894,6 +1936,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 21:30', short: 'Ajustes reorganizado en secciones, y buscador en Mis alimentos.', items: ['⚙️ <b>Ajustes</b> ahora es un menú de secciones (Objetivos, Báscula, Mis alimentos, Copia en GitHub, Buzón de mejoras…). Pulsa una para entrar y ‹ para volver.', '🔎 <b>Mis alimentos</b> tiene buscador y filtros (escaneados o creados por ti), para que no sea una lista interminable.'] },
   { v: '30-sep · 21:15', short: 'Menú compartido para los dos, lo del menú aparece en el Diario para apuntarlo de un toque, y buzón de mejoras.', items: ['👥 <b>Menú compartido</b>: un solo menú para los dos, con cantidades para cada uno, total a cocinar y reparto de lo cocinado. La lista de la compra suma los dos.', '📅 En el <b>Diario</b> aparece lo que tenías en el menú, con <b>✓ Comido</b> y <b>⚖️ Pesar</b>.', '💡 <b>Buzón de mejoras</b> en Ajustes para apuntar ideas.', '🍽️ Las recetas "a tu medida" ya no se agrandan ni encogen de forma exagerada (como mucho ×1,6 o ×0,5).'] },
   { v: '30-sep · 20:30', short: 'Lista de la compra ordenada por secciones del súper y botón para enviarla a Notas.', items: ['🛒 La lista de la compra se ordena <b>por sección</b> (fruta y verdura, carne y pescado, lácteos…), <b>por tienda</b> o <b>A-Z</b>.', '🥚 Cantidades en unidades cuando tiene sentido: "6 huevos (330 g)", "2 cebollas".', '📝 Botón <b>Enviar a Notas</b>: en Notas, selecciona todo y pulsa ☑️ para tener casillas.'] },
   { v: '30-sep · 02:20', short: 'Más seguridad en la copia de GitHub y arreglos tras una revisión completa de la app.', items: ['🛡️ Al reinstalar, la app <b>ya no puede sobrescribir tu copia</b> de GitHub por error: te pregunta si quieres restaurarla.', '🛡️ "Borrar todos los datos" borra solo el móvil; <b>la copia en GitHub se conserva</b>.', '⚖️ Si pulsas guardar mientras el peso se mueve, la app <b>espera a que se estabilice</b> en vez de dar error.', '🍲 Al comer una receta tuya, botón de <b>"1 ración · X g"</b>.', '📅 Si dejas la app abierta y pasa la hora de fin de día, cambia sola al día nuevo.'] },
@@ -1913,7 +1956,7 @@ const HELP = [
 <p>La app vive en una página web que se abre con <b>Bluefy</b> (gratis en la App Store), porque Safari no deja conectar con la báscula por Bluetooth.</p>
 <ol><li>Abre Bluefy y entra en la dirección de la app. Guárdala en favoritos para tenerla a mano.</li>
 <li>Arriba a la derecha pulsa <b>Conectar</b> y elige la báscula (sale como <b>4454</b>). La báscula tiene que estar encendida.</li>
-<li>Ve a <b>Ajustes → 🧮 Calcular</b> para poner tu objetivo de calorías real. Todo lo demás (recetas, sugerencias, menú) se ajusta a él.</li>
+<li>Ve a <b>Ajustes → 🎯 Objetivos → 🧮 Calcular</b> para poner tu objetivo de calorías real. Todo lo demás (recetas, sugerencias, menú) se ajusta a él.</li>
 <li>Opcional pero muy recomendable: configura la <b>copia en GitHub</b> para no perder nunca los datos y compartir precios y lista de la compra con tu pareja.</li></ol>`},
 {id:'bascula',icon:'⚖️',title:'Pesar con la báscula',tabs:['pesar'],body:`
 <p>La pestaña <b>Pesar</b> muestra el peso en vivo. El anillo gira mientras el peso se mueve y se cierra en verde cuando está <b>estable</b>: la app solo registra pesos estables.</p>
@@ -1948,12 +1991,12 @@ const HELP = [
 <p>Cuando lo apuntas, desaparece la sugerencia de esa comida.</p>`},
 {id:'habituales',icon:'⭐',title:'Comidas habituales',tabs:['hoy'],body:`
 <p>Si desayunas casi siempre lo mismo, apúntalo una vez y pulsa <b>⭐</b> en esa comida para guardarlo como habitual.</p>
-<p>A partir de ahí aparece un botón <b>⚡</b> en esa comida: un toque y queda todo apuntado con sus cantidades. Las borras desde Ajustes → Comidas habituales.</p>`},
+<p>A partir de ahí aparece un botón <b>⚡</b> en esa comida: un toque y queda todo apuntado con sus cantidades. Las borras desde Ajustes → ⭐ Comidas habituales.</p>`},
 {id:'sugerir',icon:'✨',title:'¿Qué como ahora?',tabs:['hoy'],body:`
 <p>En el Diario, <b>✨ ¿Qué como ahora?</b> mira lo que te queda del día, reserva hueco para las comidas que faltan y te propone recetas <b>con las cantidades ya ajustadas</b> a ese hueco.</p>
 <p>Aparecen primero las que más proteína aportan. Puedes cambiar de comida con los botones de arriba (desayuno, comida…). Al abrir una receta verás exactamente cuántos gramos de cada cosa te tocan.</p>`},
 {id:'objetivo',icon:'🧮',title:'Tu objetivo de calorías',tabs:['ajustes'],body:`
-<p>En <b>Ajustes → 🧮 Calcular</b> metes edad, altura, peso, actividad y qué buscas (perder grasa, mantener o ganar músculo). La app calcula tus calorías y macros con la fórmula de Mifflin-St Jeor.</p>
+<p>En <b>Ajustes → 🎯 Objetivos → 🧮 Calcular</b> metes edad, altura, peso, actividad y qué buscas (perder grasa, mantener o ganar músculo). La app calcula tus calorías y macros con la fórmula de Mifflin-St Jeor.</p>
 <ul><li>Nunca te propone comer por debajo de tu metabolismo basal.</li>
 <li>Es una estimación: si en 2-3 semanas tu peso no va como esperas, ajusta 100-200 kcal.</li>
 <li>El objetivo se reparte entre comidas para las recetas "a tu medida": desayuno 25%, comida 35%, merienda 10% y cena 30%.</li></ul>`},
@@ -2027,7 +2070,7 @@ const HELP = [
 <li><b>Se desconecta:</b> la báscula se apaga sola al rato. La app intenta reconectar; si no, pulsa Conectar otra vez.</li>
 <li><b>El peso no se queda "estable":</b> apoya la báscula en una superficie firme y sin vibraciones.</li>
 <li><b>La cámara no abre:</b> usa "hacer foto al código" o escribe el número. Revisa que Bluefy tenga permiso de cámara en Ajustes del iPhone.</li>
-<li><b>Un producto tiene datos raros:</b> los de Open Food Facts los sube la gente. Edítalo en Ajustes → Mis alimentos.</li>
+<li><b>Un producto tiene datos raros:</b> los de Open Food Facts los sube la gente. Edítalo en Ajustes → 🥫 Mis alimentos.</li>
 <li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
 <li><b>"GitHub respondió 409" o "GitHub estaba ocupado":</b> dos guardados muy seguidos chocaron. La app lo resuelve sola reintentando; no se pierde nada.</li>
 <li><b>Error al guardar en GitHub (en rojo):</b> revisa que el repositorio se escriba como usuario/nombre y que el token tenga "Contents: Read and write" y no haya caducado.</li>
@@ -2035,7 +2078,7 @@ const HELP = [
 <li><b>No sale la tarjeta de "¿Es saludable?":</b> sale en productos envasados y en los básicos. No sale en recetas ni en condimentos (especias, vinagre…). En alimentos creados a mano hay que rellenar azúcares y sal. Si falta, comprueba que tienes la última versión.</li>
 <li><b>No veo lo último que se ha añadido:</b> mira la versión en Ajustes (abajo del todo) y compárala con la de 🆕 Novedades. GitHub tarda hasta 10 minutos en publicar una versión nueva; después recarga la página en Bluefy.</li>
 <li><b>¿Puedo tener un icono en la pantalla de inicio?</b> Sí: en la app Atajos crea un atajo con la acción "Abrir app → Bluefy", llámalo Báscula y pulsa "Añadir a pantalla de inicio". Desde Safari no sirve, porque Safari no tiene Bluetooth.</li>
-<li><b>Quiero probar sin báscula:</b> Ajustes → Modo demo.</li></ul>`}
+<li><b>Quiero probar sin báscula:</b> Ajustes → ⚖️ Báscula → Modo demo.</li></ul>`}
 ];
 const TAB_HELP = { hoy: 'diario', pesar: 'bascula', recetas: 'recetas', menu: 'menu', progreso: 'progreso', ajustes: 'github' };
 const TIPS = {
@@ -2127,7 +2170,7 @@ function startSharedPoll() {
   shmPoll = setInterval(async () => { if (!sharedOn() || (tab !== 'menu' && tab !== 'hoy')) { clearInterval(shmPoll); shmPoll = null; return; } if (document.visibilityState === 'visible' && !$('#sheet').classList.contains('on') && await syncShared()) render(); }, 10000);
 }
 async function toggleShared() {
-  if (!syncReady()) { openSheet(`<b style="font-size:18px">👥 Menú compartido</b><p style="line-height:1.5">Para compartir el menú, primero configurad los dos la <b>copia en GitHub</b> en Ajustes, con el mismo repositorio y cada uno con su nombre.</p><button class="btn pri block" onclick="closeSheet();go('ajustes')">Ir a Ajustes</button>`); return; }
+  if (!syncReady()) { openSheet(`<b style="font-size:18px">👥 Menú compartido</b><p style="line-height:1.5">Para compartir el menú, primero configurad los dos la <b>copia en GitHub</b> en Ajustes, con el mismo repositorio y cada uno con su nombre.</p><button class="btn pri block" onclick="closeSheet();go('ajustes');ajGo('github')">Ir a Ajustes</button>`); return; }
   if (S.settings.sharedMenu) { S.settings.sharedMenu = false; save(); render(); toast('Usando tu menú personal (el compartido se conserva)'); return; }
   toast('Conectando con el menú compartido…');
   try { await loadHouse(); await syncShared(); } catch (e) { return toast('No se pudo conectar: ' + e.message); }
