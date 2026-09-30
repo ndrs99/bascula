@@ -39,7 +39,7 @@ M = {
  'Carne picada de pavo': dict(q='picada pollo', c=['Picadas y otros', 'Pavo y otras aves', 'Pollo'], x='', b='carne picada pollo'),
  'Carne picada de vacuno': dict(q='picada vacuno', c=['Picadas y otros', 'Vacuno'], x='cerdo', b='carne picada vacuno'),
  'Cebolla': dict(q='cebolla', c=['Cebolla y ajo'], x='frita tierna morada roja cebolleta caramelizada', b='cebolla'),
- 'Cerdo, lomo crudo': dict(q='lomo cerdo', c=['Cerdo'], x='adobado iberico marinado', b='lomo de cerdo'),
+ 'Cerdo, lomo crudo': dict(q='lomo cerdo', c=['Cerdo'], x='adobado iberico marinado ajillo', b='lomo de cerdo'),
  'Cerveza': dict(q='cerveza', c=['Cerveza botella y botellín', 'Cerveza lata'], x='sin alcohol 0,0 tostada radler', b='cerveza lata'),
  'Champiñones': dict(q='champi', c=['Setas y champiñones'], x='portobello laminado', b='champiñon'),
  'Chocolate negro 70%': dict(q='chocolate 70', c=['Chocolate negro'], x='', b='chocolate negro 70'),
