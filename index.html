@@ -86,7 +86,7 @@ video{width:100%;border-radius:18px;background:#000;max-height:50vh;object-fit:c
 .sline{position:absolute;left:8%;right:8%;height:2px;background:#12b886;box-shadow:0 0 12px 2px rgba(18,184,134,.8);animation:scanl 2s ease-in-out infinite}
 @keyframes scanl{0%,100%{top:12%}50%{top:86%}}
 .scanst{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;padding:9px 16px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
-.qwrap{flex-wrap:wrap;overflow:visible;margin:6px 0 0;padding:0}
+.qwrap,.chips.qwrap{flex-wrap:wrap;overflow:visible;margin:10px 0 4px;padding:0}
 label.chip,label.btn{display:inline-flex;align-items:center;justify-content:center;margin:0;color:var(--ink);font-size:inherit}
 .hcard{margin-top:14px;border-radius:20px;padding:14px;background:color-mix(in srgb,var(--hc) 11%,transparent);border:1.5px solid color-mix(in srgb,var(--hc) 35%,transparent)}
 .hchip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--card);color:var(--ink)}
@@ -105,7 +105,7 @@ label.chip,label.btn{display:inline-flex;align-items:center;justify-content:cent
 .qnum{display:flex;align-items:center;gap:10px}
 .qstep{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--card);color:var(--ink);font-size:24px;font-weight:600;box-shadow:var(--sh);font-family:inherit}
 .qin{flex:1;display:flex;align-items:baseline;justify-content:center;gap:4px}
-.qin input{border:0;background:none;padding:0;width:100%;max-width:190px;text-align:center;font-size:58px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.05}
+.qin input{border:0;background:none;padding:0;width:100%;max-width:190px;text-align:center;font-size:clamp(40px,14vw,58px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.05}
 .qin input:focus{background:none;border:0}.qin span{font-size:22px;font-weight:700;color:var(--mute)}
 .qpill{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13.5px;font-family:inherit;display:inline-flex;align-items:center}
 .qpill.on{border-color:var(--acc);color:var(--acc)}
@@ -139,6 +139,7 @@ details.help .chev{transition:transform .2s;font-size:20px}
 details.help[open] .chev{transform:rotate(90deg)}
 .helpb{font-size:14px;line-height:1.55;padding:0 0 12px 48px}
 .helpb ul,.helpb ol{padding-left:18px;margin:6px 0}.helpb li{margin:5px 0}.helpb p{margin:6px 0}
+@media (max-width:370px){header{gap:6px;padding-left:12px;padding-right:12px}header h1{font-size:24px}header .sub{font-size:12px}.pill{padding:8px 10px;font-size:13px}header .btn.round{width:36px;height:36px}.qstep{width:42px;height:42px}.qquick button{font-size:12px}main{padding-left:12px;padding-right:12px}}
 .stat{display:inline-flex;align-items:center;padding:5px 11px;border-radius:999px;background:var(--soft);font-size:12.5px;font-weight:700;color:var(--mute)}
 </style>
 </head>
@@ -158,7 +159,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 02:00';
+const APP_VERSION = '30-sep · 02:20';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -658,6 +659,7 @@ scale.net = () => scale.raw == null ? null : scale.raw - scale.tare;
 function emit() { updatePill(); try { viewHook && viewHook(); } catch (e) {} try { sheetHook && sheetHook(); } catch (e) {} }
 function fmtW(g) { if (g == null) return '—'; const d = S.settings.decimals; let v = d ? r1(g) : Math.round(g); if (Object.is(v, -0) || Math.abs(v) < (d ? 0.05 : 0.5)) v = 0; return d ? v.toFixed(1).replace('.', ',') : String(v); }
 const fmtNum = g => String(Math.max(0, S.settings.decimals ? r1(g) : Math.round(g)));
+async function waitStable(ms = 4000) { if (scale.stable) return true; const t = Date.now(); toast('Esperando a que el peso se estabilice…'); while (Date.now() - t < ms) { await sleep(150); if (scale.stable) return true; } toast('El peso no se estabiliza: comprueba que la báscula esté quieta'); return false; }
 function doTare(silent) { scale.tare = scale.raw ?? 0; subMode = false; if (!silent) toast('Tara hecha'); emit(); }
 function clearTare() { scale.tare = 0; toast('Tara quitada'); emit(); }
 
@@ -1023,7 +1025,7 @@ function openQty(food, ctx) {
   <div class="qweigh">
     <div class="qnum"><button class="qstep" data-d="-1">−</button><div class="qin"><input id="qg" type="number" inputmode="decimal" step="0.1" value="${fmtNum(grams)}"><span>g</span></div><button class="qstep" data-d="1">+</button></div>
     <div class="row" style="justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap" id="qscale"></div>
-    <div class="qquick">${[25, 50, 100, 150, 200].map(n => `<button data-q="${n}">${n} g</button>`).join('')}</div>
+    <div class="qquick">${food.src === 'recipe' && food.serv && food.cooked ? `<button data-q="${Math.round(food.cooked / food.serv)}" style="flex:2;color:var(--acc)">1 ración · ${Math.round(food.cooked / food.serv)} g</button>` : ''}${[25, 50, 100, 150, 200].slice(food.src === 'recipe' && food.serv ? 2 : 0).map(n => `<button data-q="${n}">${n} g</button>`).join('')}</div>
   </div>
   <div class="qnut"><div class="row" style="align-items:flex-end"><div class="sp"><div class="qkcal" id="qk">0</div><div class="sm mute" style="font-weight:600">kcal</div></div><div class="qmac" id="qm3"></div></div>
     <div class="qbar" id="qbar"></div><div class="sm mute" id="qx" style="margin-top:8px"></div></div>
@@ -1065,7 +1067,7 @@ function openQty(food, ctx) {
   if ($('#qfav')) $('#qfav').onclick = () => { const i = S.favs.indexOf(food.id); i >= 0 ? S.favs.splice(i, 1) : S.favs.unshift(food.id); save(); $('#qfav').textContent = S.favs.includes(food.id) ? '★' : '☆'; };
   if ($('#qdel')) $('#qdel').onclick = () => { S.diary[origDate] = (S.diary[origDate] || []).filter(e => e.id !== ctx.entry.id); save(); closeSheet(); render(); toast('Borrado'); };
   $('#qok').onclick = () => {
-    if (live && scale.connected && !scale.stable) return toast('Espera a que el peso se estabilice');
+    if (live && scale.connected && !scale.stable) { waitStable().then(ok => { if (ok && $('#qok')) $('#qok').click(); }); return; }
     const gr = g(); if (!(gr > 0)) return toast('Indica una cantidad');
     if (recipe) { closeSheet(); ctx.onDone(food, gr); return; }
     const x = calc(food, gr);
@@ -1118,7 +1120,7 @@ function vPesar(v) {
   };
 }
 function scanWeigh() { openScanner(f => { if ((f.src === 'off' || SHARED[f.id]) && !S.foods[f.id]) { S.foods[f.id] = f; save(); } pushRecent(f.id); openQty(f, { meal: guessMeal(), date: todayKey() }); }); }
-function weighAdd() { const w = curW(); if (w == null) return toast('No hay lectura de la báscula'); if (!scale.stable) return toast('Espera a que el peso se estabilice'); const g = Math.max(0, w); openPicker(f => openQty(f, { meal: guessMeal(), date: todayKey(), grams: g })); }
+async function weighAdd() { if (curW() == null) return toast('No hay lectura de la báscula'); if (!(await waitStable())) return; const w = curW(); const g = Math.max(0, w); openPicker(f => openQty(f, { meal: guessMeal(), date: todayKey(), grams: g })); }
 function pickContainer() {
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">Recipientes</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   ${S.containers.length ? S.containers.map(c => `<div class="item" data-c="${c.id}"><div class="sp">${esc(c.name)}</div><b>${fmtW(c.grams)} g</b></div>`).join('') : '<p class="sm mute">Aún no tienes recipientes guardados.</p>'}
@@ -1126,7 +1128,7 @@ function pickContainer() {
   <div class="row"><input id="cn" placeholder="Nombre (p. ej. plato hondo)"><button class="btn pri" id="cs">Guardar</button></div>
   <p class="sm mute">Quita la tara y pon el recipiente vacío antes de guardarlo.</p>`);
   document.querySelectorAll('[data-c]').forEach(el => el.onclick = () => { const c = S.containers.find(x => x.id === el.dataset.c); scale.tare = c.grams; subMode = false; closeSheet(); emit(); toast('Restando ' + c.name); });
-  $('#cs').onclick = () => { const n = $('#cn').value.trim(); if (!n) return toast('Ponle un nombre'); if (scale.raw == null || !scale.stable) return toast('Pon el recipiente y espera a que esté estable'); S.containers.push({ id: uid(), name: n, grams: r1(scale.raw) }); save(); pickContainer(); toast('Recipiente guardado'); };
+  $('#cs').onclick = () => { const n = $('#cn').value.trim(); if (!n) return toast('Ponle un nombre'); if (scale.raw == null) return toast('Conecta la báscula y pon el recipiente'); $('#cs').disabled = true; waitStable().then(ok => { if (!ok) { if ($('#cs')) $('#cs').disabled = false; return; } S.containers.push({ id: uid(), name: n, grams: r1(scale.raw) }); save(); pickContainer(); toast('Recipiente guardado'); }); };
 }
 
 /* ---------- RECETAS ---------- */
@@ -1153,7 +1155,7 @@ function vRecetas(v) {
     return;
   }
   v.innerHTML = tipCard('recetas') + seg + `<input id="rq" placeholder="Buscar receta o ingrediente…" value="${esc(recQ)}" style="margin-top:12px" autocomplete="off">
-  <div class="chips">${CATS.map(([k, l]) => `<button class="chip ${recCat === k ? 'on' : ''}" onclick="recCat='${k}';render()">${l}</button>`).join('')}</div>
+  <div class="chips qwrap">${CATS.map(([k, l]) => `<button class="chip ${recCat === k ? 'on' : ''}" onclick="recCat='${k}';render()">${l}</button>`).join('')}</div>
   <div id="rlist"></div>`;
   const draw = () => {
     const q = norm(recQ), list = RECIPES.filter(r => (recCat === 'todas' || r.cat === recCat) && (!q || norm(r.name + ' ' + r.tags.join(' ') + ' ' + r.ing.map(i => i[0]).join(' ')).includes(q)));
@@ -1218,7 +1220,7 @@ function vRecipeBuilder(v) {
   <div class="row"><button class="btn sp" onclick="cancelRecipe()">Cancelar</button><button class="btn pri sp" onclick="saveRecipe()">Guardar receta</button></div>`;
   $('#rn').oninput = e => d.name = e.target.value;
   $('#rc').oninput = e => d.cooked = parseFloat(e.target.value) || null;
-  $('#rcr').onclick = () => { if (scale.net() == null || !scale.stable) return toast('Espera a una lectura estable'); d.cooked = r1(scale.net()); $('#rc').value = d.cooked; };
+  $('#rcr').onclick = async () => { if (scale.net() == null) return toast('Conecta la báscula'); if (!(await waitStable())) return; d.cooked = r1(scale.net()); $('#rc').value = d.cooked; };
   viewHook = () => {
     const w = scale.net(); $('#rw').textContent = w == null ? '—' : fmtW(w) + ' g';
     if (step && $('#rpb')) { const p = w == null ? 0 : w / step.grams, over = p > 1.05; $('#rpb').style.width = Math.min(100, Math.max(0, p * 100)) + '%'; $('#rpb').style.background = over ? 'var(--warn)' : 'var(--grad)'; $('#rdiff').textContent = w == null ? '' : (Math.abs(w - step.grams) < 1.5 ? '· ¡perfecto!' : w < step.grams ? `· faltan ${Math.round(step.grams - w)} g` : `· te pasas ${Math.round(w - step.grams)} g`); }
@@ -1322,7 +1324,7 @@ function pickForSlot(d, s) { openRecipePicker(ref => { setSlot(d, s, { ...ref, s
 function openRecipePicker(onPick, slot) {
   let cat = slot === 'desayuno' ? 'desayuno' : slot === 'merienda' ? 'dulce' : slot ? 'principal' : 'todas';
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">Elegir receta</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
-  <input id="mpq" placeholder="Buscar…" autocomplete="off" style="margin-top:8px"><div class="chips" id="mpc"></div><div id="mpl"></div>`);
+  <input id="mpq" placeholder="Buscar…" autocomplete="off" style="margin-top:8px"><div class="chips qwrap" id="mpc"></div><div id="mpl"></div>`);
   const mine = Object.values(S.foods).filter(f => f.src === 'recipe' && f.items);
   const draw = () => {
     $('#mpc').innerHTML = CATS.concat([['mine', 'Mis recetas']]).map(([k, l]) => `<button class="chip ${cat === k ? 'on' : ''}" data-c="${k}">${l}</button>`).join('');
@@ -1582,6 +1584,7 @@ const _openSheet = openSheet; openSheet = function (h) { $('#sheet').onclick = n
 /* ---------- COPIA EN GITHUB ---------- */
 const SYNC_KEY = 'bascula.sync';
 let SY = (() => { try { return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; } catch (e) { return {}; } })();
+if (!SY.v) { if (SY.profile && SY.linked === undefined) SY.linked = SY.profile; SY.v = 2; try { localStorage.setItem('bascula.sync', JSON.stringify(SY)); } catch (e) {} } // móviles configurados antes de esta versión
 const saveSync = () => { try { localStorage.setItem(SYNC_KEY, JSON.stringify(SY)); } catch (e) {} };
 const syncReady = () => !!(SY.repo && SY.token && SY.profile);
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
@@ -1609,7 +1612,9 @@ async function ghPut(path, data, sha, msg) { return gh(path, { method: 'PUT', bo
 const lastPushed = { me: null, prices: null };
 let syncTimer = null, syncBusy = false;
 function scheduleSync() { if (!SY.auto || !syncReady()) return; if (!SY.pending) { SY.pending = 1; saveSync(); } clearTimeout(syncTimer); syncTimer = setTimeout(() => syncPush(true), 15000); }
+let lastToday = todayKey();
 document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && todayKey() !== lastToday) { if (day === lastToday) day = todayKey(); lastToday = todayKey(); render(); }
   if (document.visibilityState === 'hidden' && syncTimer) { clearTimeout(syncTimer); syncTimer = null; syncPush(true); }
   if (document.visibilityState === 'visible' && SY.pending && syncReady()) setTimeout(() => syncPush(true), 1500);
 });
@@ -1618,9 +1623,18 @@ const isNetErr = e => e instanceof TypeError || /load failed|failed to fetch|net
 const syncColor = m => /^Error/.test(m || '') ? 'var(--bad)' : /^Pendiente|^Guardando/.test(m || '') ? 'var(--warn)' : 'var(--acc)';
 function setSyncMsg(m) { SY.msg = m; saveSync(); const el = $('#symsg'); if (el) { el.textContent = m; el.style.color = syncColor(m); } }
 let syncAgain = false;
-async function syncPush(silent) {
+async function syncPush(silent, force) {
   if (!syncReady()) return; if (syncBusy) { syncAgain = true; return; } syncBusy = true;
   try {
+    if (SY.linked !== SY.profile) {
+      const remote = await ghGet(`perfiles/${SY.profile}.json`);
+      if (remote.data && !force) {
+        SY.pending = 1; setSyncMsg(`Pendiente: ya hay una copia de "${SY.profile}" en GitHub. Pulsa Restaurar para recuperarla`);
+        if (!silent) { syncBusy = false; askOverwrite(remote.data); }
+        return;
+      }
+      SY.linked = SY.profile; saveSync();
+    }
     let merged = S.prices;
     await ghUpdate('precios.json', remote => { merged = mergePrices(remote || {}, S.prices); return JSON.stringify(merged) === JSON.stringify(remote || {}) ? null : merged; }, 'Precios actualizados');
     S.prices = merged; save(true); lastPushed.prices = JSON.stringify(merged);
@@ -1639,11 +1653,21 @@ async function syncPush(silent) {
   }
   finally { syncBusy = false; if (syncAgain) { syncAgain = false; lastPushed.me = null; setTimeout(() => syncPush(true), 2000); } }
 }
+function askOverwrite(remote) {
+  const days = Object.keys(remote.diary || {}).length, rec = Object.values(remote.foods || {}).filter(f => f.src === 'recipe').length;
+  openSheet(`<b style="font-size:18px">Ya hay una copia de "${esc(SY.profile)}" en GitHub</b>
+  <p class="sm" style="line-height:1.5">Tiene <b>${days} días</b> de diario y <b>${rec} recetas propias</b>. Si es tu copia de otro móvil o de antes de reinstalar, <b>restáurala</b>. Si la sustituyes, se perderá.</p>
+  <button class="btn pri block" id="aw_r">Restaurar la copia (recomendado)</button>
+  <button class="btn block" style="margin-top:8px;color:var(--bad)" id="aw_o">Sustituirla por los datos de este móvil</button>
+  <button class="btn ghost block" onclick="closeSheet()">Cancelar</button>`);
+  $('#aw_r').onclick = () => { closeSheet(); syncPull(); };
+  $('#aw_o').onclick = () => confirmSheet(`Se borrará la copia de "${SY.profile}" en GitHub (${days} días) y se guardará la de este móvil. ¿Seguro?`, () => { SY.linked = SY.profile; saveSync(); lastPushed.me = null; syncPush(false, true); }, 'Sustituir');
+}
 async function syncPull() {
   try {
     const me = await ghGet(`perfiles/${SY.profile}.json`), pr = await ghGet('precios.json');
     if (!me.data) { toast('No hay datos de "' + SY.profile + '" en GitHub todavía'); return; }
-    S = normalize(me.data); S.prices = mergePrices(pr.data || {}, {}); save(true);
+    S = normalize(me.data); S.prices = mergePrices(pr.data || {}, S.prices || {}); save(true); SY.linked = SY.profile; SY.pending = 0; saveSync(); day = todayKey();
     lastPushed.me = JSON.stringify((({ prices, ...rest }) => rest)(S)); lastPushed.prices = JSON.stringify(S.prices);
     setSyncMsg('Restaurado desde GitHub · ' + new Date().toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
     closeSheet(); render(); toast('Datos restaurados');
@@ -1724,7 +1748,7 @@ function vAjustes(v) {
   ${syncCard()}
   <div class="card"><b>Copia manual</b><p class="sm mute">Exporta o importa todos tus datos como texto.</p>
   <div class="row"><button class="btn sp" onclick="exportData()">Exportar</button><button class="btn sp" onclick="importData()">Importar</button></div></div>
-  <div class="card"><button class="btn bad block" onclick="confirmSheet('¿Borrar TODOS los datos de este móvil?', ()=>{localStorage.removeItem(KEY);S=load();render();toast('Datos borrados')}, 'Borrar todo')">Borrar todos los datos</button></div>
+  <div class="card"><button class="btn bad block" onclick="wipeLocal()">Borrar todos los datos</button></div>
   <p class="sm mute" style="text-align:center">Versión ${APP_VERSION} · Datos de productos: Open Food Facts (ODbL). Valores de básicos aproximados.</p>`;
   const hint = () => { const k = (+$('#g_p').value) * 4 + (+$('#g_c').value) * 4 + (+$('#g_f').value) * 9; $('#g_hint').textContent = `Tus macros suman ${r0(k)} kcal (objetivo: ${$('#g_k').value || 0}).`; };
   ['#g_p', '#g_c', '#g_f', '#g_k'].forEach(id => $(id).oninput = hint); hint();
@@ -1732,6 +1756,14 @@ function vAjustes(v) {
   $('#s_de').onchange = e => { S.settings.dayEnd = +e.target.value; save(); day = todayKey(); toast('Guardado'); };
   bindSyncCard();
   $('#s_demo').onchange = e => { S.settings.demo = e.target.checked; save(); if (!e.target.checked && scale.demo) stopDemo(); render(); };
+}
+function wipeLocal() {
+  const has = syncReady() && SY.linked === SY.profile;
+  confirmSheet(`¿Borrar TODOS los datos de este móvil?${has ? ' Tu copia en GitHub NO se borra: podrás recuperarla con Restaurar.' : ' No tienes copia en GitHub, así que no se podrán recuperar.'}`, () => {
+    clearTimeout(syncTimer); localStorage.removeItem(KEY); S = load(); S.onboarded = 1; S.seenVersion = APP_VERSION; save(true);
+    if (SY.profile) { SY.linked = null; SY.pending = 0; setSyncMsg(has ? 'Datos del móvil borrados. Tu copia sigue en GitHub: pulsa Restaurar para recuperarla' : 'Datos del móvil borrados'); }
+    day = todayKey(); render(); toast('Datos del móvil borrados');
+  }, 'Borrar todo');
 }
 function setDec(d) { S.settings.decimals = d; save(); render(); }
 function delContainer(id) { S.containers = S.containers.filter(c => c.id !== id); save(); render(); }
@@ -1759,6 +1791,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 02:20', short: 'Más seguridad en la copia de GitHub y arreglos tras una revisión completa de la app.', items: ['🛡️ Al reinstalar, la app <b>ya no puede sobrescribir tu copia</b> de GitHub por error: te pregunta si quieres restaurarla.', '🛡️ "Borrar todos los datos" borra solo el móvil; <b>la copia en GitHub se conserva</b>.', '⚖️ Si pulsas guardar mientras el peso se mueve, la app <b>espera a que se estabilice</b> en vez de dar error.', '🍲 Al comer una receta tuya, botón de <b>"1 ración · X g"</b>.', '📅 Si dejas la app abierta y pasa la hora de fin de día, cambia sola al día nuevo.'] },
   { v: '30-sep · 02:00', short: '37 recetas nuevas (muchas virales) y arreglados los botones de los platos del menú.', items: ['🍽️ Arreglado: en el <b>menú semanal</b> ya funcionan cambiar raciones, Ver receta, Cambiar, Añadir al diario y Quitar del menú.', '📖 <b>37 recetas nuevas</b>, muchas virales: huevos turcos, pancakes de cottage, pasta estilo Gigi Hadid, ensalada de arroz crujiente, pollo hot honey, pizza de tortilla, brownie de alubias, cookie dough proteico, uvas con yogur heladas…'] },
   { v: '30-sep · 01:45', short: 'Arreglado el error 409 al guardar en GitHub: ahora se resuelve solo.', items: ['☁️ Arreglado el <b>error 409</b> al guardar varias cosas seguidas (por ejemplo, en la despensa): la app vuelve a leer y reintenta sola.'] },
   { v: '30-sep · 01:35', short: 'Alternativas más sanas también para los alimentos básicos, con las calorías que te ahorras.', items: ['🌿 <b>Alternativas más sanas</b> también en los básicos: arroz blanco → integral o quinoa, pan blanco → integral, mantequilla → aceite de oliva o aguacate, mayonesa → yogur griego o hummus…', '🔥 Cada alternativa te dice <b>cuántas calorías ahorras</b> con el mismo peso.', '🔎 En productos envasados sin categoría, busca alternativas por el nombre.'] },
@@ -1860,7 +1893,7 @@ const HELP = [
 <ol><li>Crea una cuenta en github.com y un repositorio <b>privado</b> llamado <b>bascula-datos</b>.</li>
 <li>Crea un <b>Fine-grained token</b> con acceso solo a ese repositorio y permiso <b>Contents: Read and write</b>. Los pasos detallados están en Ajustes.</li>
 <li>En Ajustes pega el repositorio, el token y <b>tu nombre</b>. Tu pareja pone lo mismo con su propio nombre.</li></ol>
-<p>A partir de ahí se guarda solo unos segundos después de cada cambio. Si reinstalas: vuelve a poner los tres datos y pulsa <b>Restaurar</b>.</p>
+<p>A partir de ahí se guarda solo unos segundos después de cada cambio. Si reinstalas: vuelve a poner los tres datos y pulsa <b>Restaurar</b>. La app no sobrescribe nunca una copia que ya existe sin preguntarte, y "Borrar todos los datos" solo borra el móvil, no la copia.</p>
 <p>El mensaje de estado en Ajustes te dice cómo va:</p>
 <ul><li>🟢 <b>Verde</b> "Guardado en GitHub": todo a salvo.</li>
 <li>🟡 <b>Ámbar</b> "Pendiente de guardar": se cortó la conexión (por ejemplo, al bloquear el móvil mientras guardaba). La app lo reintenta sola; no tienes que hacer nada.</li>
