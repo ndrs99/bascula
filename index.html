@@ -162,7 +162,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 23:50';
+const APP_VERSION = '1-oct · 00:55';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -681,7 +681,288 @@ steps:['Precalienta el horno a 200 °C. Pon en una bandeja los tomates partidos,
 tip:'Sale más crema de la que parece: congela la mitad en raciones para otra cena.'}
 );
 
+/* ---------- comidas comunes ya cocinadas o preparadas (valores por 100 g, tal cual se comen) ----------
+   [nombre, kcal, prot, carb, grasa, fibra, salud (2 bien · 1 con moderación · 0 de vez en cuando), ración g, nombre de la ración, pegas] */
+const COMUNES_RAW = [
+// Pollo y aves
+['Pollo asado (con piel)',215,27,0,12,0,1,250,'cuarto (solo carne)','Con la piel'],
+['Pollo asado (sin piel)',165,29,0,5.5,0,2,200,'cuarto (solo carne)'],
+['Pollo al carbón / a la brasa',190,28,0.5,8.5,0,2,200,'cuarto (solo carne)'],
+['Pechuga de pollo asada',150,31,0,3,0,2,150,'pechuga'],
+['Muslo de pollo asado',210,26,0,11.5,0,1,100,'muslo (solo carne)','Con la piel'],
+['Alitas de pollo asadas',250,24,0,17,0,1,30,'alita','Mucha grasa'],
+['Alitas de pollo fritas',290,24,4,20,0,0,30,'alita','Frito'],
+['Pollo empanado frito',260,18,15,14,0.8,0,120,'filete','Frito'],
+['Nuggets de pollo (comprados)',270,15,17,16,1,0,18,'nugget','Frito,Procesado'],
+['Pollo al curry',150,14,5,8,1,1,300,'plato'],
+['Pollo al ajillo',200,23,1.5,11.5,0.2,1,250,'plato'],
+['Pollo teriyaki',165,18,10,5.5,0.3,1,250,'plato','Azúcar añadido'],
+['Pechuga de pavo a la plancha',140,29,0,2,0,2,150,'filete'],
+['Kebab de pollo (carne)',215,22,3,13,0,1,150,'ración','Mucha grasa'],
+// Carnes
+['Filete de ternera a la plancha',175,28,0,7,0,2,150,'filete'],
+['Entrecot a la plancha',250,25,0,16.5,0,1,250,'entrecot','Mucha grasa saturada'],
+['Solomillo de ternera a la plancha',180,29,0,7,0,2,180,'solomillo'],
+['Hamburguesa de ternera a la plancha',250,20,1,18,0,1,125,'hamburguesa','Mucha grasa saturada'],
+['Hamburguesa de pollo a la plancha',180,20,4,9,0.3,2,110,'hamburguesa'],
+['Albóndigas en salsa',190,12,8,12,0.8,1,250,'plato'],
+['Filete de lomo de cerdo a la plancha',190,29,0,8,0,2,120,'filete'],
+['Chuleta de cerdo a la plancha',250,27,0,15.5,0,1,180,'chuleta','Mucha grasa'],
+['Costillas de cerdo asadas',290,24,0,21,0,0,200,'ración (solo carne)','Mucha grasa saturada'],
+['Secreto ibérico a la plancha',330,20,0,28,0,0,200,'ración','Mucha grasa saturada'],
+['Lomo adobado a la plancha',200,26,2,10,0,1,120,'filete','Mucha sal'],
+['Cordero asado',260,25,0,17.5,0,1,200,'ración','Mucha grasa saturada'],
+['Conejo al ajillo',180,26,1,8,0,2,250,'plato'],
+['Carne guisada con patatas',130,10,9,6,1.2,1,350,'plato'],
+['Filete ruso',240,15,9,16,0.5,1,100,'filete ruso','Procesado'],
+['San Jacobo',280,15,18,17,0.8,0,130,'san jacobo','Frito,Procesado'],
+['Escalope milanesa',260,20,14,14,0.8,0,150,'escalope','Frito'],
+['Cachopo',300,20,14,19,0.6,0,350,'ración','Frito,Mucha grasa'],
+// Embutidos y fiambres
+['Jamón cocido / York',110,18,1.5,3.5,0,1,20,'loncha','Procesado,Mucha sal'],
+['Jamón ibérico',375,31,0,28,0,1,15,'loncha','Mucha sal,Mucha grasa'],
+['Lomo embuchado',260,40,1,11,0,1,8,'loncha','Mucha sal'],
+['Chorizo',455,22,2,40,0,0,10,'rodaja','Procesado,Mucha sal,Mucha grasa saturada'],
+['Salchichón',440,24,2,37,0,0,8,'rodaja','Procesado,Mucha sal,Mucha grasa saturada'],
+['Fuet',490,26,2,42,0,0,6,'rodaja','Procesado,Mucha sal,Mucha grasa saturada'],
+['Mortadela',300,13,2,27,0,0,15,'loncha','Procesado,Mucha grasa'],
+['Salchichas tipo Frankfurt',270,12,2,24,0,0,45,'salchicha','Procesado,Mucha sal'],
+['Salchichas frescas de pollo o pavo',180,14,3,12.5,0,1,50,'salchicha','Procesado'],
+['Bacon frito',470,35,1,36,0,0,10,'loncha','Procesado,Mucha sal,Mucha grasa saturada'],
+['Morcilla',380,15,15,29,0.5,0,50,'rodaja gruesa','Procesado,Mucha grasa saturada'],
+// Pescado y marisco
+['Merluza a la plancha',95,19,0,2,0,2,180,'filete'],
+['Merluza rebozada',200,15,10,11,0.4,1,150,'ración','Frito'],
+['Salmón a la plancha',210,24,0,12.5,0,2,150,'lomo'],
+['Salmón al horno',200,24,0,11.5,0,2,150,'lomo'],
+['Atún a la plancha',160,30,0,4.5,0,2,150,'filete'],
+['Atún en aceite (escurrido)',200,26,0,10.5,0,2,52,'lata pequeña'],
+['Sardinas a la plancha',190,24,0,10.5,0,2,40,'sardina'],
+['Sardinas en lata (en aceite)',210,24,0,13,0,2,85,'lata'],
+['Caballa en lata',220,20,0,15.5,0,2,85,'lata'],
+['Boquerones fritos',260,20,8,17,0.3,1,150,'ración','Frito'],
+['Boquerones en vinagre',150,18,0.5,8.5,0,2,80,'ración'],
+['Calamares a la romana',230,13,17,12.5,0.5,1,150,'ración','Frito'],
+['Calamar a la plancha',100,18,3,1.8,0,2,150,'ración'],
+['Pulpo a la gallega',160,22,2,7,0,2,200,'ración'],
+['Gambas a la plancha',100,21,0,1.7,0,2,150,'ración'],
+['Mejillones al vapor',85,12,3.5,2.3,0,2,300,'ración (con concha)'],
+['Mejillones en escabeche (lata)',180,16,4,11,0,1,80,'lata','Mucha sal'],
+['Bacalao a la vizcaína',130,15,5,5.5,1,2,250,'plato'],
+['Dorada / lubina al horno',140,22,0,5.5,0,2,200,'pieza limpia'],
+['Palitos de cangrejo (surimi)',100,8,15,1,0,1,17,'palito','Procesado'],
+['Varitas de merluza (congeladas)',210,12,18,10,1,1,30,'varita','Frito,Procesado'],
+['Sushi (nigiri / maki)',150,6,28,1.5,0.5,2,30,'pieza'],
+// Huevos
+['Huevo cocido',155,13,1,11,0,2,55,'huevo'],
+['Huevo frito',195,13.5,1,15,0,1,55,'huevo'],
+['Huevos revueltos',170,11.5,1.5,13,0,2,120,'ración (2 huevos)'],
+['Tortilla francesa',175,12,1,13.5,0,2,110,'tortilla (2 huevos)'],
+['Tortilla de patatas',180,6.5,14,11,1.2,1,150,'pincho grande'],
+['Tortilla de patatas de bar / envasada',200,6,17,12,1.2,1,150,'pincho grande','Procesado'],
+// Platos de cuchara y guisos
+['Lentejas guisadas (con verdura)',110,7,15,2.5,4,2,300,'plato'],
+['Lentejas con chorizo',150,8,14,7,3.5,1,300,'plato','Mucha grasa'],
+['Garbanzos guisados / potaje',120,6.5,14,4,4,2,300,'plato'],
+['Cocido madrileño (completo)',150,12,9,7.5,2.5,1,450,'plato'],
+['Fabada asturiana',170,9,11,10,4,0,300,'plato','Mucha grasa saturada'],
+['Alubias blancas guisadas',110,7,14,2.5,5,2,300,'plato'],
+['Caldo de cocido / sopa de fideos',40,2,5,1.2,0.2,2,300,'plato'],
+['Crema de verduras',50,1.5,6,2.2,1.5,2,300,'plato'],
+['Puré de patatas',100,2,15,3.5,1.2,1,200,'ración'],
+['Gazpacho (comprado)',40,0.8,4,2.3,0.9,2,250,'vaso'],
+['Salmorejo (comprado)',90,1.5,7,6,1,2,250,'cuenco'],
+['Pisto',70,1.5,7,4,2,2,200,'ración'],
+['Menestra de verduras',60,3,7,2,3,2,250,'plato'],
+['Judías verdes con patata',60,2,8,2,2.5,2,300,'plato'],
+['Ensaladilla rusa',180,4,10,14,1.5,1,150,'ración','Mayonesa'],
+// Arroces y pastas
+['Paella de marisco',150,8,21,4,0.8,2,350,'plato'],
+['Paella valenciana (pollo y conejo)',160,10,20,4.5,0.8,2,350,'plato'],
+['Arroz a la cubana',170,5,24,6,0.6,1,350,'plato'],
+['Arroz tres delicias',170,5,26,5,1,1,300,'plato'],
+['Arroz con leche',130,3.5,21,3.5,0,0,150,'cuenco','Mucho azúcar'],
+['Espaguetis a la boloñesa',150,7,19,5,1.5,1,350,'plato'],
+['Espaguetis a la carbonara',210,8,21,10,1,0,350,'plato','Mucha grasa saturada'],
+['Macarrones con tomate y chorizo',170,6,22,6.5,1.5,1,350,'plato'],
+['Lasaña de carne',160,9,13,8,1,1,300,'ración'],
+['Canelones',170,8,15,8.5,1,1,250,'ración'],
+['Pasta con atún y tomate',150,8,21,3.5,1.5,2,350,'plato'],
+['Pasta con pesto',230,6,27,11,1.8,1,300,'plato'],
+['Fideuá',160,8,22,4.5,1,2,350,'plato'],
+['Ramen instantáneo (preparado)',120,2.5,16,5,0.6,0,350,'cuenco','Procesado,Mucha sal'],
+['Ensalada de pasta',150,5,20,5.5,1.5,2,300,'plato'],
+['Cuscús con verduras',130,4,22,3,2,2,300,'plato'],
+// Ensaladas
+['Ensalada mixta (sin aliñar)',25,1.5,3.5,0.3,1.5,2,250,'plato'],
+['Ensalada mixta con atún y huevo (aliñada)',110,7,3,8,1.3,2,350,'plato'],
+['Ensalada César (de restaurante)',190,9,7,14,1.5,1,350,'plato','Mucha grasa'],
+// Tapas y fritos
+['Croquetas de jamón',230,7,20,13,0.8,0,35,'croqueta','Frito'],
+['Croquetas de pollo',220,7,20,12.5,0.8,0,35,'croqueta','Frito'],
+['Patatas bravas',190,2.5,20,11,2,0,200,'ración','Frito'],
+['Patatas fritas (caseras)',290,3.4,36,15,3.3,0,150,'ración','Frito'],
+['Patatas fritas de bolsa',535,6.5,51,34,4,0,30,'bolsa pequeña','Frito,Mucha sal'],
+['Patatas asadas / al horno',95,2.5,21,0.1,2.2,2,200,'patata'],
+['Patatas cocidas',80,2,17,0.1,1.8,2,200,'ración'],
+['Aceitunas verdes',145,1,4,15,3,1,4,'aceituna','Mucha sal'],
+['Pimientos de Padrón fritos',90,1.5,5,7,2,1,120,'ración'],
+['Champiñones al ajillo',90,3,3,7.5,1.5,2,150,'ración'],
+['Empanadilla de atún',300,8,30,16,1.5,0,50,'empanadilla','Frito'],
+['Empanada gallega',280,9,30,13.5,1.5,1,150,'porción'],
+['Nachos con queso',480,9,50,27,4,0,100,'ración','Frito,Mucha sal'],
+['Hummus con pan de pita (ración)',230,7,32,8.5,4,2,120,'ración'],
+['Guacamole',155,2,8.5,14,6,2,50,'cucharada grande'],
+// Comida rápida
+['Pizza margarita',250,11,31,9,2,1,110,'porción','Harina refinada'],
+['Pizza barbacoa / de carne',275,12,29,12.5,2,0,120,'porción','Mucha grasa saturada,Mucha sal'],
+['Pizza cuatro quesos',290,13,28,14,1.8,0,110,'porción','Mucha grasa saturada'],
+['Hamburguesa con pan (de cadena)',255,13,26,11,1.5,0,215,'hamburguesa','Procesado,Mucha sal'],
+['Hamburguesa doble con queso (de cadena)',270,15,20,15,1.2,0,280,'hamburguesa','Procesado,Mucha grasa saturada'],
+['Patatas fritas de cadena',320,3.5,41,15,3.8,0,115,'ración mediana','Frito,Mucha sal'],
+['Perrito caliente',270,10,24,15,1,0,120,'perrito','Procesado'],
+['Kebab en pan de pita (completo)',225,12,22,10,1.5,1,380,'kebab','Mucha grasa'],
+['Durum de pollo',215,12,22,9,1.5,1,350,'durum'],
+['Burrito de carne',200,9,24,7.5,2.5,1,300,'burrito'],
+['Tacos de carne (tortilla de maíz)',215,11,19,10.5,2.5,1,90,'taco'],
+['Sándwich mixto',290,15,26,14,1.5,1,130,'sándwich','Procesado'],
+['Bocadillo de jamón serrano',260,14,34,7,1.8,1,200,'bocadillo','Mucha sal'],
+['Bocadillo de tortilla',230,8,30,9,1.8,1,250,'bocadillo'],
+['Bocadillo de calamares',260,11,33,9.5,1.5,0,250,'bocadillo','Frito'],
+['Pepito de ternera',250,14,28,9,1.5,1,250,'bocadillo'],
+['Wrap de pollo',210,12,22,8,2,2,250,'wrap'],
+['Sushi variado (bandeja)',150,6,27,2.5,0.8,2,300,'bandeja'],
+['Poke bowl de salmón (de restaurante)',150,8,17,5.5,1.5,2,450,'bol'],
+['Pollo frito estilo KFC',260,20,9,16,0.5,0,130,'pieza','Frito'],
+['Kebab / döner (solo carne)',250,18,3,19,0,0,150,'ración','Mucha grasa'],
+// Pan, cereales y bollería
+['Pan de molde blanco',265,8.5,49,3.5,2.5,1,25,'rebanada','Harina refinada'],
+['Pan de molde integral',250,9.5,43,4,6.5,2,30,'rebanada'],
+['Pan tostado / biscotes',400,11,74,6,4,1,10,'biscote','Harina refinada'],
+['Pan de centeno',250,8.5,48,1.7,6,2,40,'rebanada'],
+['Picos / regañás',420,11,72,9,3,1,5,'pico','Harina refinada'],
+['Tostada con aceite y tomate',230,5,30,10.5,2.5,2,90,'tostada'],
+['Tostada con mantequilla y mermelada',330,6,48,12.5,2,0,80,'tostada','Mucho azúcar'],
+['Cereales azucarados',385,7,82,3,3.5,0,40,'bol','Mucho azúcar'],
+['Muesli sin azúcar',360,10,62,6.5,8,2,50,'bol'],
+['Granola',450,9,62,18,6,1,50,'bol','Azúcar añadido'],
+['Croissant',410,8,46,21,2,0,55,'croissant','Mucha grasa saturada'],
+['Napolitana de chocolate',420,6,48,22,2,0,90,'napolitana','Mucha grasa saturada,Mucho azúcar'],
+['Magdalena',430,6,52,22,1,0,30,'magdalena','Mucho azúcar'],
+['Donut',420,5,50,22,1.5,0,55,'donut','Mucho azúcar,Frito'],
+['Churros',390,5,45,21,2,0,20,'churro','Frito'],
+['Galletas María',440,7,73,13,2.5,1,6,'galleta','Azúcar añadido'],
+['Galletas con chocolate',490,6,64,23,3,0,12,'galleta','Mucho azúcar'],
+['Bizcocho casero',360,6,52,14,1,0,60,'porción','Mucho azúcar'],
+['Tarta de queso (pastelería)',320,6,26,22,0.5,0,120,'porción','Mucho azúcar,Mucha grasa saturada'],
+['Tarta de chocolate',400,5,48,21,2.5,0,100,'porción','Mucho azúcar'],
+['Barrita de cereales',400,6,68,11,5,1,25,'barrita','Azúcar añadido'],
+['Barrita de proteínas',360,32,35,11,6,1,50,'barrita','Procesado'],
+// Lácteos y postres
+['Yogur de sabores',95,3.5,15,2.5,0,1,125,'yogur','Azúcar añadido'],
+['Yogur natural desnatado',40,4.5,5.5,0.1,0,2,125,'yogur'],
+['Kéfir natural',55,3.5,4,3,0,2,200,'vaso'],
+['Yogur proteico (tipo +Proteínas)',60,10,4,0.2,0,2,120,'yogur'],
+['Natillas',120,3.5,18,3.5,0,0,125,'natillas','Mucho azúcar'],
+['Flan',120,3.5,20,3,0,0,100,'flan','Mucho azúcar'],
+['Arroz con leche (comprado)',125,3,21,3,0,0,125,'postre','Mucho azúcar'],
+['Helado de vainilla',205,3.5,24,11,0.5,0,70,'bola','Mucho azúcar,Mucha grasa saturada'],
+['Helado de hielo / polo',80,0,20,0,0,0,60,'polo','Mucho azúcar'],
+['Queso de untar (tipo Philadelphia)',250,6,4,24,0,1,20,'cucharada','Mucha grasa saturada'],
+['Queso de untar light',140,9,5,9.5,0,2,20,'cucharada'],
+['Queso semicurado',390,25,0.5,32,0,1,25,'loncha / taco','Mucha sal,Mucha grasa saturada'],
+['Queso en lonchas (tipo sándwich)',300,19,3,24,0,1,20,'loncha','Procesado,Mucha sal'],
+['Queso rallado (mezcla)',380,26,1,30,0,1,15,'puñado','Mucha sal,Mucha grasa saturada'],
+['Batido de chocolate',75,3.2,11,1.8,0.5,0,200,'brik','Mucho azúcar'],
+['Leche con Cola Cao',85,3.5,12,2.2,0.6,1,250,'taza','Azúcar añadido'],
+['Batido de proteínas (con agua)',95,20,2,1,0,2,300,'batido (30 g de polvo)'],
+['Proteína en polvo (whey)',380,78,6,5,0,2,30,'cacito'],
+// Fruta, verdura y frutos secos
+['Pera',57,0.4,15,0.1,3.1,2,180,'pera'],
+['Melocotón',39,0.9,9.5,0.3,1.5,2,150,'melocotón'],
+['Nectarina',44,1,10.5,0.3,1.7,2,150,'nectarina'],
+['Piña',50,0.5,13,0.1,1.4,2,150,'rodaja gruesa'],
+['Sandía',30,0.6,7.5,0.2,0.4,2,300,'tajada'],
+['Melón',34,0.8,8,0.2,0.9,2,250,'tajada'],
+['Mandarina',53,0.8,13,0.3,1.8,2,80,'mandarina'],
+['Arándanos',57,0.7,14,0.3,2.4,2,100,'puñado grande'],
+['Frambuesas',52,1.2,12,0.7,6.5,2,100,'tarrina'],
+['Cerezas',63,1,16,0.2,2.1,2,100,'puñado'],
+['Higos',74,0.8,19,0.3,2.9,2,50,'higo'],
+['Granada',83,1.7,19,1.2,4,2,150,'media granada'],
+['Papaya',43,0.5,11,0.3,1.7,2,150,'ración'],
+['Ciruela',46,0.7,11,0.3,1.4,2,65,'ciruela'],
+['Pasas',300,3,79,0.5,3.7,1,30,'puñado','Mucho azúcar natural'],
+['Macedonia de fruta (en almíbar)',70,0.4,18,0.1,1,0,150,'ración','Mucho azúcar'],
+['Zumo de naranja natural',45,0.7,10,0.2,0.2,1,200,'vaso','Azúcar libre'],
+['Zumo envasado',45,0.5,10.5,0,0.2,0,200,'vaso','Azúcar libre'],
+['Espárragos verdes',20,2.2,2,0.1,2.1,2,150,'manojo pequeño'],
+['Espárragos blancos (bote)',20,2,2.5,0.3,1.5,2,20,'espárrago'],
+['Alcachofas',47,3.3,5,0.2,5.4,2,150,'ración'],
+['Puerro',61,1.5,12,0.3,1.8,2,100,'puerro'],
+['Col / repollo',25,1.3,5.5,0.1,2.5,2,150,'ración'],
+['Coles de Bruselas',43,3.4,5,0.3,3.8,2,150,'ración'],
+['Setas variadas',30,3,3,0.4,2,2,150,'ración'],
+['Maíz en mazorca (cocido)',96,3.4,21,1.5,2.4,2,150,'mazorca'],
+['Tomate cherry',18,0.9,3.9,0.2,1.2,2,15,'tomate cherry'],
+['Cebolla morada',40,1.1,9,0.1,1.7,2,150,'cebolla'],
+['Canónigos',21,2,3.6,0.4,0,2,50,'puñado'],
+['Verduras salteadas (congeladas)',55,2,7,2,2.5,2,200,'ración'],
+['Anacardos',575,18,27,46,3.3,2,30,'puñado',''],
+['Avellanas',630,15,7,61,10,2,30,'puñado'],
+['Frutos secos variados (sin sal)',600,18,15,52,7,2,30,'puñado'],
+['Semillas de calabaza (pipas peladas)',560,30,11,49,6,2,20,'puñado'],
+['Pipas de girasol con sal',590,21,20,51,9,1,30,'puñado','Mucha sal'],
+['Crema de almendras',615,21,9,55,10,2,15,'cucharada'],
+// Legumbres y vegetales proteicos
+['Soja texturizada (hidratada)',110,17,8,0.4,6,2,100,'ración'],
+['Heura / carne vegetal',160,20,4,7,3,1,120,'ración','Procesado'],
+['Seitán',120,21,4,2,1,2,120,'ración'],
+['Tempeh',190,19,9,11,5,2,100,'ración'],
+['Falafel',330,13,32,18,5,1,20,'falafel','Frito'],
+// Salsas y extras
+['Tomate frito',80,1.5,10,3.5,1.5,1,40,'2 cucharadas','Azúcar añadido'],
+['Ketchup',110,1.3,25,0.2,0.5,0,15,'cucharada','Mucho azúcar'],
+['Salsa barbacoa',150,1,35,0.5,1,0,15,'cucharada','Mucho azúcar'],
+['Alioli',720,1,2,79,0,0,15,'cucharada','Mucha grasa'],
+['Salsa rosa',450,1,11,45,0,0,15,'cucharada','Mucha grasa'],
+['Salsa de yogur',140,2.5,6,12,0,1,20,'cucharada'],
+['Pesto',450,5,5,45,2,1,20,'cucharada','Muy calórico'],
+['Nata para cocinar',190,2.5,4,18,0,0,50,'chorrito','Mucha grasa saturada'],
+['Aceite de girasol',884,0,0,100,0,1,10,'cucharada',''],
+['Mermelada',250,0.5,60,0.1,1,0,15,'cucharada','Mucho azúcar'],
+['Crema de cacao (tipo Nutella)',540,6,57,31,3.5,0,15,'cucharada','Mucho azúcar,Mucha grasa saturada'],
+['Azúcar moreno / panela',380,0,98,0,0,0,5,'cucharadita','Mucho azúcar'],
+['Sirope de agave',310,0,76,0,0,0,10,'cucharada','Mucho azúcar'],
+['Edulcorante líquido',0,0,0,0,0,2,1,'gotas'],
+// Bebidas
+['Café con leche (semidesnatada)',30,2,3,1,0,2,200,'taza'],
+['Café cortado',20,1,1.5,1,0,2,60,'cortado'],
+['Capuchino',40,2.2,3.5,1.9,0,2,200,'taza'],
+['Café con leche vegetal (avena)',30,0.6,4.5,1,0.4,2,200,'taza'],
+['Té o infusión (sin azúcar)',1,0,0.2,0,0,2,250,'taza'],
+['Refresco de cola',42,0,10.6,0,0,0,330,'lata','Mucho azúcar'],
+['Refresco zero / light',0.4,0,0,0,0,1,330,'lata','Edulcorantes'],
+['Refresco de naranja / limón',40,0,10,0,0,0,330,'lata','Mucho azúcar'],
+['Bebida isotónica',25,0,6,0,0,1,500,'botella','Azúcar añadido'],
+['Bebida energética',45,0,11,0,0,0,250,'lata','Mucho azúcar'],
+['Cerveza sin alcohol',20,0.3,4.5,0,0,1,330,'botellín'],
+['Cerveza 0,0 tostada',25,0.4,5.5,0,0,1,330,'botellín'],
+['Tinto de verano',45,0,6,0,0,0,300,'vaso','Alcohol'],
+['Vino blanco',82,0.1,2.6,0,0,0,150,'copa','Alcohol'],
+['Cava',75,0.2,1.5,0,0,0,120,'copa','Alcohol'],
+['Sidra',40,0,4,0,0,0,200,'vaso','Alcohol'],
+['Gin tonic',75,0,7,0,0,0,300,'copa','Alcohol'],
+['Ron con cola',90,0,9,0,0,0,300,'cubata','Alcohol,Mucho azúcar'],
+['Tercio de cerveza',43,0.5,3.6,0,0,0,330,'tercio','Alcohol'],
+['Caña de cerveza',43,0.5,3.6,0,0,0,200,'caña','Alcohol'],
+['Leche de avena',45,1,7,1.5,0.8,1,200,'vaso'],
+['Bebida de soja',40,3.3,2.5,1.8,0.5,2,200,'vaso'],
+['Horchata',70,0.5,13,2,0,0,250,'vaso','Mucho azúcar']
+];
 const BASE_FOODS = BASE_RAW.concat(EXTRA_RAW).sort((a, b) => a[0].localeCompare(b[0], 'es')).map(([name, kcal, p, c, f, fib]) => ({ id: 'b_' + norm(name).replace(/[^a-z0-9]+/g, '_'), name, kcal, p, c, f, fib, src: 'base' }));
+COMUNES_RAW.forEach(([name, kcal, p, c, f, fib, , g, lab]) => BASE_FOODS.push({ id: 'c_' + norm(name).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''), name, kcal, p, c, f, fib, src: 'base', gen: 1, por: [g, lab] }));
+BASE_FOODS.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
 /* ---------- datos ---------- */
 const KEY = 'bascula.v1';
@@ -850,6 +1131,18 @@ function editEntry(id) { const e = (S.diary[day] || []).find(x => x.id === id); 
 /* ---------- selector de alimento ---------- */
 const offCache = {};
 const foodItem = f => `<div class="item" data-id="${esc(f.id)}">${(() => { const h = healthInfo(f); return h && !h.none && !h.incomplete ? `<span title="${h.label}" style="flex:none;width:10px;height:10px;border-radius:50%;background:${h.col}"></span>` : ''; })()}<div class="sp"><div class="nm">${esc(f.name)} ${f.src === 'recipe' ? '<span class="tag">receta</span>' : ''}</div><div class="sm mute">${esc(f.brand || '')}${f.brand ? ' · ' : ''}${r0(f.kcal)} kcal · P ${r1(f.p)} · C ${r1(f.c)} · G ${r1(f.f)} /100 g</div></div>${S.favs.includes(f.id) ? '★' : ''}</div>`;
+/* búsqueda por palabras: "pollo asado" encuentra "Pechuga de pollo asada"; da igual el orden, plurales y género */
+const wstem = w => w.length > 4 ? w.replace(/(es|as|os|a|o|s)$/, '') : w;
+function searchFoods(q, max = 40) {
+  const n = norm(q).trim(), qw = n.split(/[^a-z0-9ñ%]+/).filter(Boolean).map(wstem); if (!qw.length) return [];
+  const scored = [];
+  for (const f of allFoods()) {
+    const full = norm(f.name + ' ' + (f.brand || '')), ws = full.split(/[^a-z0-9ñ%]+/).filter(Boolean).map(wstem);
+    if (!qw.every(q => ws.some(w => w.startsWith(q)))) continue;
+    const nn = norm(f.name); scored.push([nn.startsWith(n) ? 0 : nn.includes(n) ? 1 : 2, f.src === 'base' ? 0 : 1, nn.length, f]);
+  }
+  return scored.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]).slice(0, max).map(x => x[3]);
+}
 function openPicker(onPick, title = 'Añadir alimento') {
   openSheet(`<div class="row"><b class="sp" style="font-size:18px">${title}</b><button class="btn ghost" onclick="closeSheet()">Cerrar</button></div>
   <div class="row" style="margin:8px 0"><input id="ps" placeholder="Buscar alimento o marca…" autocomplete="off"><button class="btn" id="pbc" title="Código de barras">▥</button></div>
@@ -863,10 +1156,10 @@ function openPicker(onPick, title = 'Añadir alimento') {
     const q = ps.value.trim(); clearTimeout(tm);
     if (!q) {
       const fav = S.favs.map(getFood).filter(Boolean), rec = S.recents.map(getFood).filter(Boolean).slice(0, 12);
-      list.innerHTML = (fav.length ? '<div class="h">Favoritos</div>' + fav.map(foodItem).join('') : '') + (rec.length ? '<div class="h">Recientes</div>' + rec.map(foodItem).join('') : '') + '<div class="h">Básicos</div>' + BASE_FOODS.map(foodItem).join('');
+      list.innerHTML = (fav.length ? '<div class="h">Favoritos</div>' + fav.map(foodItem).join('') : '') + (rec.length ? '<div class="h">Recientes</div>' + rec.map(foodItem).join('') : '') + '<div class="h">Básicos</div>' + BASE_FOODS.filter(f => !f.gen).map(foodItem).join('') + '<p class="sm mute" style="margin:10px 2px">Escribe arriba para buscar entre ' + BASE_FOODS.length + ' alimentos y platos (pollo asado, paella, croquetas…) y en Open Food Facts.</p>';
       off.innerHTML = ''; return;
     }
-    const n = norm(q), arr = allFoods().filter(f => norm(f.name + ' ' + (f.brand || '')).includes(n)).slice(0, 30);
+    const arr = searchFoods(q);
     list.innerHTML = arr.length ? '<div class="h">En tu móvil</div>' + arr.map(foodItem).join('') : '';
     if (q.length >= 3) {
       off.innerHTML = '<div class="h">Open Food Facts</div><p class="sm mute">Buscando…</p>'; const my = ++seq;
@@ -958,6 +1251,7 @@ const BASE_HEALTH = {
   'Hummus': [2, [], ['Legumbre', 'Rico en fibra']], 'Maíz dulce (lata)': [2, [], []], 'Leche entera': [2, [], ['Rico en calcio']], 'Yogur griego': [2, [], ['Fermentado']], 'Yogur natural': [2, [], ['Fermentado']],
   'Levadura química': null, 'Especias variadas': null, 'Hierbas frescas': null, 'Canela molida': null, 'Vinagre balsámico': null, 'Vinagre de vino': null, 'Caldo de verduras': null, 'Caldo de pollo': null, 'Zumo de limón': null, 'Mostaza': null
 };
+COMUNES_RAW.forEach(([name, , , , , , lv, , , cons]) => { if (!(name in BASE_HEALTH)) BASE_HEALTH[name] = [lv, cons ? cons.split(',') : [], lv === 2 && !cons ? ['Opción equilibrada'] : []]; });
 function baseHealth(f) {
   if (!(f.name in BASE_HEALTH) && f.src !== 'base') return null;
   const row = f.name in BASE_HEALTH ? BASE_HEALTH[f.name] : [2, [], ['Sin procesar']]; if (!row) return null;
@@ -1011,6 +1305,20 @@ async function offCategorySearch(tag, spain) {
 }
 
 const BASE_SWAPS = {
+  'Pollo asado (con piel)': ['Pollo asado (sin piel)', 'Pechuga de pollo asada'], 'Pollo empanado frito': ['Pechuga de pollo asada', 'Pollo al carbón / a la brasa'], 'Nuggets de pollo (comprados)': ['Pechuga de pollo asada'],
+  'Alitas de pollo fritas': ['Pollo al carbón / a la brasa', 'Pechuga de pollo asada'], 'Pollo frito estilo KFC': ['Pollo al carbón / a la brasa'], 'Patatas fritas (caseras)': ['Patatas asadas / al horno', 'Patatas cocidas'],
+  'Patatas fritas de cadena': ['Patatas asadas / al horno'], 'Patatas bravas': ['Patatas asadas / al horno'], 'Patatas fritas de bolsa': ['Maíz para palomitas', 'Tortitas de arroz', 'Aceitunas verdes'],
+  'Refresco de cola': ['Refresco zero / light', 'Té o infusión (sin azúcar)'], 'Refresco de naranja / limón': ['Refresco zero / light'], 'Bebida energética': ['Café solo', 'Refresco zero / light'],
+  'Zumo envasado': ['Naranja', 'Zumo de naranja natural'], 'Cereales azucarados': ['Avena en copos', 'Muesli sin azúcar'], 'Croissant': ['Pan integral', 'Tostada con aceite y tomate'], 'Napolitana de chocolate': ['Tostada con aceite y tomate'],
+  'Magdalena': ['Tostada con aceite y tomate', 'Plátano'], 'Donut': ['Tostada con aceite y tomate'], 'Galletas con chocolate': ['Galletas María', 'Tortitas de arroz'], 'Yogur de sabores': ['Yogur natural desnatado', 'Yogur proteico (tipo +Proteínas)'],
+  'Natillas': ['Yogur proteico (tipo +Proteínas)'], 'Flan': ['Yogur proteico (tipo +Proteínas)'], 'Helado de vainilla': ['Yogur griego'], 'Crema de cacao (tipo Nutella)': ['Crema de cacahuete'], 'Mermelada': ['Plátano', 'Fresas'],
+  'Ketchup': ['Tomate triturado', 'Mostaza'], 'Salsa barbacoa': ['Mostaza'], 'Alioli': ['Salsa de yogur'], 'Salsa rosa': ['Salsa de yogur'], 'Nata para cocinar': ['Queso fresco batido 0%', 'Leche de coco light'],
+  'Chorizo': ['Pechuga de pavo en lonchas', 'Lomo embuchado'], 'Salchichón': ['Pechuga de pavo en lonchas'], 'Fuet': ['Pechuga de pavo en lonchas', 'Lomo embuchado'], 'Mortadela': ['Pechuga de pavo en lonchas'], 'Bacon frito': ['Jamón serrano', 'Pechuga de pavo en lonchas'],
+  'Salchichas tipo Frankfurt': ['Salchichas frescas de pollo o pavo'], 'Hamburguesa con pan (de cadena)': ['Hamburguesa de pollo a la plancha', 'Wrap de pollo'], 'Hamburguesa doble con queso (de cadena)': ['Hamburguesa de pollo a la plancha'],
+  'Pizza barbacoa / de carne': ['Pizza margarita'], 'Pizza cuatro quesos': ['Pizza margarita'], 'Croquetas de jamón': ['Pimientos de Padrón fritos', 'Champiñones al ajillo'], 'Calamares a la romana': ['Calamar a la plancha'],
+  'Merluza rebozada': ['Merluza a la plancha'], 'Boquerones fritos': ['Boquerones en vinagre', 'Sardinas a la plancha'], 'Espaguetis a la carbonara': ['Pasta con atún y tomate', 'Espaguetis a la boloñesa'], 'Fabada asturiana': ['Alubias blancas guisadas'],
+  'Lentejas con chorizo': ['Lentejas guisadas (con verdura)'], 'Costillas de cerdo asadas': ['Filete de lomo de cerdo a la plancha'], 'Secreto ibérico a la plancha': ['Filete de lomo de cerdo a la plancha', 'Solomillo de ternera a la plancha'],
+  'Ron con cola': ['Refresco zero / light'], 'Gin tonic': ['Cerveza sin alcohol'], 'Tercio de cerveza': ['Cerveza sin alcohol'], 'Caña de cerveza': ['Cerveza sin alcohol'], 'Horchata': ['Leche de avena'], 'Batido de chocolate': ['Leche con Cola Cao', 'Batido de proteínas (con agua)'],
   'Arroz blanco cocido': ['Arroz integral cocido', 'Quinoa cocida', 'Coliflor'], 'Arroz blanco crudo': ['Arroz integral crudo', 'Quinoa cruda'],
   'Pasta cocida': ['Pasta integral cocida', 'Calabacín', 'Garbanzos cocidos'], 'Pasta cruda': ['Pasta integral cruda', 'Lentejas rojas crudas'],
   'Pan blanco': ['Pan integral', 'Pan pita integral', 'Avena en copos'], 'Harina de trigo': ['Harina de avena'], 'Cuscús crudo': ['Quinoa cruda', 'Arroz integral crudo'],
@@ -1094,7 +1402,7 @@ function openQty(food, ctx) {
   <div class="qweigh">
     <div class="qnum"><button class="qstep" data-d="-1">−</button><div class="qin"><input id="qg" type="number" inputmode="decimal" step="0.1" value="${fmtNum(grams)}"><span>g</span></div><button class="qstep" data-d="1">+</button></div>
     <div class="row" style="justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap" id="qscale"></div>
-    <div class="qquick">${food.src === 'recipe' && food.serv && food.cooked ? `<button data-q="${Math.round(food.cooked / food.serv)}" style="flex:2;color:var(--acc)">1 ración · ${Math.round(food.cooked / food.serv)} g</button>` : ''}${[25, 50, 100, 150, 200].slice(food.src === 'recipe' && food.serv ? 2 : 0).map(n => `<button data-q="${n}">${n} g</button>`).join('')}</div>
+    <div class="qquick">${food.src === 'recipe' && food.serv && food.cooked ? `<button data-q="${Math.round(food.cooked / food.serv)}" style="flex:2;color:var(--acc)">1 ración · ${Math.round(food.cooked / food.serv)} g</button>` : ''}${food.por ? `<button data-q="${food.por[0]}" style="flex:2;color:var(--acc)">1 ${esc(food.por[1])} · ${food.por[0]} g</button>` : ''}${[25, 50, 100, 150, 200].slice((food.src === 'recipe' && food.serv) || food.por ? 2 : 0).map(n => `<button data-q="${n}">${n} g</button>`).join('')}</div>
   </div>
   <div class="qnut"><div class="row" style="align-items:flex-end"><div class="sp"><div class="qkcal" id="qk">0</div><div class="sm mute" style="font-weight:600">kcal</div></div><div class="qmac" id="qm3"></div></div>
     <div class="qbar" id="qbar"></div><div class="sm mute" id="qx" style="margin-top:8px"></div></div>
@@ -2017,6 +2325,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '1-oct · 00:55', short: '259 comidas nuevas ya cocinadas: pollo asado, paella, croquetas, pizza, bocadillos, bebidas…', items: ['🍗 <b>259 comidas y platos nuevos</b> en el buscador, ya cocinados o preparados: pollo asado y al carbón, filetes a la plancha, pescados, tortilla, lentejas, cocido, paella, pasta, tapas, comida rápida, bollería, postres, fruta, frutos secos, salsas y bebidas (café con leche, cañas, refrescos…).', '⚖️ Cada uno trae su <b>ración típica</b> (1 cuarto de pollo, 1 croqueta, 1 caña…) para apuntarlo de un toque si no lo pesas.', '🟢 También dicen si son saludables y proponen alternativas (patatas fritas → asadas, refresco → zero…).'] },
   { v: '30-sep · 23:50', short: 'Precios automáticos de Mercadona, Dia y Consum, y cuánto te sale la compra.', items: ['🤖 <b>Precios automáticos</b>: cada lunes la app consulta las webs de Mercadona, Dia y Consum y pone precio a casi todos los ingredientes. Los que apuntes tú siguen mandando.', '🛒 La lista de la compra enseña lo que pagarás <b>en caja</b> y lo que <b>se usa esta semana</b>, y cuánto costaría todo en cada súper.', '🏪 Añadido <b>Consum</b> a la lista de tiendas.'] },
   { v: '30-sep · 23:05', short: 'La guía explica mejor qué hace Guardar receta al cocinar con la báscula.', items: ['📖 En la guía, <b>👨‍🍳 Cocinar con la báscula</b> explica qué guarda Guardar receta, para qué sirve el peso cocinado y cómo apuntarte tu ración. También está en Preguntas frecuentes.'] },
   { v: '30-sep · 21:45', short: '14 recetas virales nuevas de comida y cena.', items: ['🔥 <b>14 recetas virales</b> de comida y cena: ensalada "Jennifer Aniston", dense bean salad, pizza bowl de cottage, bowl de atún picante con arroz crujiente, sándwich de pimiento, pasta al limón con burrata, bocaditos de salmón con la ensalada de pepino viral, orzo de pollo al limón, alubias cremosas, pollo hasselback, sopa anti-resfriado, garbanzos "marry me", wrap de pan de cottage y crema de tomate asado con sándwich.', '🛒 Nuevos ingredientes con dónde comprarlos: bulgur, pistachos y burrata.'] },
@@ -2162,6 +2471,7 @@ const HELP = [
 <li><b>Se desconecta:</b> la báscula se apaga sola al rato. La app intenta reconectar; si no, pulsa Conectar otra vez.</li>
 <li><b>El peso no se queda "estable":</b> apoya la báscula en una superficie firme y sin vibraciones.</li>
 <li><b>La cámara no abre:</b> usa "hacer foto al código" o escribe el número. Revisa que Bluefy tenga permiso de cámara en Ajustes del iPhone.</li>
+<li><b>No encuentro una comida ya hecha (pollo asado, paella…):</b> escribe una palabra en el buscador: hay cerca de 400 alimentos y platos con su ración típica. Si no está, búscalo en Open Food Facts, escanea el código de barras o créalo en + Crear alimento propio.</li>
 <li><b>Un producto tiene datos raros:</b> los de Open Food Facts los sube la gente. Edítalo en Ajustes → 🥫 Mis alimentos.</li>
 <li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
 <li><b>"GitHub respondió 409" o "GitHub estaba ocupado":</b> dos guardados muy seguidos chocaron. La app lo resuelve sola reintentando; no se pierde nada.</li>
