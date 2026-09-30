@@ -1,5 +1,8 @@
 name: Sondeo de precios
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    paths: ['tools/sondeo.py', '.github/workflows/sondeo.yml']
 permissions:
   contents: write
 jobs:
