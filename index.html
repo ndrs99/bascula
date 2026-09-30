@@ -162,7 +162,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '30-sep · 21:45';
+const APP_VERSION = '30-sep · 23:05';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1998,6 +1998,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '30-sep · 23:05', short: 'La guía explica mejor qué hace Guardar receta al cocinar con la báscula.', items: ['📖 En la guía, <b>👨‍🍳 Cocinar con la báscula</b> explica qué guarda Guardar receta, para qué sirve el peso cocinado y cómo apuntarte tu ración. También está en Preguntas frecuentes.'] },
   { v: '30-sep · 21:45', short: '14 recetas virales nuevas de comida y cena.', items: ['🔥 <b>14 recetas virales</b> de comida y cena: ensalada "Jennifer Aniston", dense bean salad, pizza bowl de cottage, bowl de atún picante con arroz crujiente, sándwich de pimiento, pasta al limón con burrata, bocaditos de salmón con la ensalada de pepino viral, orzo de pollo al limón, alubias cremosas, pollo hasselback, sopa anti-resfriado, garbanzos "marry me", wrap de pan de cottage y crema de tomate asado con sándwich.', '🛒 Nuevos ingredientes con dónde comprarlos: bulgur, pistachos y burrata.'] },
   { v: '30-sep · 21:30', short: 'Ajustes reorganizado en secciones, y buscador en Mis alimentos.', items: ['⚙️ <b>Ajustes</b> ahora es un menú de secciones (Objetivos, Báscula, Mis alimentos, Copia en GitHub, Buzón de mejoras…). Pulsa una para entrar y ‹ para volver.', '🔎 <b>Mis alimentos</b> tiene buscador y filtros (escaneados o creados por ti), para que no sea una lista interminable.'] },
   { v: '30-sep · 21:15', short: 'Menú compartido para los dos, lo del menú aparece en el Diario para apuntarlo de un toque, y buzón de mejoras.', items: ['👥 <b>Menú compartido</b>: un solo menú para los dos, con cantidades para cada uno, total a cocinar y reparto de lo cocinado. La lista de la compra suma los dos.', '📅 En el <b>Diario</b> aparece lo que tenías en el menú, con <b>✓ Comido</b> y <b>⚖️ Pesar</b>.', '💡 <b>Buzón de mejoras</b> en Ajustes para apuntar ideas.', '🍽️ Las recetas "a tu medida" ya no se agrandan ni encogen de forma exagerada (como mucho ×1,6 o ×0,5).'] },
@@ -2075,8 +2076,12 @@ const HELP = [
 <ol><li>Pon la olla o el bol en la báscula (la app hace la tara sola).</li>
 <li>Te dice qué echar y cuánto. La barra se va llenando y te avisa de "faltan 20 g" o "te pasas 5 g".</li>
 <li>Pulsa <b>Hecho ✓</b> y pasa al siguiente, con la tara hecha automáticamente.</li>
-<li>Al terminar, cocina siguiendo los pasos (📖 Ver pasos) y <b>pesa el resultado cocinado</b> sin la olla.</li>
-<li>Se guarda en <b>Mis recetas</b> con el peso real de cada ración. Así, al comer, solo pesas tu plato.</li></ol>
+<li>Al terminar, cocina siguiendo los pasos (📖 Ver pasos) y <b>pesa todo lo cocinado</b> sin la olla ni la bandeja. Apúntalo en <b>Peso final cocinado</b> (o pulsa Leer báscula).</li>
+<li>Pulsa <b>Guardar receta</b>.</li></ol>
+<p><b>¿Qué guarda?</b> Un plato nuevo en <b>Recetas → Mis recetas</b> con los gramos que <b>de verdad</b> echaste de cada ingrediente (lo que marcó la báscula, no el objetivo), y calcula sus calorías y macros <b>por cada 100 g de plato cocinado</b>.</p>
+<p><b>¿Por qué el peso cocinado?</b> Al cocinar se pierde agua y el plato pesa menos: las mismas calorías quedan en menos gramos. Si lo dejas vacío se usa el peso en crudo y las calorías por 100 g saldrían más bajas de lo real.</p>
+<p><b>Guardar no apunta nada en el Diario.</b> Para apuntar lo que comes: pon tu plato en la báscula, abre la receta en Mis recetas y pulsa <b>Comer</b> (o búscala en Pesar como cualquier alimento). Así cada uno se sirve lo que quiera y le cuenta lo suyo.</p>
+<p>Si repites la receta con otras cantidades, ábrela y pulsa <b>Editar</b> en vez de crear otra.</p>
 <p>En <b>Mis recetas → + Nueva receta propia</b> puedes hacer lo mismo con las recetas de casa.</p>`},
 {id:'menu',icon:'🍽️',title:'Menú semanal',tabs:['menu'],body:`
 <ul><li>Cada día tiene desayuno, comida, merienda y cena. Toca un hueco para elegir receta.</li>
@@ -2137,6 +2142,7 @@ const HELP = [
 <li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
 <li><b>"GitHub respondió 409" o "GitHub estaba ocupado":</b> dos guardados muy seguidos chocaron. La app lo resuelve sola reintentando; no se pierde nada.</li>
 <li><b>Error al guardar en GitHub (en rojo):</b> revisa que el repositorio se escriba como usuario/nombre y que el token tenga "Contents: Read and write" y no haya caducado.</li>
+<li><b>Al cocinar con la báscula, ¿qué hace Guardar receta?</b> Guarda el plato en Mis recetas con lo que pesaste de verdad y sus calorías por 100 g cocinado. No apunta nada en el Diario: para eso pesa tu plato y pulsa Comer en la receta (más en 👨‍🍳 Cocinar con la báscula).</li>
 <li><b>Apunté la cena en el día que no era:</b> tócala en el Diario, elige el día correcto (Ayer, Anteayer u Otro) y pulsa Guardar.</li>
 <li><b>No sale la tarjeta de "¿Es saludable?":</b> sale en productos envasados y en los básicos. No sale en recetas ni en condimentos (especias, vinagre…). En alimentos creados a mano hay que rellenar azúcares y sal. Si falta, comprueba que tienes la última versión.</li>
 <li><b>No veo lo último que se ha añadido:</b> mira la versión en Ajustes (abajo del todo) y compárala con la de 🆕 Novedades. GitHub tarda hasta 10 minutos en publicar una versión nueva; después recarga la página en Bluefy.</li>
