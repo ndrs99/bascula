@@ -6,8 +6,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 from mapa_precios import M
 
 UA = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1', 'Accept': 'application/json'}
-def get(u):
-    with urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=30) as x: return json.loads(x.read().decode('utf-8', 'replace'))
+DESK = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36', 'Accept': 'text/html,application/json;q=0.9,*/*;q=0.8', 'Accept-Language': 'es-ES,es;q=0.9'}
+def get(u, h=None):
+    with urllib.request.urlopen(urllib.request.Request(u, headers=h or UA), timeout=30) as x: return json.loads(x.read().decode('utf-8', 'replace'))
 def norm(s): return ''.join(c for c in unicodedata.normalize('NFD', (s or '').lower()) if unicodedata.category(c) != 'Mn')
 def stem(w): return w[:-2] if w.endswith('es') and len(w) > 5 else w[:-1] if w.endswith('s') and len(w) > 3 else w
 def strip_brand(name):
@@ -89,7 +90,7 @@ def size_g(txt, u=None):
 # ---------- Alcampo (web de compra online: se leen las fichas de la búsqueda) ----------
 def alcampo_offers(s):
     q = urllib.parse.quote(s.get('b') or s['q'])
-    req = urllib.request.Request(f'https://www.compraonline.alcampo.es/search?q={q}', headers={**UA, 'Accept': 'text/html'})
+    req = urllib.request.Request(f'https://www.compraonline.alcampo.es/search?q={q}', headers=DESK)
     with urllib.request.urlopen(req, timeout=40) as x: t = x.read().decode('utf-8', 'replace')
     out = []
     for c in t.split('data-test="fop-wrapper:')[1:41]:
@@ -112,7 +113,7 @@ def alcampo_offers(s):
 # ---------- Lidl (solo los productos que tiene en su web, sobre todo ofertas de la semana) ----------
 def lidl_offers(s):
     q = urllib.parse.quote(s.get('b') or s['q'])
-    d = get(f'https://www.lidl.es/q/api/search?q={q}&locale=es_ES&assortment=ES&version=v2.0.0&fetchsize=48')
+    d = get(f'https://www.lidl.es/q/api/search?q={q}&locale=es_ES&assortment=ES&version=v2.0.0&fetchsize=48', DESK)
     out = []
     for it in d.get('items', []):
         g0 = (it.get('gridbox') or {}).get('data') or {}
