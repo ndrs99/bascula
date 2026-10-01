@@ -87,13 +87,16 @@ def size_g(txt, u=None):
     g = n * q * k
     return g if 5 <= g <= 20000 else None
 
+ALC_DEBUG = []
 # ---------- Alcampo (web de compra online: se leen las fichas de la búsqueda) ----------
 def alcampo_offers(s):
     q = urllib.parse.quote(s.get('b') or s['q'])
     req = urllib.request.Request(f'https://www.compraonline.alcampo.es/search?q={q}', headers=DESK)
     with urllib.request.urlopen(req, timeout=40) as x: t = x.read().decode('utf-8', 'replace')
-    out = []
-    for c in t.split('data-test="fop-wrapper:')[1:41]:
+    out = []; cards = t.split('data-test="fop-wrapper:')[1:41]
+    if not cards:
+        tt = re.search(r'<title>([^<]*)', t); ALC_DEBUG.append(f"{s.get('b') or s['q']}: {len(t)} bytes, titulo={tt.group(1)[:60] if tt else '-'}")
+    for c in cards:
         n = re.search(r'data-test="fop-product-link"[^>]*>(?:<[^>]+>)*?<span class="salt-vc">([^<]+)</span>', c)
         p = re.search(r'data-test="fop-price">([^<]+)<', c)
         if not n or not p: continue
@@ -178,14 +181,14 @@ def main():
                 if x: row[tienda] = x
                 elif tienda in ('alcampo', 'lidl'): log.append(f'{tienda} {ing}: {len(offs)} candidatos, ninguno válido')
             except Exception as e: log.append(f'{tienda} {ing}: ERROR {str(e)[:120]}')
-            time.sleep(0.3)
+            time.sleep(1.2 if tienda == 'alcampo' else 0.3)
         res[ing] = row
     for ing, s in M.items():
         if 'de' in s:
             base = res.get(s['de'], {}); r = s['r']
             res[ing] = {t: dict(p=v['p'], g=round(v['g'] * r), k=round(v['k'] / r, 2), n=v['n']) for t, v in base.items()}
     out = dict(fecha=datetime.date.today().isoformat(), tiendas=['mercadona', 'dia', 'alcampo', 'lidl'], precios=res)
-    json.dump(log, open('tools/ultimo-registro.json', 'w'), ensure_ascii=False, indent=0)
+    json.dump(ALC_DEBUG[:20] + log, open('tools/ultimo-registro.json', 'w'), ensure_ascii=False, indent=0)
     json.dump(out, open('precios-auto.json', 'w'), ensure_ascii=False, separators=(',', ':'))
     falta = [k for k, v in res.items() if not v]
     print('ingredientes', len(res), 'sin precio', falta)
