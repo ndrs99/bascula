@@ -163,7 +163,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="vendor/zxing-library.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '1-oct · 15:40';
+const APP_VERSION = '1-oct · 16:30';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1735,7 +1735,7 @@ function viewRecipe(id) {
 
 /* ---------- PRECIOS ---------- */
 const STORES = [['mercadona', 'Mercadona'], ['lidl', 'Lidl'], ['alcampo', 'Alcampo'], ['dia', 'Dia'], ['carrefour', 'Carrefour'], ['aldi', 'Aldi'], ['familycash', 'Family Cash'], ['dani', 'Dani'], ['eroski', 'Eroski'], ['eljamon', 'El Jamón'], ['otro', 'Otra tienda']];
-const AUTO_STORES = ['mercadona', 'dia', 'alcampo', 'lidl'];
+const AUTO_STORES = ['mercadona', 'dia', 'lidl'];
 /* precios automáticos: los descarga cada lunes un proceso de GitHub desde las webs de los súper (precios-auto.json) */
 let AUTO = (() => { try { return JSON.parse(localStorage.getItem('bascula.auto')) || null; } catch (e) { return null; } })();
 async function pullAuto() {
@@ -2424,7 +2424,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
-  { v: '1-oct · 15:40', short: 'Precios automáticos de Alcampo y Lidl; tiendas de Sevilla.', items: ['🤖 Ahora los precios automáticos son de <b>Mercadona, Dia y Alcampo</b>, y de <b>Lidl</b> lo que publica en su web (sobre todo ofertas). Consum se quita porque no hay en Sevilla.', '🏪 En la lista de tiendas para apuntar precios a mano están también <b>Family Cash, Dani, Eroski y El Jamón</b>.'] },
+  { v: '1-oct · 16:30', short: 'Precios de Lidl y tiendas de Sevilla.', items: ['🤖 Los precios automáticos son de <b>Mercadona y Dia</b>, y de <b>Lidl</b> lo que publica en su web (sobre todo ofertas). Consum se quita porque no hay en Sevilla.', '🏪 En la lista de tiendas para apuntar precios a mano están también <b>Family Cash, Dani, Eroski y El Jamón</b>.'] },
   { v: '1-oct · 14:45', short: 'Escáner de códigos de barras mucho más fiable.', items: ['📷 <b>Escáner nuevo</b>: usa el lector de códigos ZXing C++ (el mismo motor que muchas apps nativas), mira solo la franja del recuadro con más resolución y pide autoenfoque continuo.', '🔍 <b>Zoom 1×/2×</b> y <b>linterna 🔦</b> en la cámara si tu móvil lo permite, y pistas si tarda en leer.', '📸 Las <b>fotos</b> se leen en varias pasadas (entera, por franjas, girada), así que lee códigos torcidos o pequeños.', '⚡ El lector va incluido en la app: ya no depende de descargarse de internet cada vez.'] },
   { v: '1-oct · 00:55', short: '259 comidas nuevas ya cocinadas: pollo asado, paella, croquetas, pizza, bocadillos, bebidas…', items: ['🍗 <b>259 comidas y platos nuevos</b> en el buscador, ya cocinados o preparados: pollo asado y al carbón, filetes a la plancha, pescados, tortilla, lentejas, cocido, paella, pasta, tapas, comida rápida, bollería, postres, fruta, frutos secos, salsas y bebidas (café con leche, cañas, refrescos…).', '⚖️ Cada uno trae su <b>ración típica</b> (1 cuarto de pollo, 1 croqueta, 1 caña…) para apuntarlo de un toque si no lo pesas.', '🟢 También dicen si son saludables y proponen alternativas (patatas fritas → asadas, refresco → zero…).'] },
   { v: '30-sep · 23:50', short: 'Precios automáticos de Mercadona, Dia y Consum, y cuánto te sale la compra.', items: ['🤖 <b>Precios automáticos</b>: cada lunes la app consulta las webs de Mercadona, Dia y Consum y pone precio a casi todos los ingredientes. Los que apuntes tú siguen mandando.', '🛒 La lista de la compra enseña lo que pagarás <b>en caja</b> y lo que <b>se usa esta semana</b>, y cuánto costaría todo en cada súper.', '🏪 Añadido <b>Consum</b> a la lista de tiendas.'] },
@@ -2539,8 +2539,8 @@ const HELP = [
 <li><b>Por sección, por tienda o A-Z:</b> elige cómo ordenarla. Por sección sigue el orden de los pasillos (fruta y verdura, carne y pescado, lácteos…), y las cantidades salen en unidades cuando tiene sentido (6 huevos, 2 cebollas).</li>
 <li><b>📝 Enviar a Notas</b>: la manda a la app Notas. Allí selecciona todo y pulsa el botón de lista (☑️) para que cada producto tenga su casilla. <b>📋 Copiar lista</b> la copia para WhatsApp.</li></ul>`},
 {id:'precios',icon:'💶',title:'Precios y súper más barato',tabs:['menu'],body:`
-<p>🤖 <b>Precios automáticos:</b> cada lunes la app consulta las webs de <b>Mercadona, Dia y Alcampo</b> (y de <b>Lidl</b> lo poco que publica, sobre todo ofertas) y guarda el precio de cada ingrediente (el más barato por kilo que encaja). No tienes que hacer nada.</p>
-<ul><li>Carrefour, Eroski y El Corte Inglés bloquean las consultas automáticas, y Aldi, Family Cash y Dani no publican sus precios en internet, así que esos los podéis apuntar vosotros (están en la lista de tiendas).</li>
+<p>🤖 <b>Precios automáticos:</b> cada lunes la app consulta las webs de <b>Mercadona y Dia</b> (y de <b>Lidl</b> lo poco que publica, sobre todo ofertas) y guarda el precio de cada ingrediente (el más barato por kilo que encaja). No tienes que hacer nada.</p>
+<ul><li>Carrefour, Alcampo, Eroski y El Corte Inglés bloquean las consultas automáticas, y Aldi, Family Cash y Dani no publican sus precios en internet, así que esos los podéis apuntar vosotros (están en la lista de tiendas).</li>
 <li>Si un precio automático no te cuadra (por ejemplo, compras otra marca), escribe el tuyo: siempre manda el que apuntas tú.</li>
 <li>Los pocos ingredientes que no venden online (como el bulgur) salen con un <b>precio estimado</b> (≈).</li>
 <li>Toca cualquier producto en la lista o en una receta, o entra en <b>Menú → 💶 Precios</b>.</li>
