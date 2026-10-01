@@ -24,11 +24,14 @@ U0 = {
  'costco_q': 'https://www.costco.es/search?text=leche',
  'coviran': 'https://www.coviran.es/',
 }
-U = {k: U0[k] for k in ['familycash_q2', 'familycash_secc', 'dani_es', 'alcampo_web', 'lidl_api', 'aldi_web', 'costco_q', 'coviran']}
-U['lidl_api2'] = 'https://www.lidl.es/q/api/search?q=pechuga%20pollo&locale=es_ES&assortment=ES&version=v2.0.0'
-U['alcampo_web2'] = 'https://www.compraonline.alcampo.es/search?q=pechuga%20de%20pollo'
-U['aldi_leche'] = 'https://www.aldi.es/productos/frescos/leche-y-huevos.html'
-U['familycash_q3'] = 'https://www.familycash.es/?s=pechuga+pollo&post_type=product'
+U = {
+ 'aldi_carne': 'https://www.aldi.es/productos/carne.html',
+ 'aldi_lacteos': 'https://www.aldi.es/productos/lacteos-y-huevos.html',
+ 'aldi_api': 'https://api.aldi.es/v3/product-search?currency=EUR&serviceType=walk-in&q=leche&limit=12&offset=0&sort=relevance',
+ 'aldi_api2': 'https://api.aldi.es/v2/products?q=leche',
+ 'alcampo_leche': 'https://www.compraonline.alcampo.es/search?q=leche%20semidesnatada',
+}
+import ssl
 res = {}
 for k, u in U.items():
     try:
@@ -38,4 +41,11 @@ for k, u in U.items():
         res[k] = [e.code, u, e.headers.get('Server', ''), 0, e.read()[:300].decode('utf-8', 'replace')]
     except Exception as e: res[k] = ['ERR', u, '', 0, str(e)[:300]]
 os.makedirs('sondeo', exist_ok=True); json.dump(res, open('sondeo/tiendas.json', 'w'), ensure_ascii=False, indent=1)
+ctx = ssl._create_unverified_context()
+for k, u in {'eljamon_home': 'https://www.supermercadoseljamon.com/', 'eljamon_q': 'https://www.supermercadoseljamon.com/buscar?q=leche'}.items():
+    try:
+        r = urllib.request.urlopen(urllib.request.Request(u, headers=H), timeout=25, context=ctx); t = r.read().decode('utf-8', 'replace'); res[k] = [r.status, r.geturl(), dict(r.headers).get('Server', ''), len(t), t[:600000]]
+    except urllib.error.HTTPError as e: res[k] = [e.code, u, '', 0, '']
+    except Exception as e: res[k] = ['ERR', u, '', 0, str(e)[:300]]
+json.dump(res, open('sondeo/tiendas.json', 'w'), ensure_ascii=False, indent=1)
 for k, v in res.items(): print(k, v[0], v[2], v[3])
