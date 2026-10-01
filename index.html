@@ -95,6 +95,7 @@ label.chip,label.btn{display:inline-flex;align-items:center;justify-content:cent
 @media (prefers-color-scheme:dark){.hchip.good{color:var(--acc)}}
 .altit{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .altload{text-align:center;color:var(--mute);padding:40px 10px;line-height:1.5}
+.scantools{position:absolute;top:12px;right:12px;display:flex;gap:8px}.scantools button{width:46px;height:46px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:16px;font-weight:800;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.scantools button.on{background:#fcc419;color:#000}
 .scanst.busy{background:rgba(18,184,134,.85)}.scanst.err{background:rgba(240,62,62,.88);white-space:normal;text-align:center;border-radius:16px;width:86%;line-height:1.35}
 .qhead{display:flex;gap:14px;align-items:flex-start}
 .qimg{width:72px;height:72px;border-radius:18px;background:#fff;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.12)}
@@ -159,10 +160,10 @@ details.help[open] .chev{transform:rotate(90deg)}
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
+<script src="vendor/zxing-library.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '1-oct · 00:55';
+const APP_VERSION = '1-oct · 14:45';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -1182,35 +1183,133 @@ async function offSearch(q) { const r = await fetch(`https://es.openfoodfacts.or
 async function offBarcode(code) { const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${OFF_FIELDS}`); const j = await r.json(); return j.status === 1 ? offToFood(j.product) : null; }
 
 /* ---------- escáner de código de barras ---------- */
-let codeReader = null;
-function stopScan() { try { codeReader && codeReader.reset(); } catch (e) {} codeReader = null; }
+/* ---------- escáner de códigos de barras ----------
+   1º lector nativo del sistema (si existe) · 2º ZXing C++ (WebAssembly, el más fiable) · 3º ZXing JS (respaldo).
+   Lee solo la franja del recuadro a buena resolución, con autoenfoque, zoom y linterna si el móvil lo permite. */
+let scanState = null;
+function stopScan() { if (!scanState) return; const s = scanState; scanState = null; s.stopped = true; clearTimeout(s.timer); try { s.stream && s.stream.getTracks().forEach(t => t.stop()); } catch (e) {} }
+const BC_FORMATS = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E', 'Code128'];
+let zwPromise = null;
+function loadZW() {
+  if (zwPromise) return zwPromise;
+  zwPromise = new Promise(res => {
+    const ready = () => { try { ZXingWASM.prepareZXingModule({ overrides: { locateFile: (path, prefix) => path.endsWith('.wasm') ? new URL('vendor/zxing_reader.wasm', location.href).href : prefix + path }, fireImmediately: true }); res(ZXingWASM); } catch (e) { res(null); } };
+    if (window.ZXingWASM) return ready();
+    const sc = document.createElement('script'); sc.src = 'vendor/zxing-reader.js'; sc.onload = ready; sc.onerror = () => res(null); document.head.appendChild(sc);
+  });
+  return zwPromise;
+}
+let nativeBD;
+async function nativeDetector() {
+  if (nativeBD !== undefined) return nativeBD; nativeBD = null;
+  try { if ('BarcodeDetector' in window) { const ok = await BarcodeDetector.getSupportedFormats(); const f = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'].filter(x => ok.includes(x)); if (f.includes('ean_13')) nativeBD = new BarcodeDetector({ formats: f }); } } catch (e) {}
+  return nativeBD;
+}
+function eanOk(code) {
+  if (!/^\d+$/.test(code)) return code.length >= 6; // Code128: texto libre
+  if (![8, 12, 13, 14].includes(code.length)) return code.length >= 6;
+  const d = code.split('').map(Number), chk = d.pop(); let sum = 0;
+  d.reverse().forEach((x, i) => sum += x * (i % 2 ? 1 : 3));
+  return (10 - sum % 10) % 10 === chk;
+}
+const normCode = c => (c.length === 12 && /^\d+$/.test(c) ? '0' + c : c); // UPC-A → EAN-13
+let zjsReader = null;
+function zjsDecode(canvas) {
+  if (!window.ZXing) return null;
+  try {
+    if (!zjsReader) { const h = new Map(); h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E, ZXing.BarcodeFormat.CODE_128]); h.set(ZXing.DecodeHintType.TRY_HARDER, true); zjsReader = new ZXing.MultiFormatReader(); zjsReader.setHints(h); }
+    const r = zjsReader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(canvas)))); return r ? r.getText() : null;
+  } catch (e) { return null; }
+}
+/* intenta leer un canvas con el mejor lector disponible; devuelve el código o null */
+async function decodeCanvas(canvas, ctx, hard) {
+  const bd = await nativeDetector();
+  if (bd) { try { const r = await bd.detect(canvas); if (r && r[0] && r[0].rawValue) return r[0].rawValue; } catch (e) {} }
+  const zw = await loadZW();
+  if (zw) { try { const r = await zw.readBarcodes(ctx.getImageData(0, 0, canvas.width, canvas.height), { formats: BC_FORMATS, tryHarder: true, tryRotate: !!hard, tryInvert: false, tryDownscale: !!hard, maxNumberOfSymbols: 1 }); const ok = r.find(x => x.isValid && x.text); if (ok) return ok.text; } catch (e) {} if (!hard) return null; }
+  return zjsDecode(canvas);
+}
+async function decodeImageFile(file) {
+  const img = await new Promise((res, rej) => { const u = URL.createObjectURL(file), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); res(i); }; i.onerror = rej; i.src = u; });
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+  // varias pasadas: imagen entera a 2 tamaños y la franja central ampliada
+  const W = img.naturalWidth, H = img.naturalHeight, tries = [[0, 0, W, H, 1600], [0, 0, W, H, 900], [0, H * .25, W, H * .5, 1600], [W * .1, H * .35, W * .8, H * .3, 1400]];
+  for (const [sx, sy, sw, sh, max] of tries) {
+    const k = Math.min(1, max / Math.max(sw, sh)); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
+    cx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+    const c = await decodeCanvas(cv, cx, true); if (c) return c;
+  }
+  return null;
+}
 function openScanner(onFood) {
   openSheet(`<div class="row" style="margin-bottom:12px"><b class="sp" style="font-size:20px;letter-spacing:-.02em">Escanear producto</b><button class="btn round" style="width:36px;height:36px;font-size:16px" onclick="closeSheet()">✕</button></div>
   <div class="scanbox"><video id="vid" playsinline muted autoplay></video><div class="scanwin"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><span class="sline"></span></div>
-    <div class="scanst" id="scst">Coloca el código de barras dentro del recuadro</div></div>
+    <div class="scantools"><button id="sczoom" style="display:none">1×</button><button id="sctorch" style="display:none">🔦</button></div>
+    <div class="scanst" id="scst">Abriendo la cámara…</div></div>
   <div class="grid2" style="margin-top:12px"><label class="btn" style="cursor:pointer;padding:13px 8px;font-size:15px;font-weight:650">📸 Hacer foto<input type="file" accept="image/*" capture="environment" id="bcph" style="display:none"></label><button class="btn" id="bctype" style="padding:13px 8px">⌨️ Escribir código</button></div>
   <div class="row" id="bcrow" style="margin-top:10px;display:none"><input id="bcin" inputmode="numeric" placeholder="Números del código de barras"><button class="btn pri" id="bcgo">Buscar</button></div>
-  <p class="sm mute" style="text-align:center;margin:14px 8px 0;line-height:1.45">Datos de Open Food Facts. Si un producto no aparece, lo creas una vez y queda guardado para los dos.</p>`);
+  <p class="sm mute" style="text-align:center;margin:14px 8px 0;line-height:1.45">Consejo: código en horizontal, a un palmo del móvil y con luz. Si no enfoca, aléjalo un poco o usa el zoom.</p>`);
   let busy = false;
   const st = (t, cls) => { const el = $('#scst'); if (el) { el.textContent = t; el.className = 'scanst' + (cls ? ' ' + cls : ''); } };
-  const lookup = async code => {
-    if (busy) return; busy = true; stopScan(); st('Buscando ' + code + '…', 'busy');
+  const lookup = async raw => {
+    if (busy) return; const code = normCode(String(raw).trim()); busy = true; stopScan(); st('Buscando ' + code + '…', 'busy');
     try { navigator.vibrate && navigator.vibrate(40); } catch (e) {}
-    const local = allFoods().find(f => f.code === code); if (local) return onFood(local);
+    const local = allFoods().find(f => f.code === code || f.code === raw); if (local) return onFood(local);
     if (!navigator.onLine) { toast('Sin conexión: créalo a mano'); return openFoodForm({ code }, onFood); }
-    try { const f = await offBarcode(code); if (f) return onFood(f); } catch (e) {}
+    try { const f = await offBarcode(code) || (code !== raw ? await offBarcode(raw) : null); if (f) return onFood(f); } catch (e) {}
     toast('Producto no encontrado: créalo tú'); openFoodForm({ code }, onFood);
   };
   $('#bctype').onclick = () => { $('#bcrow').style.display = 'flex'; $('#bcin').focus(); };
   $('#bcgo').onclick = () => { const c = $('#bcin').value.replace(/\D/g, ''); if (c) lookup(c); };
   $('#bcin').onkeydown = e => { if (e.key === 'Enter') $('#bcgo').click(); };
-  $('#bcph').onchange = async e => { const f = e.target.files[0]; if (!f || !window.ZXing) return; st('Leyendo la foto…', 'busy'); const url = URL.createObjectURL(f);
-    try { const res = await new ZXing.BrowserMultiFormatReader().decodeFromImageUrl(url); lookup(res.getText()); } catch (err) { st('No se pudo leer: acércate más, con buena luz, o escribe el código', 'err'); } finally { URL.revokeObjectURL(url); } };
-  if (!window.ZXing) { st('Escáner no disponible: haz una foto o escribe el código', 'err'); return; }
-  try {
-    codeReader = new ZXing.BrowserMultiFormatReader();
-    codeReader.decodeFromVideoDevice(undefined, $('#vid'), (res) => { if (res) lookup(res.getText()); }).catch(() => st('No se pudo abrir la cámara: haz una foto o escribe el código', 'err'));
-  } catch (e) { st('No se pudo abrir la cámara: haz una foto o escribe el código', 'err'); }
+  $('#bcph').onchange = async e => { const f = e.target.files[0]; if (!f) return; st('Leyendo la foto…', 'busy');
+    try { const c = await decodeImageFile(f); if (c) return lookup(c); } catch (err) {}
+    st('No se pudo leer la foto: hazla más cerca, recta y con luz, o escribe el código', 'err'); };
+  startCamera(lookup, st);
+}
+async function startCamera(lookup, st) {
+  stopScan(); const me = scanState = { stopped: false, stream: null, timer: 0 };
+  loadZW(); nativeDetector();
+  const vid = $('#vid'); if (!vid) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return st('Este navegador no deja usar la cámara: haz una foto o escribe el código', 'err');
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } }); }
+  catch (e) { try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'environment' } }); } catch (e2) { return st(e2 && e2.name === 'NotAllowedError' ? 'Sin permiso para la cámara: dáselo en Ajustes del iPhone → Bluefy' : 'No se pudo abrir la cámara: haz una foto o escribe el código', 'err'); } }
+  if (me.stopped) { stream.getTracks().forEach(t => t.stop()); return; }
+  me.stream = stream; vid.srcObject = stream; try { await vid.play(); } catch (e) {}
+  const track = stream.getVideoTracks()[0]; let caps = {}; try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+  try { if (caps.focusMode && caps.focusMode.includes('continuous')) await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+  if (caps.zoom && caps.zoom.max >= 1.5) {
+    const zb = $('#sczoom'), lv = [caps.zoom.min || 1, Math.min(2, caps.zoom.max), Math.min(3, caps.zoom.max)].filter((v, i, a) => a.indexOf(v) === i); let zi = 0;
+    zb.style.display = ''; zb.onclick = async () => { zi = (zi + 1) % lv.length; try { await track.applyConstraints({ advanced: [{ zoom: lv[zi] }] }); zb.textContent = (Math.round(lv[zi] * 10) / 10) + '×'; } catch (e) {} };
+  }
+  if (caps.torch) { const tb = $('#sctorch'); let on = false; tb.style.display = ''; tb.onclick = async () => { on = !on; try { await track.applyConstraints({ advanced: [{ torch: on }] }); tb.classList.toggle('on', on); } catch (e) {} }; }
+  st('Coloca el código de barras dentro del recuadro');
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+  const t0 = Date.now(); let n = 0, last = '', lastN = 0, hinted = 0;
+  const tick = async () => {
+    if (me.stopped || scanState !== me) return;
+    const vw = vid.videoWidth, vh = vid.videoHeight;
+    if (vw && vh) {
+      n++;
+      // franja del recuadro (≈ 80 % del ancho, 35 % del alto); cada 4 intentos, la imagen entera
+      const full = n % 4 === 0, sw = full ? vw : vw * .84, sh = full ? vh : vh * .38, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+      const k = Math.min(1, (full ? 1280 : 1400) / sw); cv.width = Math.round(sw * k); cv.height = Math.round(sh * k);
+      cx.drawImage(vid, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+      const code = await decodeCanvas(cv, cx, false);
+      if (me.stopped) return;
+      if (code && eanOk(code)) {
+        // con el lector JS pedimos dos lecturas iguales seguidas para evitar errores
+        if (nativeBD || (await loadZW()) || code === last) return lookup(code);
+        last = code; lastN = n;
+      } else if (n - lastN > 6) last = '';
+      const secs = (Date.now() - t0) / 1000;
+      if (secs > 7 && hinted < 1) { hinted = 1; st('¿No lo pilla? Aleja un poco el móvil' + (caps.zoom ? ' o usa el zoom' : '') + (caps.torch ? ' o enciende la linterna' : '')); }
+      else if (secs > 16 && hinted < 2) { hinted = 2; st('Prueba con 📸 Hacer foto o escribe el número', 'err'); }
+    }
+    me.timer = setTimeout(tick, 90);
+  };
+  tick();
 }
 
 /* ---------- formulario de alimento propio ---------- */
@@ -2325,6 +2424,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '1-oct · 14:45', short: 'Escáner de códigos de barras mucho más fiable.', items: ['📷 <b>Escáner nuevo</b>: usa el lector de códigos ZXing C++ (el mismo motor que muchas apps nativas), mira solo la franja del recuadro con más resolución y pide autoenfoque continuo.', '🔍 <b>Zoom 1×/2×</b> y <b>linterna 🔦</b> en la cámara si tu móvil lo permite, y pistas si tarda en leer.', '📸 Las <b>fotos</b> se leen en varias pasadas (entera, por franjas, girada), así que lee códigos torcidos o pequeños.', '⚡ El lector va incluido en la app: ya no depende de descargarse de internet cada vez.'] },
   { v: '1-oct · 00:55', short: '259 comidas nuevas ya cocinadas: pollo asado, paella, croquetas, pizza, bocadillos, bebidas…', items: ['🍗 <b>259 comidas y platos nuevos</b> en el buscador, ya cocinados o preparados: pollo asado y al carbón, filetes a la plancha, pescados, tortilla, lentejas, cocido, paella, pasta, tapas, comida rápida, bollería, postres, fruta, frutos secos, salsas y bebidas (café con leche, cañas, refrescos…).', '⚖️ Cada uno trae su <b>ración típica</b> (1 cuarto de pollo, 1 croqueta, 1 caña…) para apuntarlo de un toque si no lo pesas.', '🟢 También dicen si son saludables y proponen alternativas (patatas fritas → asadas, refresco → zero…).'] },
   { v: '30-sep · 23:50', short: 'Precios automáticos de Mercadona, Dia y Consum, y cuánto te sale la compra.', items: ['🤖 <b>Precios automáticos</b>: cada lunes la app consulta las webs de Mercadona, Dia y Consum y pone precio a casi todos los ingredientes. Los que apuntes tú siguen mandando.', '🛒 La lista de la compra enseña lo que pagarás <b>en caja</b> y lo que <b>se usa esta semana</b>, y cuánto costaría todo en cada súper.', '🏪 Añadido <b>Consum</b> a la lista de tiendas.'] },
   { v: '30-sep · 23:05', short: 'La guía explica mejor qué hace Guardar receta al cocinar con la báscula.', items: ['📖 En la guía, <b>👨‍🍳 Cocinar con la báscula</b> explica qué guarda Guardar receta, para qué sirve el peso cocinado y cómo apuntarte tu ración. También está en Preguntas frecuentes.'] },
@@ -2367,7 +2467,9 @@ const HELP = [
 {id:'escanear',icon:'📷',title:'Escanear productos',tabs:['pesar'],body:`
 <p>En <b>Pesar → 📷 Escanear producto</b> (o con el botón ▥ al buscar un alimento) lees el código de barras de cualquier producto envasado.</p>
 <ul><li>Te muestra la foto, el Nutri-Score, y las calorías y macros <b>de lo que estás pesando en ese momento</b>, que cambian en vivo con la báscula.</li>
-<li>Si la cámara no se abre dentro de Bluefy, pulsa <b>"hacer foto al código"</b> o escribe el número a mano.</li>
+<li><b>Para que lo lea a la primera:</b> el código en horizontal dentro del recuadro, a un palmo del móvil (los iPhone no enfocan muy de cerca), con luz y sin reflejos. En latas y botellas, gira el producto para que el código quede plano.</li>
+<li>Si el móvil lo permite verás arriba a la derecha el <b>zoom (1×/2×)</b> y la <b>linterna 🔦</b>: con zoom puedes alejar el móvil y enfoca mejor.</li>
+<li>Si aun así no lo pilla, pulsa <b>📸 Hacer foto</b> (lee la foto con más calma) o <b>⌨️ Escribir código</b>.</li>
 <li>Los datos vienen de <b>Open Food Facts</b>, una base de datos abierta con millones de productos (incluidas marcas blancas).</li>
 <li>Si un producto no aparece, lo creas una vez copiando la etiqueta (valores por 100 g). Queda guardado y, con GitHub activado, también le aparece a tu pareja.</li></ul>`},
 {id:'diario',icon:'📅',title:'El diario',tabs:['hoy'],body:`
@@ -2470,7 +2572,8 @@ const HELP = [
 <ul><li><b>No encuentra la báscula:</b> enciéndela poniendo algo encima y <b>cierra la app Silvergear Fit</b> del todo (la báscula solo acepta una conexión). Tiene que abrirse desde Bluefy, no desde Safari.</li>
 <li><b>Se desconecta:</b> la báscula se apaga sola al rato. La app intenta reconectar; si no, pulsa Conectar otra vez.</li>
 <li><b>El peso no se queda "estable":</b> apoya la báscula en una superficie firme y sin vibraciones.</li>
-<li><b>La cámara no abre:</b> usa "hacer foto al código" o escribe el número. Revisa que Bluefy tenga permiso de cámara en Ajustes del iPhone.</li>
+<li><b>La cámara no abre:</b> usa 📸 Hacer foto o escribe el número. Revisa que Bluefy tenga permiso de cámara en Ajustes del iPhone.</li>
+<li><b>El escáner no lee un código:</b> aleja el móvil a un palmo (de muy cerca el iPhone no enfoca), usa el zoom 2× si aparece, evita reflejos y pon el código en horizontal. Si no, 📸 Hacer foto.</li>
 <li><b>No encuentro una comida ya hecha (pollo asado, paella…):</b> escribe una palabra en el buscador: hay cerca de 400 alimentos y platos con su ración típica. Si no está, búscalo en Open Food Facts, escanea el código de barras o créalo en + Crear alimento propio.</li>
 <li><b>Un producto tiene datos raros:</b> los de Open Food Facts los sube la gente. Edítalo en Ajustes → 🥫 Mis alimentos.</li>
 <li><b>"Load failed" o "Pendiente de guardar":</b> se cortó la conexión mientras guardaba. No se ha perdido nada; la app lo reintenta sola. Si quieres, pulsa Guardar ahora.</li>
