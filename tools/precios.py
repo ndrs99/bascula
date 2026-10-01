@@ -173,9 +173,10 @@ def main():
         for tienda, fn in (('dia', dia_offers), ('alcampo', alcampo_offers), ('lidl', lidl_offers)):
             if len(sys.argv) > 1: break
             try:
-                x = pick(fn(s), s, ref)
+                offs = fn(s); x = pick(offs, s, ref)
                 if x: row[tienda] = x
-            except Exception as e: log.append(f'{tienda} {ing}: {e}')
+                elif tienda in ('alcampo', 'lidl'): log.append(f'{tienda} {ing}: {len(offs)} candidatos, ninguno válido')
+            except Exception as e: log.append(f'{tienda} {ing}: ERROR {str(e)[:120]}')
             time.sleep(0.3)
         res[ing] = row
     for ing, s in M.items():
@@ -183,6 +184,7 @@ def main():
             base = res.get(s['de'], {}); r = s['r']
             res[ing] = {t: dict(p=v['p'], g=round(v['g'] * r), k=round(v['k'] / r, 2), n=v['n']) for t, v in base.items()}
     out = dict(fecha=datetime.date.today().isoformat(), tiendas=['mercadona', 'dia', 'alcampo', 'lidl'], precios=res)
+    json.dump(log, open('tools/ultimo-registro.json', 'w'), ensure_ascii=False, indent=0)
     json.dump(out, open('precios-auto.json', 'w'), ensure_ascii=False, separators=(',', ':'))
     falta = [k for k, v in res.items() if not v]
     print('ingredientes', len(res), 'sin precio', falta)
