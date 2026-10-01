@@ -1,0 +1,8 @@
+./zxing-wasm-2.2.4/package/dist/iife/reader/index.js
+./zxing-wasm-2.2.4/package/dist/es/reader/index.js
+./zxing-wasm-2.2.4/package/dist/cjs/reader/index.js
+./zxing-wasm-2.2.4/package/dist/reader/zxing_reader.wasm
+./zxing-wasm-2.2.4/package/dist/full/zxing_full.wasm
+./zxing-wasm-2.2.4/package/dist/writer/zxing_writer.wasm
+  "version": "0.21.3",
+  "version": "2.2.4",
