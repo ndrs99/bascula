@@ -112,6 +112,7 @@ label.chip,label.btn{display:inline-flex;align-items:center;justify-content:cent
 .qpill{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:700;font-size:13.5px;font-family:inherit;display:inline-flex;align-items:center}
 .qpill.on{border-color:var(--acc);color:var(--acc)}
 .qquick{display:flex;gap:6px;margin-top:12px}
+.qunits{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.qquick button.qu{color:var(--acc)}.qulink{border:0;background:none;color:var(--acc);font-weight:700;font-size:13px;font-family:inherit;padding:10px 0 0;cursor:pointer}
 .qquick button{flex:1;border:0;background:var(--card);color:var(--ink);border-radius:12px;padding:9px 0;font-weight:700;font-size:13px;font-family:inherit}
 .qnut{background:var(--soft);border-radius:24px;padding:16px;margin-top:10px}
 .qkcal{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--acc);font-variant-numeric:tabular-nums}
@@ -163,7 +164,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="vendor/zxing-library.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '1-oct · 16:30';
+const APP_VERSION = '1-oct · 21:45';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -969,7 +970,7 @@ BASE_FOODS.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 const KEY = 'bascula.v1';
 function load() { let d = null; try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} return normalize(d); }
 function normalize(d) {
-  const def = { goals: { kcal: 2000, p: 120, c: 220, f: 65, water: 2000 }, foods: {}, diary: {}, containers: [], recents: [], favs: [], water: {}, menu: {}, shopChecked: {}, prices: {}, pantry: {}, templates: [], body: null, tipsSeen: {}, onboarded: 0, settings: { decimals: 0, demo: false } };
+  const def = { goals: { kcal: 2000, p: 120, c: 220, f: 65, water: 2000 }, foods: {}, diary: {}, containers: [], recents: [], favs: [], water: {}, menu: {}, shopChecked: {}, prices: {}, pantry: {}, templates: [], units: {}, body: null, tipsSeen: {}, onboarded: 0, settings: { decimals: 0, demo: false } };
   d = Object.assign(def, d || {}); d.goals = Object.assign(def.goals, d.goals); d.settings = Object.assign({ decimals: 0, demo: false, dayEnd: 4 }, d.settings); return d;
 }
 let S = load();
@@ -1174,11 +1175,74 @@ function openPicker(onPick, title = 'Añadir alimento') {
   $('#pbc').onclick = () => openScanner(pick);
   $('#pnew').onclick = () => openFoodForm({ name: ps.value.trim() }, pick);
 }
+/* ---------- unidades (1 loncha, ½ aguacate, 2 huevos…) ---------- */
+const UNIT_WORDS = 'loncha|lonchas|rebanada|rebanadas|unidad|unidades|ud|uds|pieza|piezas|porcion|porciones|porción|barrita|barritas|galleta|galletas|tortita|tortitas|yogur|yogures|tarrina|tarrinas|lata|latas|sobre|sobres|bolsita|bolsitas|filete|filetes|hamburguesa|hamburguesas|salchicha|salchichas|tortilla|tortillas|huevo|huevos|bote|botes|botella|botellas|brik|briks|croqueta|croquetas|nugget|nuggets|cápsula|cápsulas|capsula|capsulas|pan|panes|bollo|bollos|magdalena|magdalenas|onza|onzas|pastilla|pastillas';
+const singular = w => { w = String(w || '').toLowerCase().trim(); const x = { uds: 'unidad', ud: 'unidad', unidades: 'unidad', panes: 'pan', yogures: 'yogur', porciones: 'porción', capsulas: 'cápsula', cápsulas: 'cápsula', briks: 'brik' }[w]; return x || (w.endsWith('es') && /[rnlz]es$/.test(w) ? w.slice(0, -2) : w.endsWith('s') ? w.slice(0, -1) : w); };
+const plural = s => s.replace(/^(\S+)/, w => /[aeiouáéó]$/i.test(w) ? w + 's' : /z$/.test(w) ? w.slice(0, -1) + 'ces' : /ón$/.test(w) ? w.slice(0, -2) + 'ones' : /í$/.test(w) ? w + 'es' : w + 'es');
+function weightG(t) { const m = String(t || '').toLowerCase().replace(',', '.').match(/(\d+(?:\.\d+)?)\s*(kg|g|gr|grs|l|ml|cl)\b/); if (!m) return 0; return +m[1] * ({ kg: 1000, l: 1000, cl: 10 }[m[2]] || 1); }
+function offUnit(p) {
+  const out = {}, ss = String(p.serving_size || ''), sq = +p.serving_quantity || 0;
+  // "1 loncha (15 g)", "2 galletas (25 g)", "30 g"
+  if (sq > 0 && sq < 2000) { const m = ss.toLowerCase().match(new RegExp('(\\d+(?:[.,]\\d+)?)?\\s*(' + UNIT_WORDS + ')\\b')); const n = m && m[1] ? parseFloat(m[1].replace(',', '.')) : 1; out.servG = Math.round(sq / (n || 1) * 10) / 10; out.servS = m ? singular(m[2]) : 'ración'; }
+  // "8 lonchas 120 g", "120 g (8 lonchas)", "6 x 125 g", o el nombre "Pavo 12 lonchas"
+  const txt = (String(p.quantity || '') + ' ' + (p.product_name_es || p.product_name || '')).toLowerCase(), tot = weightG(p.quantity) || weightG(txt);
+  const mx = txt.match(/(\d+)\s*x\s*(\d+(?:[.,]\d+)?)\s*(g|gr|ml)\b/);
+  const mc = txt.match(new RegExp('(\\d+)\\s*(' + UNIT_WORDS + ')\\b'));
+  if (mc && tot && +mc[1] > 1 && +mc[1] < 200) out.unit = [Math.round(tot / +mc[1] * 10) / 10, singular(mc[2] === 'ud' || mc[2] === 'uds' ? 'unidad' : mc[2])];
+  else if (mx && +mx[1] > 1) out.unit = [parseFloat(mx[2].replace(',', '.')), /yogur/.test(txt) ? 'yogur' : 'unidad'];
+  if (out.unit && /loncha|lonchas|fiambre|sliced|tranches/.test(txt + ' ' + (p.categories_tags || []).join(' ')) && out.unit[1] === 'unidad') out.unit[1] = 'loncha';
+  return out;
+}
+const EAT_U = {
+  'Aguacate': [[140, 'aguacate']], 'Tomate': [[120, 'tomate']], 'Pepino': [[250, 'pepino']], 'Cebolla': [[150, 'cebolla']], 'Zanahoria': [[80, 'zanahoria']],
+  'Pechuga de pavo en lonchas': [[15, 'loncha']], 'Jamón serrano': [[15, 'loncha']], 'Salmón ahumado': [[20, 'loncha']], 'Queso curado': [[20, 'loncha'], [12, 'taco']], 'Queso fresco': [[60, 'loncha gruesa', 'lonchas gruesas']],
+  'Pan integral': [[30, 'rebanada']], 'Pan blanco': [[30, 'rebanada'], [60, 'panecillo'], [250, 'barra']], 'Yogur natural': [[125, 'yogur']], 'Yogur griego': [[125, 'yogur']], 'Skyr o yogur griego 0%': [[125, 'yogur'], [150, 'tarrina']],
+  'Queso mozzarella light': [[125, 'bola']], 'Burrata': [[125, 'burrata']], 'Queso cottage': [[200, 'tarrina']], 'Atún al natural (escurrido)': [[52, 'lata pequeña', 'latas pequeñas'], [80, 'lata grande', 'latas grandes']],
+  'Galletas integrales': [[7, 'galleta']], 'Tortitas de arroz': [[9, 'tortita']], 'Almendras': [[1.2, 'almendra'], [30, 'puñado']], 'Nueces': [[5, 'nuez', 'nueces'], [30, 'puñado']], 'Cacahuetes': [[30, 'puñado']], 'Pistachos': [[30, 'puñado']],
+  'Dátiles': [[8, 'dátil', 'dátiles']], 'Fresas': [[15, 'fresa']], 'Uvas': [[6, 'uva'], [150, 'racimo pequeño', 'racimos pequeños']], 'Champiñones': [[20, 'champiñón', 'champiñones']],
+  'Aceite de oliva': [[10, 'cucharada'], [4, 'cucharadita']], 'Miel': [[20, 'cucharada'], [7, 'cucharadita']], 'Crema de cacahuete': [[15, 'cucharada']], 'Azúcar': [[5, 'cucharadita']], 'Mantequilla': [[10, 'nuez', 'nueces']],
+  'Mayonesa': [[15, 'cucharada']], 'Tahini': [[15, 'cucharada']], 'Hummus': [[30, 'cucharada grande', 'cucharadas grandes']], 'Cacao puro en polvo': [[5, 'cucharadita']], 'Canela molida': [[2, 'cucharadita']],
+  'Leche desnatada': [[250, 'vaso'], [200, 'taza']], 'Leche semidesnatada': [[250, 'vaso'], [200, 'taza']], 'Leche entera': [[250, 'vaso'], [200, 'taza']], 'Bebida de almendras sin azúcar': [[250, 'vaso']],
+  'Avena en copos': [[40, 'ración', 'raciones'], [10, 'cucharada']], 'Arroz blanco crudo': [[80, 'ración', 'raciones']], 'Arroz integral crudo': [[80, 'ración', 'raciones']], 'Pasta cruda': [[80, 'ración', 'raciones']], 'Pasta integral cruda': [[80, 'ración', 'raciones']],
+  'Pechuga de pollo cruda': [[200, 'pechuga'], [120, 'filete']], 'Pechuga de pollo a la plancha': [[150, 'pechuga']], 'Pavo, pechuga cruda': [[120, 'filete']], 'Ternera magra cruda': [[150, 'filete']], 'Cerdo, lomo crudo': [[100, 'filete']],
+  'Salmón crudo': [[150, 'lomo']], 'Merluza cruda': [[150, 'filete']], 'Café solo': [[40, 'café', 'cafés']], 'Cerveza': [[330, 'botellín', 'botellines'], [200, 'caña']], 'Vino tinto': [[150, 'copa']]
+};
+function foodUnits(f) {
+  const out = [], add = (g, s, p, src) => { g = +g; if (!(g > 0) || !s || out.some(u => u.s === s)) return; out.push({ g, s, p: p || plural(s), src }); };
+  const own = (S.units || {})[f.id]; if (own) add(own[0], own[1], own[2], 'own');
+  if (f.unit) add(f.unit[0], f.unit[1], f.unit[2], 'prod');
+  if (f.servG) add(f.servG, f.servS || 'ración', f.servS ? null : 'raciones', 'off');
+  (EAT_U[f.name] || []).forEach(u => add(u[0], u[1], u[2], 'base'));
+  const ug = typeof UNIT_G !== 'undefined' && UNIT_G[f.name]; if (ug) add(ug[0], ug[1], ug[2], 'base');
+  if (f.por) { const l = f.por[1]; /^\d/.test(l) ? add(f.por[0], `ración (${l})`, `raciones (${l})`, 'base') : add(f.por[0], l, null, 'base'); }
+  return out;
+}
+const fracTxt = k => k === 0.5 ? '½' : k === 1.5 ? '1½' : String(k);
+function unitCount(g, u) { const k = Math.round(g / u.g * 2) / 2; if (!(k > 0) || Math.abs(g - k * u.g) > Math.max(2, u.g * 0.12)) return ''; return `${fracTxt(k)} ${k <= 1 ? u.s : u.p}`; }
+function editUnit(food, back) {
+  const cur = (S.units || {})[food.id] || (foodUnits(food)[0] ? [foodUnits(food)[0].g, foodUnits(food)[0].s] : null);
+  openSheet(`<div class="row"><b class="sp" style="font-size:18px">📏 ¿Cuánto pesa 1 unidad?</b><button class="btn ghost" id="ucl">‹ Volver</button></div>
+  <p class="sm mute" style="margin:4px 0 12px">${esc(food.name)}${food.brand ? ' · ' + esc(food.brand) : ''}. Así podrás apuntar "1 loncha" o "½" sin pesar.</p>
+  <label>¿Qué es 1 unidad?<input id="u_s" value="${esc(cur ? cur[1] : 'unidad')}" placeholder="loncha, rebanada, galleta, unidad…"></label>
+  <div class="h">Elige una forma</div>
+  <label>Lo que pesa 1 unidad (g)<input id="u_g" type="number" inputmode="decimal" step="0.1" value="${cur ? cur[0] : ''}"></label>
+  <p class="sm mute" style="margin:10px 0 6px">…o con el paquete: lo que pesa el paquete entero y cuántas trae.</p>
+  <div class="grid2"><label>Paquete (g)<input id="u_pk" type="number" inputmode="decimal" placeholder="${weightG(food.qty) || 'p. ej. 120'}"></label><label>Unidades que trae<input id="u_n" type="number" inputmode="numeric" placeholder="p. ej. 8"></label></div>
+  ${scale.connected ? '<button class="btn block" id="u_sc" style="margin-top:10px">⚖️ Pon 1 unidad en la báscula y pulsa aquí</button>' : ''}
+  <div class="row" style="margin-top:14px">${(S.units || {})[food.id] ? '<button class="btn bad" id="u_del">Quitar</button>' : ''}<button class="btn pri sp" id="u_ok">Guardar</button></div>`);
+  $('#ucl').onclick = back;
+  const calcPk = () => { const pk = parseFloat($('#u_pk').value) || weightG(food.qty), n = parseFloat($('#u_n').value); if (pk > 0 && n > 0) $('#u_g').value = Math.round(pk / n * 10) / 10; };
+  $('#u_pk').oninput = calcPk; $('#u_n').oninput = calcPk;
+  if ($('#u_sc')) $('#u_sc').onclick = () => { const v = scale.net(); if (v > 0) $('#u_g').value = fmtNum(v); else toast('La báscula marca 0'); };
+  if ($('#u_del')) $('#u_del').onclick = () => { delete S.units[food.id]; save(); back(); };
+  $('#u_ok').onclick = () => { const g = parseFloat(String($('#u_g').value).replace(',', '.')), sname = $('#u_s').value.trim().toLowerCase() || 'unidad'; if (!(g > 0)) return toast('Pon cuánto pesa 1 unidad');
+    S.units = S.units || {}; S.units[food.id] = [g, sname]; save(); toast('Guardado: 1 ' + sname + ' = ' + fmtNum(g) + ' g'); back(); };
+}
 function offToFood(p) {
   const n = p.nutriments || {}; let kcal = n['energy-kcal_100g']; if (kcal == null && n.energy_100g != null) kcal = n.energy_100g / 4.184; if (kcal == null) return null;
-  return { id: 'off_' + p.code, code: p.code, name: p.product_name_es || p.product_name || 'Producto sin nombre', brand: (p.brands || '').split(',')[0].trim(), kcal: +kcal, p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), fib: +(n.fiber_100g || 0), sug: +(n.sugars_100g || 0), salt: +(n.salt_100g || 0), sat: n['saturated-fat_100g'] != null ? +n['saturated-fat_100g'] : null, img: p.image_front_small_url || '', ns: (p.nutriscore_grade || '').length === 1 ? p.nutriscore_grade : '', qty: p.quantity || '', nova: +p.nova_group || 0, lv: p.nutrient_levels || {}, cats: p.categories_tags || [], stores: p.stores || '', hv: 1, src: 'off' };
+  return { id: 'off_' + p.code, code: p.code, name: p.product_name_es || p.product_name || 'Producto sin nombre', brand: (p.brands || '').split(',')[0].trim(), kcal: +kcal, p: +(n.proteins_100g || 0), c: +(n.carbohydrates_100g || 0), f: +(n.fat_100g || 0), fib: +(n.fiber_100g || 0), sug: +(n.sugars_100g || 0), salt: +(n.salt_100g || 0), sat: n['saturated-fat_100g'] != null ? +n['saturated-fat_100g'] : null, img: p.image_front_small_url || '', ns: (p.nutriscore_grade || '').length === 1 ? p.nutriscore_grade : '', qty: p.quantity || '', ...offUnit(p), nova: +p.nova_group || 0, lv: p.nutrient_levels || {}, cats: p.categories_tags || [], stores: p.stores || '', hv: 1, src: 'off' };
 }
-const OFF_FIELDS = 'code,product_name,product_name_es,brands,nutriments,image_front_small_url,nutriscore_grade,quantity,nova_group,nutrient_levels,categories_tags,stores';
+const OFF_FIELDS = 'code,product_name,product_name_es,brands,nutriments,image_front_small_url,nutriscore_grade,quantity,nova_group,nutrient_levels,categories_tags,stores,serving_quantity,serving_size';
 async function offSearch(q) { const r = await fetch(`https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20&fields=${OFF_FIELDS}`); const j = await r.json(); return (j.products || []).map(offToFood).filter(Boolean); }
 async function offBarcode(code) { const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${OFF_FIELDS}`); const j = await r.json(); return j.status === 1 ? offToFood(j.product) : null; }
 
@@ -1501,7 +1565,8 @@ function openQty(food, ctx) {
   <div class="qweigh">
     <div class="qnum"><button class="qstep" data-d="-1">−</button><div class="qin"><input id="qg" type="number" inputmode="decimal" step="0.1" value="${fmtNum(grams)}"><span>g</span></div><button class="qstep" data-d="1">+</button></div>
     <div class="row" style="justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap" id="qscale"></div>
-    <div class="qquick">${food.src === 'recipe' && food.serv && food.cooked ? `<button data-q="${Math.round(food.cooked / food.serv)}" style="flex:2;color:var(--acc)">1 ración · ${Math.round(food.cooked / food.serv)} g</button>` : ''}${food.por ? `<button data-q="${food.por[0]}" style="flex:2;color:var(--acc)">1 ${esc(food.por[1])} · ${food.por[0]} g</button>` : ''}${[25, 50, 100, 150, 200].slice((food.src === 'recipe' && food.serv) || food.por ? 2 : 0).map(n => `<button data-q="${n}">${n} g</button>`).join('')}</div>
+    <div class="qquick">${food.src === 'recipe' && food.serv && food.cooked ? `<button data-q="${Math.round(food.cooked / food.serv)}" style="flex:2;color:var(--acc)">1 ración · ${Math.round(food.cooked / food.serv)} g</button>` : ''}${[25, 50, 100, 150, 200].slice(food.src === 'recipe' && food.serv ? 2 : 0).map(n => `<button data-q="${n}">${n} g</button>`).join('')}</div>
+    <div id="qunits"></div>
   </div>
   <div class="qnut"><div class="row" style="align-items:flex-end"><div class="sp"><div class="qkcal" id="qk">0</div><div class="sm mute" style="font-weight:600">kcal</div></div><div class="qmac" id="qm3"></div></div>
     <div class="qbar" id="qbar"></div><div class="sm mute" id="qx" style="margin-top:8px"></div></div>
@@ -1517,6 +1582,7 @@ function openQty(food, ctx) {
     $('#qbar').innerHTML = `<i style="width:${x.p * 4 / mk * 100}%;background:var(--p)"></i><i style="width:${x.c * 4 / mk * 100}%;background:var(--c)"></i><i style="width:${x.f * 9 / mk * 100}%;background:var(--f)"></i>`;
     $('#qx').textContent = [food.sug ? `Azúcares ${r1(food.sug * gg)} g` : '', food.fib ? `Fibra ${r1(food.fib * gg)} g` : '', food.salt ? `Sal ${r1(food.salt * gg)} g` : ''].filter(Boolean).join(' · ');
     $('#qok').textContent = `${ctx.entry ? 'Guardar' : 'Añadir'} · ${r0(x.kcal)} kcal`;
+    if (typeof showCount === 'function') showCount();
   };
   const drawScale = () => {
     const el = $('#qscale'); if (!el) return;
@@ -1525,6 +1591,18 @@ function openQty(food, ctx) {
     $('#qlive').onclick = () => { live = !live; sheetHook(); };
     $('#qtare').onclick = () => { doTare(); live = true; sheetHook(); };
   };
+  const units = recipe ? [] : foodUnits(food); let ui = 0;
+  const drawUnits = () => {
+    const el = $('#qunits'); if (!el) return;
+    if (!units.length) { el.innerHTML = food.src === 'recipe' ? '' : `<button class="qulink" id="qudef">📏 Apuntar por unidades (1 loncha, 1 galleta…)</button>`; const b = $('#qudef'); if (b) b.onclick = () => editUnit(food, () => openQty(food, { ...ctx, meal, date, grams: live ? undefined : g() })); return; }
+    const u = units[ui], ks = u.g < 12 ? [1, 2, 3, 5] : u.g >= 40 ? [0.5, 1, 1.5, 2] : [1, 2, 3, 4];
+    el.innerHTML = `<div class="qunits">${units.length > 1 ? `<div class="chips" style="margin:0 0 8px;flex-wrap:wrap">${units.map((x, i) => `<button class="chip ${i === ui ? 'on' : ''}" data-ui="${i}">${esc(x.s)}</button>`).join('')}</div>` : ''}
+      <div class="qquick" style="margin-top:0">${ks.map(k => `<button data-q="${Math.round(u.g * k * 10) / 10}" class="qu">${fracTxt(k)} ${esc(k <= 1 ? u.s : u.p)}</button>`).join('')}</div>
+      <div class="row sm mute" style="margin-top:8px"><span class="sp" id="qucnt">1 ${esc(u.s)} ≈ ${fmtNum(u.g)} g${u.src === 'off' ? ' (según la etiqueta)' : u.src === 'prod' ? ' (según el paquete)' : u.src === 'own' ? ' (tuyo)' : ' (aprox.)'}</span><button class="qulink" id="qudef">📏 Ajustar</button></div></div>`;
+    $('#qudef').onclick = () => editUnit(food, () => openQty(food, { ...ctx, meal, date, grams: live ? undefined : g() }));
+    showCount();
+  };
+  const showCount = () => { const el = $('#qucnt'); if (!el || !units.length) return; const u = units[ui], c = unitCount(g(), u); el.innerHTML = (c ? `<b style="color:var(--acc)">≈ ${esc(c)}</b> · ` : '') + `1 ${esc(u.s)} ≈ ${fmtNum(u.g)} g`; };
   const drawDates = () => {
     const el = $('#qdate'); if (!el) return; const t = todayKey(), opts = [addDays(t, -2), addDays(t, -1), t];
     if (!opts.includes(date)) opts.push(date);
@@ -1535,6 +1613,7 @@ function openQty(food, ctx) {
   qg.oninput = () => { live = false; upd(); drawScale(); };
   qg.onfocus = () => qg.select();
   $('#sheet').onclick = e => {
+    const uix = e.target.closest('[data-ui]'); if (uix) { ui = +uix.dataset.ui; drawUnits(); return; }
     const q = e.target.closest('[data-q]'); if (q) { live = false; qg.value = q.dataset.q; upd(); drawScale(); return; }
     const st = e.target.closest('[data-d]'); if (st) { live = false; const step = g() >= 100 ? 10 : 5; qg.value = Math.max(0, Math.round((g() + step * +st.dataset.d) / step) * step); upd(); drawScale(); return; }
     const m = e.target.closest('[data-m]'); if (m) { meal = m.dataset.m; document.querySelectorAll('#qmeal .chip').forEach(b => b.classList.toggle('on', b.dataset.m === meal)); return; }
@@ -1557,7 +1636,7 @@ function openQty(food, ctx) {
   const bindAlt = () => { const b = $('#qalt'); if (b) b.onclick = () => openAlternatives(food, { ...ctx, meal, date, grams: live ? undefined : g() }); const ed = $('#qedit'); if (ed) ed.onclick = () => openFoodForm(food, nf => openQty(nf, { ...ctx, meal, date, grams: g() })); };
   bindAlt();
   if (food.code && food.src === 'off' && food.hv !== 1) enrichFood(food).then(n => { const el = $('#qhealth'); if (n && el && $('#qg') === qg) { el.innerHTML = healthCard(n); bindAlt(); if (n.img) $('.qimg').innerHTML = `<img src="${esc(n.img)}" alt="">`; if (n.ns && !document.querySelector('.qhead .nsb')) $('.qhead .tag').insertAdjacentHTML('beforebegin', `<span class="nsb" style="background:${NS_COL[n.ns]}">Nutri-Score ${n.ns.toUpperCase()}</span>`); } });
-  upd(); drawDates(); sheetHook();
+  upd(); drawDates(); drawUnits(); sheetHook();
 }
 
 /* ---------- PESAR ---------- */
@@ -2424,6 +2503,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '1-oct · 21:45', short: 'Apunta por unidades: 1 loncha, ½ aguacate, 2 huevos…', items: ['📏 Al añadir un alimento salen botones de <b>unidades</b>: ½ aguacate, 1 loncha, 2 huevos, 1 cucharada, 1 vaso… sin tener que pesar.', '🏷️ En productos escaneados, la app saca el peso de 1 unidad de la <b>etiqueta</b> ("1 loncha = 15 g") o del <b>paquete</b> ("120 g · 8 lonchas").', '✏️ Si no lo sabe, pulsa <b>📏 Apuntar por unidades</b>: escribes cuánto pesa el paquete y cuántas trae (o pones 1 en la báscula) y se queda guardado.', '⚖️ Al pesar, te dice también cuántas unidades son ("≈ 2 lonchas").'] },
   { v: '1-oct · 16:30', short: 'Precios de Lidl y tiendas de Sevilla.', items: ['🤖 Los precios automáticos son de <b>Mercadona y Dia</b>, y de <b>Lidl</b> lo que publica en su web (sobre todo ofertas). Consum se quita porque no hay en Sevilla.', '🏪 En la lista de tiendas para apuntar precios a mano están también <b>Family Cash, Dani, Eroski y El Jamón</b>.'] },
   { v: '1-oct · 14:45', short: 'Escáner de códigos de barras mucho más fiable.', items: ['📷 <b>Escáner nuevo</b>: usa el lector de códigos ZXing C++ (el mismo motor que muchas apps nativas), mira solo la franja del recuadro con más resolución y pide autoenfoque continuo.', '🔍 <b>Zoom 1×/2×</b> y <b>linterna 🔦</b> en la cámara si tu móvil lo permite, y pistas si tarda en leer.', '📸 Las <b>fotos</b> se leen en varias pasadas (entera, por franjas, girada), así que lee códigos torcidos o pequeños.', '⚡ El lector va incluido en la app: ya no depende de descargarse de internet cada vez.'] },
   { v: '1-oct · 00:55', short: '259 comidas nuevas ya cocinadas: pollo asado, paella, croquetas, pizza, bocadillos, bebidas…', items: ['🍗 <b>259 comidas y platos nuevos</b> en el buscador, ya cocinados o preparados: pollo asado y al carbón, filetes a la plancha, pescados, tortilla, lentejas, cocido, paella, pasta, tapas, comida rápida, bollería, postres, fruta, frutos secos, salsas y bebidas (café con leche, cañas, refrescos…).', '⚖️ Cada uno trae su <b>ración típica</b> (1 cuarto de pollo, 1 croqueta, 1 caña…) para apuntarlo de un toque si no lo pesas.', '🟢 También dicen si son saludables y proponen alternativas (patatas fritas → asadas, refresco → zero…).'] },
@@ -2476,6 +2556,7 @@ const HELP = [
 {id:'diario',icon:'📅',title:'El diario',tabs:['hoy'],body:`
 <ul><li>La tarjeta verde te dice cuántas calorías <b>te quedan</b>. Debajo, cómo vas de proteína, carbohidratos y grasa.</li>
 <li>Pulsa <b>+ Añadir</b> en cualquier comida para buscar un alimento, escanearlo o elegir uno reciente o favorito (★).</li>
+<li><b>Sin pesar:</b> al elegir un alimento salen botones de unidades (½ aguacate, 1 loncha, 2 huevos, 1 cucharada…). En productos escaneados el peso de 1 unidad sale de la etiqueta o del paquete; si no, pulsa <b>📏 Apuntar por unidades</b> y pon lo que pesa el paquete y cuántas trae (o pon 1 en la báscula). Se queda guardado.</li>
 <li>Toca cualquier alimento ya apuntado para cambiar la cantidad, <b>moverlo a otra comida u otro día</b> (botones Anteayer · Ayer · Hoy · 📅 Otro) o borrarlo con 🗑.</li>
 <li>En la ficha de cada alimento ajustas el peso con <b>− / +</b>, los atajos de 25 a 200 g o la báscula en vivo. El botón de abajo te dice cuántas calorías vas a apuntar antes de confirmar.</li>
 <li>Con las flechas ‹ › cambias de día. Puedes copiar un día entero o una comida de ayer.</li>
