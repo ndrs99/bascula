@@ -100,7 +100,7 @@ M = {
  'Patata cruda': dict(q='patata', c=['Patata', 'Patatas'], x='frita dados gajos cocida', b='patatas'),
  'Pavo, pechuga cruda': dict(q='pechuga pavo', c=['Pavo y otras aves'], x='', b='pechuga de pavo filetes'),
  'Pechuga de pavo en lonchas': dict(q='pechuga pavo', c=['Pavo y otros'], x='', b='pechuga de pavo lonchas'),
- 'Pechuga de pollo cruda': dict(q='pechuga pollo', c=['Pollo'], x='marinad empanad adobad hierbas', b='pechuga de pollo'),
+ 'Pechuga de pollo cruda': dict(q='pechuga pollo', c=['Pollo'], x='marinad empanad adobad hierbas lonchas fiambre asad cocid', b='pechuga de pollo'),
  'Pechuga de pollo a la plancha': dict(de='Pechuga de pollo cruda', r=0.75),
  'Pepino': dict(q='pepino', c=['Pepino y zanahoria'], x='', b='pepino', u=300),
  'Pimiento rojo': dict(q='pimiento rojo', c=['Calabacín y pimiento'], x='asado', b='pimiento rojo'),

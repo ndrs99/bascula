@@ -1,7 +1,7 @@
 """Actualiza precios-auto.json con precios reales de supermercados online.
 Lo ejecuta GitHub Actions cada semana (.github/workflows/precios.yml).
 Uso local: python3 tools/precios.py [catalogo_mercadona.json]"""
-import json, sys, time, unicodedata, urllib.request, urllib.parse, datetime, os
+import json, sys, time, unicodedata, urllib.request, urllib.parse, datetime, os, re, html
 sys.path.insert(0, os.path.dirname(__file__))
 from mapa_precios import M
 
@@ -10,9 +10,14 @@ def get(u):
     with urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=30) as x: return json.loads(x.read().decode('utf-8', 'replace'))
 def norm(s): return ''.join(c for c in unicodedata.normalize('NFD', (s or '').lower()) if unicodedata.category(c) != 'Mn')
 def stem(w): return w[:-2] if w.endswith('es') and len(w) > 5 else w[:-1] if w.endswith('s') and len(w) > 3 else w
+def strip_brand(name):
+    """Quita la marca en mayúsculas del principio: 'AUCHAN Pechuga de pollo' -> 'Pechuga de pollo'."""
+    w = (name or '').replace('-', ' ').split()
+    while len(w) > 1 and (w[0].isupper() or not any(c.isalpha() for c in w[0]) or '.' in w[0] or w[0].endswith('®')): w.pop(0)
+    return ' '.join(w)
 def ok_head(name, s):
-    """En Dia y Consum no hay secciones: el nombre tiene que empezar por el producto (evita 'Refresco de limón' para limones)."""
-    words = [w for w in norm(name).replace(',', ' ').split() if w.isalpha()]
+    """Sin secciones, el nombre tiene que empezar por el producto (evita 'Refresco de limón' para limones)."""
+    words = [w for w in norm(strip_brand(name)).replace(',', ' ').split() if w.isalpha()]
     if not words: return False
     heads = {stem(t) for f in ('q', 'o', 'b', 'h') for t in norm(s.get(f, '')).split()}
     return stem(words[0]) in heads
@@ -66,7 +71,64 @@ def dia_offers(s):
         out.append(dict(p=round(p, 2), g=round(g), n=it['display_name']))
     return out
 
-# ---------- Consum ----------
+# ---------- tamaño del envase a partir del texto ("6 x 1 l", "500 g", "Aprox. 360-460g", "2x88 g") ----------
+def size_g(txt, u=None):
+    t = norm(txt).replace(',', '.')
+    m = re.search(r'(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*(kg|g|gr|l|ml|cl)\b', t)
+    if m: n, q, un = int(m.group(1)), float(m.group(2)), m.group(3)
+    else:
+        m = re.search(r'(\d+(?:\.\d+)?)\s*(?:-\s*(\d+(?:\.\d+)?))?\s*(kg|g|gr|l|ml|cl)\b', t)
+        if not m:
+            m2 = re.search(r'(\d+)\s*(?:uds?|unidades|piezas)\b', t)
+            return int(m2.group(1)) * u if (m2 and u) else None
+        n, q, un = 1, (float(m.group(1)) + float(m.group(2))) / 2 if m.group(2) else float(m.group(1)), m.group(3)
+    k = {'kg': 1000, 'l': 1000, 'g': 1, 'gr': 1, 'ml': 1, 'cl': 10}[un]
+    g = n * q * k
+    return g if 5 <= g <= 20000 else None
+
+# ---------- Alcampo (web de compra online: se leen las fichas de la búsqueda) ----------
+def alcampo_offers(s):
+    q = urllib.parse.quote(s.get('b') or s['q'])
+    req = urllib.request.Request(f'https://www.compraonline.alcampo.es/search?q={q}', headers={**UA, 'Accept': 'text/html'})
+    with urllib.request.urlopen(req, timeout=40) as x: t = x.read().decode('utf-8', 'replace')
+    out = []
+    for c in t.split('data-test="fop-wrapper:')[1:41]:
+        n = re.search(r'data-test="fop-product-link"[^>]*>(?:<[^>]+>)*?<span class="salt-vc">([^<]+)</span>', c)
+        p = re.search(r'data-test="fop-price">([^<]+)<', c)
+        if not n or not p: continue
+        name = html.unescape(n.group(1)).strip().rstrip('.'); name = re.sub(r'\s*Producto Alcampo\.?$', '', name)
+        try: price = float(p.group(1).replace('\xa0', ' ').replace('€', '').replace('.', '').replace(',', '.').strip())
+        except: continue
+        if not ok_name(name, s) or not ok_head(name, s): continue
+        g = None; u = re.search(r'data-test="fop-price-per-unit">\(([\d.,]+)\s*(?:&nbsp;|\xa0)?€ por (kilogramo|litro|unidad)', c)
+        if u:
+            per = float(u.group(1).replace('.', '').replace(',', '.'))
+            if per > 0 and u.group(2) in ('kilogramo', 'litro'): g = price / per * 1000
+            elif per > 0 and s.get('u'): g = price / per * s['u']
+        if not g: g = size_g(name, s.get('u'))
+        if g: out.append(dict(p=round(price, 2), g=round(g), n=name))
+    return out
+
+# ---------- Lidl (solo los productos que tiene en su web, sobre todo ofertas de la semana) ----------
+def lidl_offers(s):
+    q = urllib.parse.quote(s.get('b') or s['q'])
+    d = get(f'https://www.lidl.es/q/api/search?q={q}&locale=es_ES&assortment=ES&version=v2.0.0&fetchsize=48')
+    out = []
+    for it in d.get('items', []):
+        g0 = (it.get('gridbox') or {}).get('data') or {}
+        if g0.get('category') != 'Food': continue
+        name, pr = g0.get('fullTitle') or g0.get('title') or '', g0.get('price') or {}
+        price = pr.get('price')
+        if not price or not ok_name(name, s) or not ok_head(name, s): continue
+        g = size_g(((pr.get('packaging') or {}).get('text') or '') + ' ' + name, s.get('u'))
+        bp = re.search(r'([\d.,]+)\s*€/(kg|l)\b', norm((pr.get('basePrice') or {}).get('text', '')))
+        if bp:
+            per = float(bp.group(1).replace('.', '').replace(',', '.'))
+            if per > 0: g = price / per * 1000
+        if g: out.append(dict(p=round(price, 2), g=round(g), n=strip_brand(name)))
+    return out
+
+# ---------- Consum (ya no se consulta: no hay en Sevilla) ----------
 def consum_offers(s):
     q = urllib.parse.quote(s.get('b') or s['q'])
     d = get(f'https://tienda.consum.es/api/rest/V1.0/catalog/product?q={q}&limit=30')
@@ -108,7 +170,7 @@ def main():
         m = pick(cands, s)
         if m: row['mercadona'] = m
         ref = m['k'] if m else None
-        for tienda, fn in (('dia', dia_offers), ('consum', consum_offers)):
+        for tienda, fn in (('dia', dia_offers), ('alcampo', alcampo_offers), ('lidl', lidl_offers)):
             if len(sys.argv) > 1: break
             try:
                 x = pick(fn(s), s, ref)
@@ -120,11 +182,11 @@ def main():
         if 'de' in s:
             base = res.get(s['de'], {}); r = s['r']
             res[ing] = {t: dict(p=v['p'], g=round(v['g'] * r), k=round(v['k'] / r, 2), n=v['n']) for t, v in base.items()}
-    out = dict(fecha=datetime.date.today().isoformat(), tiendas=['mercadona', 'dia', 'consum'], precios=res)
+    out = dict(fecha=datetime.date.today().isoformat(), tiendas=['mercadona', 'dia', 'alcampo', 'lidl'], precios=res)
     json.dump(out, open('precios-auto.json', 'w'), ensure_ascii=False, separators=(',', ':'))
     falta = [k for k, v in res.items() if not v]
     print('ingredientes', len(res), 'sin precio', falta)
-    for t in ('mercadona', 'dia', 'consum'): print(t, sum(1 for v in res.values() if t in v))
+    for t in ('mercadona', 'dia', 'alcampo', 'lidl'): print(t, sum(1 for v in res.values() if t in v))
     for l in log[:30]: print(l)
 
 if __name__ == '__main__': main()
