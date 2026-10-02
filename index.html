@@ -164,7 +164,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="vendor/zxing-library.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '1-oct · 21:45';
+const APP_VERSION = '2-oct · 23:15';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -217,7 +217,8 @@ const EXTRA_RAW = [
 ['Queso cottage',98,11,3.4,4.3,0],['Café solo',2,0.1,0,0,0],['Edamame',121,11.9,8.9,5.2,5.2],['Maíz para palomitas',375,11,74,4.3,15],['Remolacha cocida',44,1.7,10,0.2,2],['Galletas integrales',440,7,68,15,6],['Arroz integral cocido',123,2.7,25.6,1,1.6],['Quinoa cocida',120,4.4,21.3,1.9,2.8],['Pasta integral cocida',149,6,30,1.7,4],['Papel de arroz',330,6,77,0.3,1],['Ñoquis de patata',150,4,32,0.3,1.5],['Copos de maíz sin azúcar',370,7,84,0.9,3],
 ['Harina de trigo',340,10,71,1.2,3],['Tomates secos',258,14,43,3,12],['Judías verdes',31,1.8,4.5,0.2,3],['Guisantes',80,5.4,10,0.4,5],['Dátiles',280,2.5,66,0.4,8],
 ['Pechuga de pavo en lonchas',100,20,1.5,1.5,0],['Semillas de chía',486,17,8,31,34],['Vinagre de vino',20,0,0.5,0,0],['Caldo de pollo',8,1,0.5,0.3,0],['Tortitas de arroz',380,8,80,3,3],
-['Bulgur crudo',342,12.3,69,1.3,12.5],['Pistachos',562,20,17,45,10],['Burrata',240,11,2,21,0]];
+['Bulgur crudo',342,12.3,69,1.3,12.5],['Pistachos',562,20,17,45,10],['Burrata',240,11,2,21,0],
+['Pan de hamburguesa',265,9,47,4.5,2.5],['Queso en lonchas light',230,27,2,12.5,0],['Pepinillos',20,0.8,2.5,0.2,1.2],['Alitas de pollo crudas',190,17.5,0,13,0],['Pan rallado',380,12,73,4,4.5],['Queso cheddar rallado',400,25,1.3,33,0],['Tortilla de maíz',220,5.7,45,2.9,6]];
 
 const WHERE = {
 'Queso fresco batido 0%':'Mercadona, Lidl, Carrefour, Dia (lácteos)',
@@ -265,7 +266,8 @@ const WHERE = {
 'Café solo':'Cualquier súper o tu cafetera',
 'Bulgur crudo':'Mercadona, Carrefour, Alcampo (pasillo de arroces y legumbres) o tiendas árabes',
 'Pistachos':'Pasillo de frutos secos (mejor pelados y sin sal)',
-'Burrata':'Mercadona, Lidl, Carrefour, Aldi (quesos frescos italianos)'};
+'Burrata':'Mercadona, Lidl, Carrefour, Aldi (quesos frescos italianos)',
+'Pan de hamburguesa':'Panadería envasada de cualquier súper (también hay integral)','Queso en lonchas light':'Quesos en lonchas (busca "light" o "0%")','Pepinillos':'Encurtidos de cualquier súper','Alitas de pollo crudas':'Carnicería o refrigerados de pollo','Pan rallado':'Junto a la harina en cualquier súper','Queso cheddar rallado':'Quesos rallados de Mercadona, Lidl, Carrefour','Tortilla de maíz':'Sección internacional o junto a las tortillas de trigo'};
 
 /* ---------- recetario ---------- */
 const RECIPES = [
@@ -681,6 +683,64 @@ tip:'Sale mejor con papel de horno de calidad (o una esterilla de silicona). Agu
 ing:[['Tomate',700],['Pimiento rojo',150],['Cebolla',100],['Ajo',10],['Aceite de oliva',10],['Caldo de verduras',250],['Queso fresco batido 0%',60],['Hierbas frescas',8,'albahaca'],['Pan integral',120,'4 rebanadas'],['Queso mozzarella light',60]],
 steps:['Precalienta el horno a 200 °C. Pon en una bandeja los tomates partidos, el pimiento y la cebolla en trozos y los ajos con piel, con el aceite y sal. Asa 30 minutos.','Pela los ajos y tritura todas las verduras con el caldo, el queso batido y la albahaca hasta que quede muy fina.','Mientras, haz los sándwiches con el pan y la mozzarella y tuéstalos en una sartén sin aceite, apretando, 2-3 minutos por lado.','Sirve la crema caliente con el sándwich cortado en tiras para mojar.'],
 tip:'Sale más crema de la que parece: congela la mitad en raciones para otra cena.'}
+);
+RECIPES.push(
+{id:'cap-smash-burger',name:'Smash burger doble con patatas al horno',emoji:'🍔',cat:'capricho',time:35,serv:2,tags:['Fake away','Alto en proteína'],
+ing:[['Patata cruda',400],['Aceite de oliva',10],['Especias variadas',3,'pimentón, ajo en polvo y sal'],['Ternera magra cruda',280,'pídela picada en la carnicería'],['Pan de hamburguesa',140,'2 panes'],['Queso en lonchas light',40,'2 lonchas'],['Cebolla',60],['Pepinillos',40],['Lechuga',30],['Tomate',80],['Ketchup',15],['Mostaza',10],['Skyr o yogur griego 0%',30,'para la salsa']],
+steps:['Corta las patatas en gajos con piel, mézclalas con el aceite y las especias y hornéalas a 210 °C 30 minutos (o 20 minutos en freidora de aire), dándoles la vuelta a mitad.','Haz 4 bolas con la carne y sálalas.','Calienta mucho una sartén sin aceite. Pon 2 bolas, aplástalas con una espátula hasta que queden muy finas y cocina 2 minutos hasta que se doren por debajo. Dales la vuelta, pon media loncha de queso encima y 1 minuto más. Repite con las otras.','Mezcla el skyr con el ketchup, la mostaza y unos pepinillos picados: es la salsa "big mac" ligera.','Tuesta los panes y monta: salsa, lechuga, 2 carnes con queso, cebolla en aros finos, tomate y pepinillos. Sirve con las patatas.'],
+tip:'Una hamburguesa doble de cadena con patatas ronda las 1.100 kcal; con carne magra, queso light y patatas al horno se queda en unas 650.'},
+{id:'cap-pizza-yogur',name:'Pizza casera con masa de yogur (sin levar)',emoji:'🍕',cat:'capricho',time:30,serv:2,tags:['Fake away','Sin esperas'],
+ing:[['Harina de trigo',150],['Skyr o yogur griego 0%',150],['Levadura química',6],['Tomate triturado',100],['Especias variadas',2,'orégano'],['Queso mozzarella light',125,'1 bola'],['Jamón cocido / York',60],['Champiñones',80],['Pimiento verde',50],['Rúcula',20]],
+steps:['Precalienta el horno a 230 °C (o lo más fuerte que dé).','Mezcla la harina, el skyr, la levadura y una pizca de sal hasta tener una masa que no se pegue (si se pega, un poco más de harina).','Estírala muy fina sobre papel de horno con un rodillo o con las manos.','Cubre con el tomate y el orégano, la mozzarella en trozos, el jamón, los champiñones laminados y el pimiento.','Hornea 12-15 minutos hasta que los bordes estén dorados. Pon la rúcula por encima al sacarla.'],
+tip:'La masa de 2 ingredientes es viral en redes: queda fina y crujiente y lleva el doble de proteína que una masa normal.'},
+{id:'cap-kebab-casero',name:'Kebab casero de pollo con salsa de yogur',emoji:'🥙',cat:'capricho',time:30,serv:2,tags:['Fake away','Alto en proteína'],
+ing:[['Pechuga de pollo cruda',350],['Especias variadas',6,'comino, pimentón, ajo, orégano y canela'],['Zumo de limón',15],['Aceite de oliva',8],['Pan pita integral',160,'2 panes'],['Lechuga',60],['Tomate',120],['Cebolla',50],['Skyr o yogur griego 0%',120],['Ajo',3],['Salsa sriracha',8,'opcional']],
+steps:['Corta el pollo en tiras muy finas y mézclalo con las especias, el limón, la mitad del aceite y sal. Déjalo 10 minutos.','Hazlo en una sartén muy caliente con el resto del aceite 6-7 minutos, sin moverlo mucho para que se tueste como el de kebab.','Mezcla el skyr con el ajo rallado, sal y un chorrito de limón: es la salsa blanca.','Calienta los panes de pita y ábrelos.','Rellena con lechuga, tomate, cebolla en juliana, el pollo y mucha salsa (y sriracha si te gusta el picante).'],
+tip:'Un kebab de la calle con patatas pasa de 1.000 kcal; este se queda en la mitad y con el doble de proteína.'},
+{id:'cap-nachos',name:'Nachos gratinados con carne, frijoles y guacamole',emoji:'🧀',cat:'capricho',time:25,serv:2,tags:['Fake away','Para compartir'],
+ing:[['Tortilla de trigo integral',120,'3 tortillas'],['Aceite de oliva',5],['Carne picada de pavo',200],['Especias variadas',5,'comino, pimentón y orégano'],['Alubias cocidas',120,'mejor rojas'],['Tomate triturado',80],['Queso cheddar rallado',40],['Queso mozzarella light',50],['Aguacate',100],['Tomate',100],['Cebolla',40],['Zumo de limón',10],['Skyr o yogur griego 0%',60]],
+steps:['Corta las tortillas en triángulos, píntalas con el aceite y hornéalas a 200 °C 6-8 minutos hasta que estén crujientes (o 4 minutos en freidora de aire).','Dora la carne con las especias y sal, añade las alubias y el tomate triturado y cocina 5 minutos.','En una fuente pon los nachos, la carne por encima y los dos quesos. Gratina 5 minutos hasta que se fundan.','Machaca el aguacate con el limón y sal y mezcla con la mitad del tomate y la cebolla picados.','Sirve con el guacamole, el resto del tomate y cebolla, y el skyr como "nata agria".'],
+tip:'Los nachos de bolsa con queso fundido de restaurante pasan de 1.200 kcal la ración; estos tienen totopos horneados y queso de verdad, pero menos.'},
+{id:'cap-alitas-bbq',name:'Alitas BBQ en freidora con salsa de yogur',emoji:'🍗',cat:'capricho',time:35,serv:2,tags:['Freidora de aire','Para ver el fútbol'],
+ing:[['Alitas de pollo crudas',600,'unas 12 alitas'],['Especias variadas',5,'pimentón ahumado, ajo y cebolla en polvo'],['Levadura química',3,'el truco del crujiente'],['Salsa barbacoa',40],['Miel',10],['Skyr o yogur griego 0%',100],['Ajo',2],['Hierbas frescas',5,'cebollino o perejil'],['Zanahoria',150],['Pepino',150]],
+steps:['Seca muy bien las alitas con papel. Mézclalas con las especias, la levadura y sal (la levadura hace que la piel quede crujiente sin freír).','Cocínalas en la freidora de aire a 200 °C 22-25 minutos, dándoles la vuelta a mitad (o en el horno a 220 °C 35-40 minutos sobre una rejilla).','Calienta la salsa barbacoa con la miel 30 segundos y embadurna las alitas recién hechas.','Mezcla el skyr con el ajo rallado, las hierbas picadas y sal.','Sirve con la salsa y bastones de zanahoria y pepino.'],
+tip:'Sin freír, la grasa de la piel se queda en el fondo de la freidora: la mitad de calorías que unas alitas de bar.'},
+{id:'cap-carbonara',name:'Carbonara cremosa sin nata con "bacon" de pavo',emoji:'🍝',cat:'capricho',time:20,serv:2,tags:['Fake away','Rápido'],
+ing:[['Pasta cruda',160,'espaguetis'],['Pechuga de pavo en lonchas',80,'en tiras'],['Aceite de oliva',5],['Huevo entero',110,'2 huevos'],['Clara de huevo',60],['Queso parmesano',30],['Especias variadas',2,'mucha pimienta negra']],
+steps:['Cuece la pasta en agua con sal. Guarda un vaso del agua de cocción.','Dora las tiras de pavo en la sartén con el aceite 3-4 minutos hasta que queden crujientes, como si fuera bacon.','Bate los huevos, las claras, el parmesano y mucha pimienta.','Apaga el fuego, echa la pasta escurrida en la sartén del pavo, espera 30 segundos y añade el huevo con un chorrito del agua de la pasta, removiendo rápido: se forma una crema sin que cuaje.','Sirve al momento con más pimienta y un poco de parmesano.'],
+tip:'La carbonara de restaurante con nata y bacon ronda las 1.000 kcal; la de verdad (la italiana) tampoco lleva nata.'},
+{id:'cap-mac-cheese',name:'Mac and cheese ligero gratinado',emoji:'🧀',cat:'capricho',time:30,serv:2,tags:['Reconfortante','Gratinado'],
+ing:[['Pasta cruda',160,'macarrones'],['Leche desnatada',300],['Maicena',15],['Queso cheddar rallado',50],['Queso fresco batido 0%',100],['Especias variadas',2,'mostaza en polvo, pimentón y nuez moscada'],['Brócoli',200],['Pan rallado',10],['Queso parmesano',10]],
+steps:['Cuece la pasta 2 minutos menos de lo que diga el paquete; en los últimos 3 minutos añade el brócoli en arbolitos pequeños.','En un cazo, disuelve la maicena en la leche fría, calienta removiendo hasta que espese y apaga.','Añade el cheddar, el queso batido, las especias y sal, y remueve hasta que quede una salsa lisa.','Mezcla con la pasta y el brócoli escurridos, pásalo a una fuente y cubre con el pan rallado y el parmesano.','Gratina en el horno a 220 °C 8-10 minutos hasta que esté dorado.'],
+tip:'El truco es la maicena con leche: espesa como una bechamel sin mantequilla ni nata.'},
+{id:'cap-bravas',name:'Patatas bravas al horno con alioli de yogur',emoji:'🥔',cat:'capricho',time:40,serv:2,tags:['Tapeo','Vegetariana'],
+ing:[['Patata cruda',600],['Aceite de oliva',15],['Especias variadas',6,'pimentón dulce y picante'],['Tomate triturado',150],['Cebolla',50],['Harina de trigo',5],['Caldo de verduras',100],['Skyr o yogur griego 0%',100],['Ajo',4],['Zumo de limón',5]],
+steps:['Corta las patatas en dados grandes, mézclalas con 10 g de aceite y sal y hornéalas a 220 °C 35 minutos (o 20-25 en freidora de aire), removiendo un par de veces.','Para la brava: sofríe la cebolla picada con el resto del aceite 4 minutos, añade la harina y el pimentón, remueve 30 segundos y echa el tomate y el caldo. Cocina 8 minutos y tritura.','Para el alioli: mezcla el skyr con el ajo muy rallado, el limón y sal.','Sirve las patatas con la brava y el alioli por encima.'],
+tip:'Unas bravas de bar fritas con alioli de verdad rondan las 600 kcal la ración de tapa; esta es una ración generosa por bastante menos.'},
+{id:'cap-hot-dog',name:'Perritos calientes caseros con cebolla crujiente',emoji:'🌭',cat:'capricho',time:20,serv:2,tags:['Fake away','Rápido'],
+ing:[['Salchichas frescas de pollo o pavo',200,'4 salchichas'],['Pan de hamburguesa',160,'4 panes de perrito'],['Cebolla',150],['Aceite de oliva',5],['Pepinillos',40],['Ketchup',20],['Mostaza',15],['Queso cheddar rallado',20],['Lechuga',40]],
+steps:['Corta la cebolla en aros muy finos y hazla en la freidora de aire con el aceite y sal a 190 °C 10-12 minutos, removiendo, hasta que esté crujiente (o en la sartén a fuego lento 15 minutos).','Haz las salchichas a la plancha 8-10 minutos, girándolas, hasta que estén doradas.','Calienta los panes 1 minuto en el horno o la sartén.','Monta: lechuga, salchicha, cebolla crujiente, pepinillos picados, queso, ketchup y mostaza.'],
+tip:'Las salchichas frescas de pollo o pavo tienen la mitad de grasa que las de tipo Frankfurt.'},
+{id:'cap-pollo-naranja',name:'Pollo a la naranja estilo chino con arroz',emoji:'🍊',cat:'capricho',time:30,serv:2,tags:['Fake away','Estilo chino'],
+ing:[['Pechuga de pollo cruda',350],['Maicena',25],['Huevo entero',55,'1 huevo'],['Aceite de oliva',10],['Naranja',400,'2 naranjas en zumo y la ralladura de una'],['Salsa de soja',25],['Miel',20],['Ajo',4],['Jengibre fresco',8],['Arroz blanco crudo',140],['Semillas de sésamo',5]],
+steps:['Pon el arroz a cocer.','Corta el pollo en dados, pásalo por el huevo batido y luego por 15 g de maicena con sal.','Hazlo en la freidora de aire a 200 °C 12 minutos (o en la sartén con el aceite, por tandas) hasta que esté dorado y crujiente.','En la sartén, calienta el zumo y la ralladura de naranja, la soja, la miel, el ajo y el jengibre rallados. Cuando hierva, añade el resto de la maicena disuelta en un poco de agua fría y remueve hasta que espese.','Echa el pollo, mezcla para que se cubra de salsa y sirve con el arroz y el sésamo.'],
+tip:'El del restaurante chino va frito y con mucho azúcar: con su arroz suele pasar de 1.000 kcal. Este se queda bastante por debajo y con el doble de proteína.'},
+{id:'cap-tacos-pastor',name:'Tacos al pastor de cerdo con piña',emoji:'🌮',cat:'capricho',time:30,serv:2,tags:['Estilo mexicano','Para compartir'],
+ing:[['Cerdo, lomo crudo',300],['Especias variadas',6,'pimentón, comino, orégano y chile'],['Zumo de naranja natural',40],['Vinagre de vino',10],['Ajo',4],['Aceite de oliva',8],['Piña',150],['Tortilla de maíz',150,'6 tortillas pequeñas'],['Cebolla',60],['Hierbas frescas',10,'cilantro'],['Zumo de limón',15,'mejor lima'],['Salsa sriracha',10]],
+steps:['Corta el lomo en tiras muy finas y mézclalo con las especias, el zumo de naranja, el vinagre, el ajo rallado y sal. Déjalo marinar al menos 15 minutos.','Dora la piña en dados en una sartén muy caliente 3 minutos y resérvala.','En la misma sartén con el aceite, haz la carne a fuego fuerte 5-6 minutos hasta que se caramelice por los bordes.','Calienta las tortillas en la sartén seca 20 segundos por lado.','Rellena con la carne y la piña, y termina con cebolla y cilantro picados, limón y salsa picante.'],
+tip:'El lomo es de los cortes de cerdo más magros: tienes el sabor del taquero con muy poca grasa.'},
+{id:'cap-croquetas-horno',name:'Croquetas de pollo al horno',emoji:'🟤',cat:'capricho',time:50,serv:3,tags:['Tapeo','Batch cooking'],
+ing:[['Aceite de oliva',15],['Cebolla',60],['Harina de trigo',50],['Leche desnatada',400],['Pechuga de pollo a la plancha',200,'o pollo asado sin piel, desmigado'],['Jamón serrano',30,'en taquitos'],['Especias variadas',1,'nuez moscada'],['Huevo entero',55,'1 huevo'],['Pan rallado',60]],
+steps:['Pocha la cebolla muy picada con el aceite 5 minutos. Añade la harina y remueve 2 minutos.','Echa la leche poco a poco sin parar de remover y cocina 8-10 minutos hasta tener una bechamel espesa. Añade el pollo desmigado, el jamón, la nuez moscada y sal.','Extiende la masa en una fuente, tápala con film pegado y déjala enfriar en la nevera al menos 2 horas (mejor de un día para otro).','Forma unas 18 croquetas, pásalas por el huevo batido y el pan rallado.','Hornéalas a 220 °C 15-18 minutos (o 10 minutos en freidora de aire) con un poco de aceite en espray, hasta que estén doradas.'],
+tip:'Fritas, cada croqueta absorbe casi una cucharada de aceite. Se congelan perfectas antes de hornear.'},
+{id:'cap-burrito',name:'Burrito XL de ternera, arroz y frijoles',emoji:'🌯',cat:'capricho',time:30,serv:2,tags:['Fake away','Para llevar'],
+ing:[['Arroz blanco crudo',80],['Ternera magra cruda',250,'en tiras finas o picada'],['Especias variadas',6,'comino, pimentón, ajo y orégano'],['Aceite de oliva',8],['Alubias cocidas',150,'mejor negras o rojas'],['Pimiento rojo',100],['Cebolla',80],['Tortilla de trigo integral',140,'2 tortillas grandes'],['Queso cheddar rallado',30],['Lechuga',40],['Tomate',100],['Skyr o yogur griego 0%',60],['Zumo de limón',10]],
+steps:['Cuece el arroz y alíñalo con el limón y sal.','Saltea el pimiento y la cebolla en tiras con el aceite 5 minutos. Añade la ternera con las especias y sal y cocina 4 minutos a fuego fuerte.','Calienta las alubias con un poco de su agua y aplástalas un poco con un tenedor.','Calienta las tortillas para que no se rompan y rellena: arroz, alubias, ternera con verduras, queso, lechuga, tomate y skyr.','Dobla los lados y enrolla apretando. Dóralo 1 minuto por cada lado en la sartén para sellarlo.'],
+tip:'Un burrito de cadena ronda las 1.000-1.200 kcal; este llena igual con bastante menos.'},
+{id:'cap-sandwich-mixto',name:'Croque madame (sándwich mixto con huevo) al horno',emoji:'🥪',cat:'capricho',time:20,serv:2,tags:['Cena rápida','Gratinado'],
+ing:[['Pan de molde integral',120,'4 rebanadas'],['Jamón cocido / York',80],['Queso en lonchas light',60,'3 lonchas'],['Leche desnatada',100],['Maicena',8],['Especias variadas',1,'nuez moscada'],['Queso cheddar rallado',20],['Huevo entero',110,'2 huevos'],['Rúcula',30]],
+steps:['Precalienta el horno a 220 °C.','Haz una bechamel exprés: calienta la leche con la maicena disuelta, sal y nuez moscada, removiendo hasta que espese (2 minutos).','Monta los sándwiches con el jamón y el queso en lonchas, úntalos por encima con la bechamel y espolvorea el cheddar.','Hornéalos 8-10 minutos hasta que estén gratinados. Mientras, haz los huevos a la plancha.','Pon un huevo encima de cada sándwich y sirve con la rúcula.'],
+tip:'Es el clásico de las cafeterías de París, con bechamel sin mantequilla y queso light.'}
 );
 
 /* ---------- comidas comunes ya cocinadas o preparadas (valores por 100 g, tal cual se comen) ----------
@@ -1409,7 +1469,7 @@ const BASE_HEALTH = {
   'Galletas integrales': [1, ['Azúcar añadido', PROC], ['Integral']], 'Café solo': null,
   'Azúcar': [0, [AZ, 'Sin nutrientes'], []], 'Cerveza': [0, ['Alcohol'], []], 'Vino tinto': [0, ['Alcohol'], []],
   'Aceite de oliva': [2, [CAL], [GOOD]], 'Aguacate': [2, [], [GOOD, 'Rico en fibra']], 'Almendras': [2, [CAL], [GOOD, 'Rico en fibra']], 'Nueces': [2, [CAL], [GOOD, 'Omega 3']], 'Cacahuetes': [2, [CAL], [GOOD, 'Rico en proteína']],
-  'Tahini': [2, [CAL], [GOOD]], 'Pistachos': [2, [CAL], [GOOD, 'Rico en fibra']], 'Bulgur crudo': [2, [], ['Integral', 'Rico en fibra']], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
+  'Tahini': [2, [CAL], [GOOD]], 'Pan de hamburguesa': [1, [RF], []], 'Queso cheddar rallado': [1, [SAL, GS], ['Rico en calcio']], 'Pepinillos': [1, [SAL], []], 'Alitas de pollo crudas': [1, [GS], ['Rico en proteína']], 'Pan rallado': [1, [RF], []], 'Queso en lonchas light': [2, [SAL], ['Rico en proteína']], 'Tortilla de maíz': [2, [], ['Rico en fibra']], 'Pistachos': [2, [CAL], [GOOD, 'Rico en fibra']], 'Bulgur crudo': [2, [], ['Integral', 'Rico en fibra']], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
   'Pan integral': [2, [], ['Integral', 'Rico en fibra']], 'Pan pita integral': [2, [], ['Integral']], 'Pasta integral cruda': [2, [], ['Integral', 'Rico en fibra']], 'Arroz integral crudo': [2, [], ['Integral']], 'Arroz integral cocido': [2, [], ['Integral']], 'Pasta integral cocida': [2, [], ['Integral', 'Rico en fibra']],
   'Hummus': [2, [], ['Legumbre', 'Rico en fibra']], 'Maíz dulce (lata)': [2, [], []], 'Leche entera': [2, [], ['Rico en calcio']], 'Yogur griego': [2, [], ['Fermentado']], 'Yogur natural': [2, [], ['Fermentado']],
   'Levadura química': null, 'Especias variadas': null, 'Hierbas frescas': null, 'Canela molida': null, 'Vinagre balsámico': null, 'Vinagre de vino': null, 'Caldo de verduras': null, 'Caldo de pollo': null, 'Zumo de limón': null, 'Mostaza': null
@@ -1688,11 +1748,12 @@ function pickContainer() {
 
 /* ---------- RECETAS ---------- */
 let recTab = 'lib', recCat = 'todas', recQ = '';
-const CATS = [['todas', 'Todas'], ['desayuno', 'Desayunos'], ['principal', 'Comidas y cenas'], ['dulce', 'Dulces y snacks']];
-const CAT_BG = { desayuno: 'rgba(245,159,0,.16)', principal: 'rgba(18,184,134,.16)', dulce: 'rgba(230,73,128,.14)' };
+const CATS = [['todas', 'Todas'], ['desayuno', 'Desayunos'], ['principal', 'Comidas y cenas'], ['dulce', 'Dulces y snacks'], ['capricho', '😋 Caprichos ligeros']];
+const inAll = r => r.cat !== 'capricho'; // los caprichos solo salen en su sección
+const CAT_BG = { desayuno: 'rgba(245,159,0,.16)', principal: 'rgba(18,184,134,.16)', dulce: 'rgba(230,73,128,.14)', capricho: 'rgba(253,126,20,.18)' };
 const ingFood = n => BASE_FOODS.find(f => f.name === n);
 const MEAL_SHARE = { desayuno: .25, comida: .35, merienda: .10, cena: .30 };
-const CAT_SLOT = { desayuno: 'desayuno', principal: 'comida', dulce: 'merienda' };
+const CAT_SLOT = { desayuno: 'desayuno', principal: 'comida', dulce: 'merienda', capricho: 'cena' };
 const SLOT_NAME = { desayuno: 'el desayuno', comida: 'la comida', merienda: 'la merienda', cena: 'la cena' };
 const FIT_MIN = 0.5, FIT_MAX = 1.6;
 function fitFactor(kcal, slot, goals) { const tgt = (goals || S.goals).kcal * (MEAL_SHARE[slot] || .3); return kcal > 0 ? Math.min(FIT_MAX, Math.max(FIT_MIN, tgt / kcal)) : 1; }
@@ -1714,7 +1775,7 @@ function vRecetas(v) {
   <div class="chips qwrap">${CATS.map(([k, l]) => `<button class="chip ${recCat === k ? 'on' : ''}" onclick="recCat='${k}';render()">${l}</button>`).join('')}</div>
   <div id="rlist"></div>`;
   const draw = () => {
-    const q = norm(recQ), list = RECIPES.filter(r => (recCat === 'todas' || r.cat === recCat) && (!q || norm(r.name + ' ' + r.tags.join(' ') + ' ' + r.ing.map(i => i[0]).join(' ')).includes(q)));
+    const q = norm(recQ), list = RECIPES.filter(r => (recCat === 'todas' ? inAll(r) : r.cat === recCat) && (!q || norm(r.name + ' ' + r.tags.join(' ') + ' ' + r.ing.map(i => i[0]).join(' ')).includes(q)));
     $('#rlist').innerHTML = list.length ? `<p class="sm mute" style="margin:4px 2px">${list.length} recetas</p>` + list.map(recCard).join('') : '<p class="mute sm" style="text-align:center;margin-top:30px">No hay recetas con eso.</p>';
   };
   $('#rq').oninput = e => { recQ = e.target.value; draw(); };
@@ -1905,7 +1966,7 @@ function openRecipePicker(onPick, slot) {
   const draw = () => {
     $('#mpc').innerHTML = CATS.concat([['mine', 'Mis recetas']]).map(([k, l]) => `<button class="chip ${cat === k ? 'on' : ''}" data-c="${k}">${l}</button>`).join('');
     const q = norm($('#mpq').value);
-    const lib = RECIPES.filter(r => (cat === 'todas' || r.cat === cat) && (!q || norm(r.name + ' ' + r.ing.map(i => i[0]).join(' ')).includes(q))).map(r => ({ ref: { src: 'lib', id: r.id, serv: 1 }, name: r.name, emoji: r.emoji, kcal: perServ(r).kcal }));
+    const lib = RECIPES.filter(r => (cat === 'todas' ? inAll(r) : r.cat === cat) && (!q || norm(r.name + ' ' + r.ing.map(i => i[0]).join(' ')).includes(q))).map(r => ({ ref: { src: 'lib', id: r.id, serv: 1 }, name: r.name, emoji: r.emoji, kcal: perServ(r).kcal }));
     const mn = (cat === 'mine' || cat === 'todas') ? mine.filter(r => !q || norm(r.name).includes(q)).map(r => ({ ref: { src: 'mine', id: r.id, serv: 1 }, name: r.name, emoji: '🍲', kcal: perRation({ src: 'mine', id: r.id }).kcal })) : [];
     const list = (cat === 'mine' ? [] : lib).concat(mn);
     $('#mpl').innerHTML = list.map((x, i) => `<div class="item" data-i="${i}"><div class="mealic" style="width:40px;height:40px;font-size:20px;background:var(--soft)">${x.emoji}</div><div class="sp nm" style="font-size:14px">${esc(x.name)}</div><span class="kc sm">${r0(x.kcal)} kcal</span></div>`).join('') || '<p class="sm mute">Nada por aquí.</p>';
@@ -2127,13 +2188,13 @@ const isOn = x => x === 1 || !!(x && x.v);
 const SECTIONS = [['fruver', '🥬 Frutas y verduras'], ['carne', '🥩 Carne y pescado'], ['lacteos', '🥛 Lácteos y huevos'], ['pan', '🍞 Pan, cereales y pasta'], ['legum', '🫘 Legumbres y conservas'],
   ['secos', '🥜 Frutos secos y semillas'], ['aceite', '🫒 Aceites, salsas y especias'], ['congel', '❄️ Congelados'], ['dulce', '🍫 Dulces y bebidas'], ['otros', '🛒 Otros']];
 const SEC_OF = {
-  fruver: ['Aguacate', 'Ajo', 'Berenjena', 'Boniato crudo', 'Brócoli', 'Calabacín', 'Calabaza', 'Cebolla', 'Champiñones', 'Coliflor', 'Espinacas', 'Fresas', 'Hierbas frescas', 'Jengibre fresco', 'Judías verdes', 'Kiwi', 'Lechuga', 'Mango', 'Manzana', 'Naranja', 'Patata cruda', 'Pepino', 'Pimiento rojo', 'Pimiento verde', 'Plátano', 'Rúcula', 'Tomate', 'Uvas', 'Zanahoria', 'Zumo de limón', 'Remolacha cocida', 'Dátiles'],
-  carne: ['Bacalao desalado', 'Carne picada de pavo', 'Carne picada de vacuno', 'Cerdo, lomo crudo', 'Gambas peladas', 'Jamón serrano', 'Merluza cruda', 'Pavo, pechuga cruda', 'Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Pechuga de pollo cruda', 'Salmón ahumado', 'Salmón crudo', 'Ternera magra cruda', 'Atún al natural (escurrido)'],
-  lacteos: ['Clara de huevo', 'Huevo entero', 'Leche desnatada', 'Leche entera', 'Leche semidesnatada', 'Mantequilla', 'Queso cottage', 'Queso curado', 'Queso feta', 'Queso fresco', 'Queso fresco batido 0%', 'Queso mozzarella light', 'Queso parmesano', 'Skyr o yogur griego 0%', 'Yogur griego', 'Yogur natural', 'Bebida de almendras sin azúcar', 'Tofu', 'Hummus', 'Ñoquis de patata', 'Burrata'],
-  pan: ['Arroz blanco cocido', 'Arroz blanco crudo', 'Arroz integral cocido', 'Arroz integral crudo', 'Avena en copos', 'Copos de maíz sin azúcar', 'Cuscús crudo', 'Fideos de arroz (crudos)', 'Harina de avena', 'Harina de trigo', 'Maicena', 'Pan blanco', 'Pan integral', 'Pan pita integral', 'Papel de arroz', 'Pasta cocida', 'Pasta cruda', 'Pasta integral cocida', 'Pasta integral cruda', 'Quinoa cocida', 'Quinoa cruda', 'Tortilla de trigo integral', 'Tortitas de arroz', 'Galletas integrales', 'Levadura química', 'Maíz para palomitas', 'Bulgur crudo'],
-  legum: ['Alubias cocidas', 'Garbanzos cocidos', 'Lentejas cocidas', 'Lentejas rojas crudas', 'Maíz dulce (lata)', 'Tomate triturado', 'Tomates secos', 'Leche de coco light', 'Caldo de pollo', 'Caldo de verduras'],
+  fruver: ['Aguacate', 'Ajo', 'Berenjena', 'Boniato crudo', 'Brócoli', 'Calabacín', 'Calabaza', 'Cebolla', 'Champiñones', 'Coliflor', 'Espinacas', 'Fresas', 'Hierbas frescas', 'Jengibre fresco', 'Judías verdes', 'Kiwi', 'Lechuga', 'Mango', 'Manzana', 'Naranja', 'Patata cruda', 'Pepino', 'Pimiento rojo', 'Pimiento verde', 'Plátano', 'Rúcula', 'Tomate', 'Uvas', 'Zanahoria', 'Zumo de limón', 'Remolacha cocida', 'Dátiles', 'Piña', 'Zumo de naranja natural'],
+  carne: ['Bacalao desalado', 'Carne picada de pavo', 'Carne picada de vacuno', 'Cerdo, lomo crudo', 'Gambas peladas', 'Jamón serrano', 'Merluza cruda', 'Pavo, pechuga cruda', 'Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Pechuga de pollo cruda', 'Salmón ahumado', 'Salmón crudo', 'Ternera magra cruda', 'Atún al natural (escurrido)', 'Alitas de pollo crudas'],
+  lacteos: ['Clara de huevo', 'Huevo entero', 'Leche desnatada', 'Leche entera', 'Leche semidesnatada', 'Mantequilla', 'Queso cottage', 'Queso curado', 'Queso feta', 'Queso fresco', 'Queso fresco batido 0%', 'Queso mozzarella light', 'Queso parmesano', 'Skyr o yogur griego 0%', 'Yogur griego', 'Yogur natural', 'Bebida de almendras sin azúcar', 'Tofu', 'Hummus', 'Ñoquis de patata', 'Burrata', 'Queso en lonchas light', 'Queso cheddar rallado', 'Jamón cocido / York', 'Salchichas frescas de pollo o pavo'],
+  pan: ['Arroz blanco cocido', 'Arroz blanco crudo', 'Arroz integral cocido', 'Arroz integral crudo', 'Avena en copos', 'Copos de maíz sin azúcar', 'Cuscús crudo', 'Fideos de arroz (crudos)', 'Harina de avena', 'Harina de trigo', 'Maicena', 'Pan blanco', 'Pan integral', 'Pan pita integral', 'Papel de arroz', 'Pasta cocida', 'Pasta cruda', 'Pasta integral cocida', 'Pasta integral cruda', 'Quinoa cocida', 'Quinoa cruda', 'Tortilla de trigo integral', 'Tortitas de arroz', 'Galletas integrales', 'Levadura química', 'Maíz para palomitas', 'Bulgur crudo', 'Pan de hamburguesa', 'Pan rallado', 'Tortilla de maíz', 'Pan de molde integral'],
+  legum: ['Alubias cocidas', 'Garbanzos cocidos', 'Lentejas cocidas', 'Lentejas rojas crudas', 'Maíz dulce (lata)', 'Tomate triturado', 'Tomates secos', 'Leche de coco light', 'Caldo de pollo', 'Caldo de verduras', 'Pepinillos'],
   secos: ['Almendras', 'Cacahuetes', 'Crema de cacahuete', 'Nueces', 'Semillas de chía', 'Semillas de sésamo', 'Tahini', 'Pistachos'],
-  aceite: ['Aceite de oliva', 'Canela molida', 'Especias variadas', 'Mayonesa', 'Mostaza', 'Salsa de soja', 'Salsa sriracha', 'Vinagre balsámico', 'Vinagre de vino', 'Miel', 'Azúcar'],
+  aceite: ['Aceite de oliva', 'Canela molida', 'Especias variadas', 'Mayonesa', 'Mostaza', 'Ketchup', 'Salsa barbacoa', 'Salsa de soja', 'Salsa sriracha', 'Vinagre balsámico', 'Vinagre de vino', 'Miel', 'Azúcar'],
   congel: ['Frutos rojos congelados', 'Guisantes', 'Edamame'],
   dulce: ['Cacao puro en polvo', 'Chocolate negro 70%', 'Café solo', 'Cerveza', 'Vino tinto']
 };
@@ -2503,6 +2564,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '2-oct · 23:15', short: 'Nueva sección 😋 Caprichos ligeros: hamburguesa, pizza, kebab, nachos… en versión ligera.', items: ['😋 <b>Caprichos ligeros</b>: 14 comidas y cenas tipo "cheat meal" pero con muchas menos calorías: smash burger doble, pizza casera, kebab, nachos, alitas BBQ, carbonara, mac and cheese, bravas, perritos, pollo a la naranja, tacos al pastor, croquetas al horno, burrito XL y croque madame.', '🙈 Van en su <b>propia sección</b> de Recetas: no salen en "Todas", ni al autorrellenar el menú, ni en ¿Qué como ahora?. Si quieres uno, lo eliges tú.'] },
   { v: '1-oct · 21:45', short: 'Apunta por unidades: 1 loncha, ½ aguacate, 2 huevos…', items: ['📏 Al añadir un alimento salen botones de <b>unidades</b>: ½ aguacate, 1 loncha, 2 huevos, 1 cucharada, 1 vaso… sin tener que pesar.', '🏷️ En productos escaneados, la app saca el peso de 1 unidad de la <b>etiqueta</b> ("1 loncha = 15 g") o del <b>paquete</b> ("120 g · 8 lonchas").', '✏️ Si no lo sabe, pulsa <b>📏 Apuntar por unidades</b>: escribes cuánto pesa el paquete y cuántas trae (o pones 1 en la báscula) y se queda guardado.', '⚖️ Al pesar, te dice también cuántas unidades son ("≈ 2 lonchas").'] },
   { v: '1-oct · 16:30', short: 'Precios de Lidl y tiendas de Sevilla.', items: ['🤖 Los precios automáticos son de <b>Mercadona y Dia</b>, y de <b>Lidl</b> lo que publica en su web (sobre todo ofertas). Consum se quita porque no hay en Sevilla.', '🏪 En la lista de tiendas para apuntar precios a mano están también <b>Family Cash, Dani, Eroski y El Jamón</b>.'] },
   { v: '1-oct · 14:45', short: 'Escáner de códigos de barras mucho más fiable.', items: ['📷 <b>Escáner nuevo</b>: usa el lector de códigos ZXing C++ (el mismo motor que muchas apps nativas), mira solo la franja del recuadro con más resolución y pide autoenfoque continuo.', '🔍 <b>Zoom 1×/2×</b> y <b>linterna 🔦</b> en la cámara si tu móvil lo permite, y pistas si tarda en leer.', '📸 Las <b>fotos</b> se leen en varias pasadas (entera, por franjas, girada), así que lee códigos torcidos o pequeños.', '⚡ El lector va incluido en la app: ya no depende de descargarse de internet cada vez.'] },
@@ -2579,6 +2641,7 @@ const HELP = [
 <li>El objetivo se reparte entre comidas para las recetas "a tu medida": desayuno 25%, comida 35%, merienda 10% y cena 30%.</li></ul>`},
 {id:'recetas',icon:'🍲',title:'Recetas a tu medida',tabs:['recetas'],body:`
 <p>El <b>Recetario</b> tiene ${RECIPES.length} recetas ligeras, con buscador y filtros por tipo.</p>
+<p><b>😋 Caprichos ligeros</b> es una sección aparte con comidas y cenas tipo "cheat meal" (hamburguesa, pizza, kebab…) en versión ligera. No salen en "Todas", ni al autorrellenar el menú, ni en ¿Qué como ahora?: solo cuando tú los eliges.</p>
 <ul><li><b>🎯 A mi medida</b> (activado por defecto): los gramos se recalculan para que tu ración encaje con tu objetivo. Tu pareja, con su objetivo, verá otras cantidades.</li>
 <li><b>Receta original:</b> las cantidades tal cual.</li>
 <li>Con <b>− / +</b> cambias las raciones y se recalcula todo.</li>

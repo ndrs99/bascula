@@ -142,5 +142,19 @@ M = {
  'Zanahoria': dict(q='zanahoria', c=['Pepino y zanahoria'], x='rallada baby', b='zanahoria'),
  'Zumo de limón': dict(q='limon', c=['Cítricos'], x='', b='limon', u=120, r=0.33),
  'Especias': None,
+ 'Pan de hamburguesa': dict(q='pan', o='hamburguesa burger', c=['Pan de hamburguesa y wrap'], x='', b='pan hamburguesa'),
+ 'Queso en lonchas light': dict(q='queso lonchas', o='light 0% ligero', c=['Queso lonchas'], x='', b='queso lonchas light'),
+ 'Pepinillos': dict(q='pepinillo', c=['Pepinillos y otros encurtidos'], x='', b='pepinillos'),
+ 'Alitas de pollo crudas': dict(q='alitas pollo', c=['Pollo'], x='adobad marinad barbacoa', b='alitas de pollo'),
+ 'Pan rallado': dict(q='pan rallado', c=['Pan rallado'], x='', b='pan rallado'),
+ 'Queso cheddar rallado': dict(q='queso rallado', o='cheddar', c=['Queso rallado'], x='', b='queso cheddar rallado', h='queso'),
+ 'Tortilla de maíz': dict(q='tortillas', o='maiz', c=['Pan de hamburguesa y wrap'], x='trigo', b='tortillas de maiz'),
+ 'Ketchup': dict(q='ketchup', c=['Ketchup'], x='', b='ketchup'),
+ 'Salsa barbacoa': dict(q='barbacoa', c=['Salsas para carnes', 'Ketchup', 'Otras salsas'], x='patatas', b='salsa barbacoa', h='salsa'),
+ 'Piña': dict(q='pina', c=['Fruta tropical'], x='zumo almibar', b='piña'),
+ 'Zumo de naranja natural': dict(q='naranja', c=['Cítricos'], x=SEM + ' refresco', b='naranja', r=0.45),
+ 'Jamón cocido / York': dict(q='jamon cocido', c=['Jamón cocido'], x='', b='jamon cocido lonchas'),
+ 'Salchichas frescas de pollo o pavo': dict(q='salchicha', o='pollo pavo', c=['Salchichas', 'Pollo', 'Pavo y otras aves', 'Picadas y otros'], x='frankfurt cocida', b='salchichas frescas pollo'),
+ 'Pan de molde integral': dict(q='pan molde integral', c=['Pan de molde'], x='', b='pan de molde integral')
 }
 M.pop('Especias')
