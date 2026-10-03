@@ -155,6 +155,11 @@ M = {
  'Zumo de naranja natural': dict(q='naranja', c=['Cítricos'], x=SEM + ' refresco', b='naranja', r=0.45),
  'Jamón cocido / York': dict(q='jamon cocido', c=['Jamón cocido'], x='', b='jamon cocido lonchas'),
  'Salchichas frescas de pollo o pavo': dict(q='salchicha', o='pollo pavo', c=['Salchichas', 'Pollo', 'Pavo y otras aves', 'Picadas y otros'], x='frankfurt cocida', b='salchichas frescas pollo'),
- 'Pan de molde integral': dict(q='pan molde integral', c=['Pan de molde'], x='', b='pan de molde integral')
+ 'Pan de molde integral': dict(q='pan molde integral', c=['Pan de molde'], x='', b='pan de molde integral'),
+ 'Atún fresco crudo': dict(q='atun', c=['Pescado', 'Pescado congelado', 'Otros'], x='lata natural aceite ahumado', b='atun fresco', h='tacos lomo'),
+ 'Calamar crudo': dict(q='calamar', c=['Sepia, pulpo y calamar', 'Sepia, pulpo y calamar congelado', 'Marisco'], x='romana rebozad tinta', b='calamar limpio', h='anillas tubo tubos'),
+ 'Dorada o lubina cruda': dict(q='', o='dorada lubina', c=['Dorada', 'Lubina', 'Pescado'], x='', b='dorada'),
+ 'Espárragos verdes': dict(q='esparrago', o='verde triguero', c=['Otras verduras y hortalizas'], x='blanco lata', b='esparragos verdes'),
+ 'Col / repollo': dict(q='', o='repollo col', c=['Repollo y col'], x='lombarda bruselas', b='repollo')
 }
 M.pop('Especias')

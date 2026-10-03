@@ -164,7 +164,7 @@ details.help[open] .chev{transform:rotate(90deg)}
 <script src="vendor/zxing-library.min.js" defer></script>
 <script>
 /* ---------- utilidades ---------- */
-const APP_VERSION = '2-oct · 23:15';
+const APP_VERSION = '4-oct · 01:30';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -218,7 +218,8 @@ const EXTRA_RAW = [
 ['Harina de trigo',340,10,71,1.2,3],['Tomates secos',258,14,43,3,12],['Judías verdes',31,1.8,4.5,0.2,3],['Guisantes',80,5.4,10,0.4,5],['Dátiles',280,2.5,66,0.4,8],
 ['Pechuga de pavo en lonchas',100,20,1.5,1.5,0],['Semillas de chía',486,17,8,31,34],['Vinagre de vino',20,0,0.5,0,0],['Caldo de pollo',8,1,0.5,0.3,0],['Tortitas de arroz',380,8,80,3,3],
 ['Bulgur crudo',342,12.3,69,1.3,12.5],['Pistachos',562,20,17,45,10],['Burrata',240,11,2,21,0],
-['Pan de hamburguesa',265,9,47,4.5,2.5],['Queso en lonchas light',230,27,2,12.5,0],['Pepinillos',20,0.8,2.5,0.2,1.2],['Alitas de pollo crudas',190,17.5,0,13,0],['Pan rallado',380,12,73,4,4.5],['Queso cheddar rallado',400,25,1.3,33,0],['Tortilla de maíz',220,5.7,45,2.9,6]];
+['Pan de hamburguesa',265,9,47,4.5,2.5],['Queso en lonchas light',230,27,2,12.5,0],['Pepinillos',20,0.8,2.5,0.2,1.2],['Alitas de pollo crudas',190,17.5,0,13,0],['Pan rallado',380,12,73,4,4.5],['Queso cheddar rallado',400,25,1.3,33,0],['Tortilla de maíz',220,5.7,45,2.9,6],
+['Atún fresco crudo',110,23,0,1.5,0],['Calamar crudo',80,16,3,1,0],['Dorada o lubina cruda',100,19.5,0,2.5,0]];
 
 const WHERE = {
 'Queso fresco batido 0%':'Mercadona, Lidl, Carrefour, Dia (lácteos)',
@@ -267,7 +268,8 @@ const WHERE = {
 'Bulgur crudo':'Mercadona, Carrefour, Alcampo (pasillo de arroces y legumbres) o tiendas árabes',
 'Pistachos':'Pasillo de frutos secos (mejor pelados y sin sal)',
 'Burrata':'Mercadona, Lidl, Carrefour, Aldi (quesos frescos italianos)',
-'Pan de hamburguesa':'Panadería envasada de cualquier súper (también hay integral)','Queso en lonchas light':'Quesos en lonchas (busca "light" o "0%")','Pepinillos':'Encurtidos de cualquier súper','Alitas de pollo crudas':'Carnicería o refrigerados de pollo','Pan rallado':'Junto a la harina en cualquier súper','Queso cheddar rallado':'Quesos rallados de Mercadona, Lidl, Carrefour','Tortilla de maíz':'Sección internacional o junto a las tortillas de trigo'};
+'Pan de hamburguesa':'Panadería envasada de cualquier súper (también hay integral)','Queso en lonchas light':'Quesos en lonchas (busca "light" o "0%")','Pepinillos':'Encurtidos de cualquier súper','Alitas de pollo crudas':'Carnicería o refrigerados de pollo','Pan rallado':'Junto a la harina en cualquier súper','Queso cheddar rallado':'Quesos rallados de Mercadona, Lidl, Carrefour','Tortilla de maíz':'Sección internacional o junto a las tortillas de trigo',
+'Atún fresco crudo':'Pescadería (también congelado en tacos en Mercadona, Lidl)','Calamar crudo':'Pescadería o congelados (anillas o tubos limpios)','Dorada o lubina cruda':'Pescadería de cualquier súper (pídela limpia o en lomos)'};
 
 /* ---------- recetario ---------- */
 const RECIPES = [
@@ -741,6 +743,122 @@ tip:'Un burrito de cadena ronda las 1.000-1.200 kcal; este llena igual con basta
 ing:[['Pan de molde integral',120,'4 rebanadas'],['Jamón cocido / York',80],['Queso en lonchas light',60,'3 lonchas'],['Leche desnatada',100],['Maicena',8],['Especias variadas',1,'nuez moscada'],['Queso cheddar rallado',20],['Huevo entero',110,'2 huevos'],['Rúcula',30]],
 steps:['Precalienta el horno a 220 °C.','Haz una bechamel exprés: calienta la leche con la maicena disuelta, sal y nuez moscada, removiendo hasta que espese (2 minutos).','Monta los sándwiches con el jamón y el queso en lonchas, úntalos por encima con la bechamel y espolvorea el cheddar.','Hornéalos 8-10 minutos hasta que estén gratinados. Mientras, haz los huevos a la plancha.','Pon un huevo encima de cada sándwich y sirve con la rúcula.'],
 tip:'Es el clásico de las cafeterías de París, con bechamel sin mantequilla y queso light.'}
+);
+RECIPES.push(
+{id:'merluza-salsa-verde',name:'Merluza en salsa verde con guisantes y patata',emoji:'🐟',cat:'principal',time:30,serv:2,tags:['Pescado','Receta española'],
+ing:[['Patata cruda',250],['Aceite de oliva',12],['Ajo',8,'3 dientes'],['Harina de trigo',8],['Caldo de verduras',250,'mejor de pescado'],['Merluza cruda',350,'lomos o rodajas'],['Guisantes',100],['Hierbas frescas',15,'mucho perejil'],['Huevo entero',55,'1 huevo cocido, opcional']],
+steps:['Corta la patata en rodajas de medio centímetro y cuécela en agua con sal 10 minutos. Escúrrela.','En una cazuela baja, dora el ajo picado en el aceite a fuego suave sin que se queme. Añade la harina y remueve 1 minuto.','Vierte el caldo poco a poco moviendo la cazuela en vaivén hasta que espese ligeramente.','Coloca la merluza salada, las patatas y los guisantes, tapa y cocina 6-8 minutos a fuego suave, moviendo la cazuela para que la salsa ligue.','Termina con el perejil picado y el huevo cocido en cuartos.'],
+tip:'El movimiento de vaivén suelta la gelatina del pescado y espesa la salsa sin nata.'},
+{id:'salmon-papillote',name:'Salmón en papillote con verduras y limón',emoji:'🎁',cat:'principal',time:25,serv:2,tags:['Pescado','Omega 3'],
+ing:[['Salmón crudo',300,'2 lomos'],['Calabacín',200],['Zanahoria',100],['Cebolla',60],['Zumo de limón',15,'y unas rodajas'],['Aceite de oliva',8],['Hierbas frescas',5,'eneldo o perejil'],['Patata cruda',300]],
+steps:['Precalienta el horno a 200 °C. Corta la patata en rodajas finas y hornéala 15 minutos con un poco de sal mientras preparas lo demás.','Corta el calabacín, la zanahoria y la cebolla en tiras muy finas.','Sobre dos hojas grandes de papel de horno pon una cama de verduras, encima el salmón, sal, el limón, el aceite y las hierbas.','Cierra los paquetes doblando los bordes para que no salga el vapor.','Hornea 12-14 minutos junto a las patatas. Abre los paquetes en la mesa.'],
+tip:'Se cocina en su propio vapor: queda jugosísimo y no ensucias nada.'},
+{id:'atun-encebollado',name:'Atún encebollado a la andaluza',emoji:'🧅',cat:'principal',time:30,serv:2,tags:['Pescado','Receta andaluza'],
+ing:[['Aceite de oliva',15],['Cebolla',400,'2 cebollas grandes'],['Ajo',6],['Especias variadas',3,'pimentón y laurel'],['Vino tinto',50,'o vino blanco'],['Atún fresco crudo',350,'en tacos'],['Arroz integral crudo',120]],
+steps:['Pon el arroz a cocer.','Pocha la cebolla en juliana con el aceite a fuego suave 15 minutos, hasta que esté muy blanda y dorada.','Añade el ajo laminado, el pimentón y el laurel, 1 minuto, y el vino. Deja que se evapore 2 minutos.','Incorpora el atún salado y cocina solo 3-4 minutos, tapado: tiene que quedar rosado por dentro o se seca.','Sirve con el arroz.'],
+tip:'Un clásico de Cádiz y Sevilla. Si lo dejas reposar 10 minutos, aún sabe mejor.'},
+{id:'arroz-caldoso-gambas',name:'Arroz caldoso de gambas y verduras',emoji:'🦐',cat:'principal',time:35,serv:3,tags:['Marisco','Receta española'],
+ing:[['Aceite de oliva',15],['Cebolla',80],['Pimiento rojo',120],['Ajo',6],['Tomate triturado',150],['Especias variadas',2,'pimentón y azafrán o colorante'],['Arroz blanco crudo',200],['Caldo de verduras',1100,'mejor de pescado'],['Gambas peladas',300],['Judías verdes',150],['Zumo de limón',10]],
+steps:['Sofríe la cebolla, el pimiento y el ajo picados con el aceite 6 minutos.','Añade el tomate y el pimentón y cocina 4 minutos.','Echa el arroz, remueve 1 minuto y vierte el caldo caliente con el azafrán y sal. Añade las judías troceadas.','Cuece 16-17 minutos a fuego medio; tiene que quedar con caldo.','En los últimos 3 minutos añade las gambas. Deja reposar 2 minutos y sirve con limón.'],
+tip:'Más caldo que una paella y menos aceite: llena mucho con menos calorías.'},
+{id:'calamar-plancha',name:'Calamar a la plancha con patatas y ajo-perejil',emoji:'🦑',cat:'principal',time:30,serv:2,tags:['Marisco','Rápido'],
+ing:[['Patata cruda',400],['Calamar crudo',400,'limpio, en anillas o tiras'],['Aceite de oliva',15],['Ajo',8],['Hierbas frescas',15,'perejil'],['Zumo de limón',15],['Lechuga',100],['Tomate',150]],
+steps:['Corta las patatas en dados, sálalas y hazlas en el horno a 210 °C 25 minutos (o 18 en freidora de aire) con 5 g de aceite.','Machaca el ajo y el perejil con el resto del aceite y el limón: es el "ajillo".','Seca muy bien el calamar y hazlo en una plancha muy caliente 2-3 minutos, sin moverlo, para que se dore sin soltar agua.','Riégalo con el ajillo nada más sacarlo.','Sirve con las patatas y una ensalada de lechuga y tomate.'],
+tip:'El secreto es la plancha muy caliente y poco tiempo: más de 3 minutos y se queda como una goma.'},
+{id:'dorada-panaderas',name:'Dorada al horno con patatas panaderas',emoji:'🐠',cat:'principal',time:45,serv:2,tags:['Pescado','Horno'],
+ing:[['Patata cruda',400],['Cebolla',100],['Pimiento verde',100],['Aceite de oliva',15],['Caldo de verduras',100],['Dorada o lubina cruda',400,'4 lomos o 2 piezas limpias'],['Ajo',6],['Zumo de limón',15],['Hierbas frescas',5,'perejil']],
+steps:['Precalienta el horno a 200 °C. Corta las patatas en rodajas finas, la cebolla y el pimiento en tiras, mézclalo con 10 g de aceite y sal, añade el caldo y hornea 25 minutos.','Haz 2-3 cortes en la piel de cada dorada y sálalas.','Pon el pescado encima de las patatas y hornea 15-18 minutos más (lomos: 10 minutos).','Dora el ajo laminado en el resto del aceite, apaga, añade el limón y el perejil, y viértelo por encima al servir.'],
+tip:'La "bilbaína" de ajo, aceite y limón se hace en 2 minutos y es lo que lo hace especial.'},
+{id:'cerdo-agridulce',name:'Cerdo agridulce con piña y arroz',emoji:'🍍',cat:'principal',time:30,serv:2,tags:['Estilo chino','Cerdo magro'],
+ing:[['Cerdo, lomo crudo',300],['Maicena',15],['Aceite de oliva',10],['Pimiento rojo',120],['Pimiento verde',80],['Cebolla',80],['Piña',150],['Tomate triturado',60],['Vinagre de vino',15,'mejor de arroz'],['Salsa de soja',20],['Miel',15],['Arroz blanco crudo',140]],
+steps:['Pon el arroz a cocer.','Corta el lomo en dados, sálalo y rebózalo en 10 g de maicena. Dóralo en la sartén con el aceite 5 minutos y resérvalo.','En la misma sartén saltea los pimientos y la cebolla en cuadrados 4 minutos y añade la piña.','Mezcla el tomate, el vinagre, la soja, la miel y el resto de la maicena con 80 ml de agua, viértelo y cocina hasta que espese.','Vuelve a meter el cerdo, remueve 1 minuto y sirve con el arroz.'],
+tip:'Sin freír en abundante aceite y con menos azúcar que en el restaurante.'},
+{id:'pinchitos-morunos',name:'Pinchitos morunos de lomo con cuscús y yogur',emoji:'🍢',cat:'principal',time:30,serv:2,tags:['Receta andaluza','Cerdo magro'],
+ing:[['Cerdo, lomo crudo',320],['Especias variadas',8,'comino, pimentón, cúrcuma, orégano y un poco de picante'],['Ajo',6],['Zumo de limón',15],['Aceite de oliva',10],['Cuscús crudo',120],['Pepino',150],['Tomate',150],['Cebolla',40],['Skyr o yogur griego 0%',120],['Hierbas frescas',8,'menta y perejil']],
+steps:['Corta el lomo en dados y mézclalo con las especias, el ajo rallado, el limón, la mitad del aceite y sal. Déjalo marinar 15 minutos (o toda la noche).','Ensártalo en brochetas y hazlo a la plancha o en la freidora de aire a 200 °C 10 minutos, girándolo.','Hidrata el cuscús con 120 ml de agua hirviendo con sal y el resto del aceite, 5 minutos tapado, y suéltalo con un tenedor.','Mezcla el pepino, el tomate y la cebolla picados con las hierbas y el limón.','Sirve los pinchitos con el cuscús, la ensalada y el yogur con un poco de comino.'],
+tip:'Típicos de las ferias andaluzas: la marinada es todo, si puedes déjala de un día para otro.'},
+{id:'ternera-estofado',name:'Estofado de ternera con verduras (ligero)',emoji:'🥘',cat:'principal',time:75,serv:3,tags:['Batch cooking','Reconfortante'],
+ing:[['Ternera magra cruda',450,'para guisar, en tacos'],['Aceite de oliva',12],['Cebolla',150],['Zanahoria',200],['Pimiento rojo',100],['Ajo',6],['Tomate triturado',200],['Vino tinto',100],['Caldo de verduras',500],['Especias variadas',2,'laurel, tomillo y pimienta'],['Patata cruda',400],['Guisantes',100]],
+steps:['Dora la ternera salada en una olla con el aceite a fuego fuerte, por tandas. Resérvala.','En la misma olla pocha la cebolla, la zanahoria, el pimiento y el ajo 8 minutos.','Añade el tomate, el vino y las especias y deja reducir 3 minutos. Vuelve a meter la carne y cubre con el caldo.','Cocina tapado a fuego suave 45 minutos (15 en olla exprés).','Añade las patatas chascadas y cocina 20 minutos más; los guisantes en los últimos 5.'],
+tip:'Al día siguiente está aún mejor y se congela muy bien.'},
+{id:'steak-chimichurri',name:'Filete de ternera con chimichurri y patatas asadas',emoji:'🥩',cat:'principal',time:35,serv:2,tags:['Alto en proteína','Ternera'],
+ing:[['Patata cruda',400],['Aceite de oliva',20],['Ternera magra cruda',320,'2 filetes gruesos'],['Hierbas frescas',20,'perejil y orégano fresco'],['Ajo',4],['Vinagre de vino',10],['Especias variadas',2,'guindilla y pimienta'],['Lechuga',80],['Tomate',150]],
+steps:['Corta las patatas en gajos, mézclalas con 5 g de aceite y sal y ásalas a 210 °C 30 minutos.','Para el chimichurri pica muy fino el perejil, el orégano y el ajo y mézclalos con el resto del aceite, el vinagre, la guindilla, sal y una cucharada de agua.','Saca la carne de la nevera 15 minutos antes. Hazla en una plancha muy caliente 2-3 minutos por lado y déjala reposar 3 minutos.','Córtala en tiras y sírvela con el chimichurri, las patatas y la ensalada.'],
+tip:'El chimichurri aguanta una semana en la nevera: sirve para pollo, pescado o verduras.'},
+{id:'huevos-flamenca',name:'Huevos a la flamenca ligeros',emoji:'🍳',cat:'principal',time:30,serv:2,tags:['Receta andaluza','Una sola cazuela'],
+ing:[['Aceite de oliva',10],['Cebolla',80],['Pimiento rojo',100],['Ajo',4],['Tomate triturado',300],['Guisantes',100],['Judías verdes',100],['Jamón serrano',40,'en taquitos'],['Huevo entero',220,'4 huevos'],['Pan integral',60]],
+steps:['Sofríe la cebolla, el pimiento y el ajo picados en el aceite 6 minutos.','Añade el tomate, sal y una pizca de azúcar si está ácido, y cocina 8 minutos.','Incorpora los guisantes, las judías troceadas y la mitad del jamón, y cocina 5 minutos.','Pásalo a una fuente (o déjalo en la sartén), casca los huevos encima y hornea a 200 °C 8-10 minutos hasta que cuaje la clara.','Pon el resto del jamón por encima y sirve con el pan.'],
+tip:'Sin chorizo ni fritura, sigue siendo el plato sevillano de siempre.'},
+{id:'tortilla-espinacas',name:'Tortilla de espinacas y queso fresco con ensalada',emoji:'🥬',cat:'principal',time:15,serv:1,tags:['Rápido','Vegetariana'],
+ing:[['Aceite de oliva',5],['Espinacas',100],['Ajo',3],['Huevo entero',110,'2 huevos'],['Clara de huevo',60],['Queso fresco',50],['Tomate',150],['Pepino',100],['Pan integral',40]],
+steps:['Saltea las espinacas con el ajo en el aceite 2 minutos hasta que se reduzcan.','Bate los huevos y las claras con sal, añade las espinacas y el queso en dados.','Cuaja la tortilla en una sartén pequeña a fuego medio 2-3 minutos por lado.','Sirve con una ensalada de tomate y pepino y el pan.'],
+tip:'Cena de 10 minutos con más de 35 g de proteína.'},
+{id:'revuelto-gambas-esparragos',name:'Revuelto de gambas y espárragos trigueros',emoji:'🥚',cat:'principal',time:15,serv:2,tags:['Marisco','Rápido'],
+ing:[['Aceite de oliva',10],['Ajo',4],['Espárragos verdes',250,'un manojo'],['Gambas peladas',200],['Huevo entero',165,'3 huevos'],['Clara de huevo',90],['Pan integral',60]],
+steps:['Corta los espárragos en trozos, desechando la parte dura del final.','Saltéalos con el aceite y el ajo laminado 4-5 minutos.','Añade las gambas y cocina 1 minuto.','Baja el fuego, echa los huevos y las claras batidos con sal y remueve suavemente hasta que cuajen pero sigan jugosos.','Sirve con el pan tostado.'],
+tip:'Saca el revuelto del fuego un poco antes de que esté hecho: termina de cuajar en el plato.'},
+{id:'espinacas-garbanzos',name:'Espinacas con garbanzos a la sevillana',emoji:'🫘',cat:'principal',time:25,serv:2,tags:['Receta sevillana','Vegana'],
+ing:[['Pan integral',40,'1 rebanada'],['Aceite de oliva',15],['Ajo',8,'3 dientes'],['Especias variadas',5,'comino y pimentón'],['Vinagre de vino',10],['Espinacas',400],['Garbanzos cocidos',400,'1 bote escurrido'],['Huevo entero',110,'2 huevos cocidos']],
+steps:['Fríe el pan y los ajos en el aceite hasta que estén dorados. Retíralos.','Tritúralos en un mortero o picadora con el comino, el pimentón y el vinagre hasta hacer una pasta.','En la misma sartén rehoga las espinacas hasta que se reduzcan.','Añade los garbanzos, la pasta del mortero y un poco de agua, y cocina 5-8 minutos a fuego suave.','Sirve con el huevo cocido en cuartos.'],
+tip:'Una de las tapas más típicas de Sevilla, y muy completa: legumbre, verdura y huevo.'},
+{id:'ensalada-lentejas',name:'Ensalada templada de lentejas, salmón ahumado y aguacate',emoji:'🥗',cat:'principal',time:15,serv:2,tags:['Sin cocinar','Para llevar'],
+ing:[['Lentejas cocidas',400,'1 bote escurrido'],['Tomate',150,'cherry'],['Pimiento rojo',80],['Cebolla',40,'morada'],['Aguacate',100],['Salmón ahumado',80],['Rúcula',40],['Aceite de oliva',15],['Vinagre balsámico',10],['Mostaza',5]],
+steps:['Lava y escurre muy bien las lentejas. Si quieres, templa en el microondas 1 minuto.','Pica el tomate, el pimiento y la cebolla en trocitos pequeños.','Mezcla el aceite, el vinagre y la mostaza con sal.','Junta todo con la rúcula, el aguacate en dados y el salmón en tiras, y aliña.'],
+tip:'Lleva legumbre, pescado azul y grasa buena: comida completa en 15 minutos.'},
+{id:'curry-garbanzos',name:'Curry de garbanzos y boniato con leche de coco',emoji:'🍛',cat:'principal',time:30,serv:3,tags:['Vegana','Batch cooking'],
+ing:[['Aceite de oliva',10],['Cebolla',120],['Ajo',6],['Jengibre fresco',10],['Especias variadas',10,'curry, cúrcuma y comino'],['Boniato crudo',350],['Tomate triturado',300],['Leche de coco light',200],['Garbanzos cocidos',400],['Espinacas',100],['Arroz integral crudo',150],['Hierbas frescas',8,'cilantro']],
+steps:['Pon el arroz a cocer.','Pocha la cebolla con el aceite 5 minutos, añade el ajo, el jengibre y las especias, 1 minuto.','Añade el boniato en dados, el tomate y 150 ml de agua, y cocina tapado 12 minutos.','Incorpora la leche de coco y los garbanzos y cocina 5 minutos más; al final, las espinacas.','Sirve con el arroz y el cilantro.'],
+tip:'Sin carne y con 15 g de fibra por ración: sacia muchísimo.'},
+{id:'tofu-fideos',name:'Salteado de tofu crujiente con verduras y fideos de arroz',emoji:'🥢',cat:'principal',time:25,serv:2,tags:['Vegana','Wok'],
+ing:[['Tofu',300,'firme'],['Maicena',10],['Aceite de oliva',12],['Fideos de arroz (crudos)',120],['Brócoli',200],['Zanahoria',100],['Pimiento rojo',100],['Ajo',4],['Jengibre fresco',8],['Salsa de soja',30],['Miel',10],['Semillas de sésamo',6]],
+steps:['Seca el tofu con papel, córtalo en dados, rebózalo en la maicena y dóralo con la mitad del aceite 8 minutos hasta que esté crujiente. Resérvalo.','Hidrata los fideos en agua caliente según el paquete.','En el wok, saltea el brócoli, la zanahoria y el pimiento con el resto del aceite, el ajo y el jengibre 4 minutos a fuego fuerte.','Añade los fideos, la soja y la miel y remueve 1 minuto.','Incorpora el tofu y sirve con el sésamo.'],
+tip:'El truco del tofu crujiente: bien seco y con maicena, sin moverlo mucho en la sartén.'}
+);
+RECIPES.push(
+{id:'cap-lasana',name:'Lasaña boloñesa ligera de las de toda la vida',emoji:'🍝',cat:'capricho',time:70,serv:4,tags:['Batch cooking','Gratinado'],
+ing:[['Aceite de oliva',10],['Cebolla',120],['Zanahoria',100],['Ajo',6],['Ternera magra cruda',400,'picada'],['Tomate triturado',500],['Especias variadas',3,'orégano y pimienta'],['Pasta cruda',180,'placas de lasaña precocidas'],['Leche desnatada',500],['Maicena',30],['Queso mozzarella light',125],['Queso parmesano',20]],
+steps:['Pocha la cebolla, la zanahoria y el ajo picados con el aceite 8 minutos. Añade la carne y dórala, luego el tomate y el orégano, y cocina 20 minutos.','Bechamel ligera: disuelve la maicena en la leche fría, añade sal y nuez moscada y calienta removiendo hasta que espese.','Hidrata las placas si lo pide el paquete.','En una fuente alterna capas: un poco de bechamel, placas, boloñesa… y termina con placas, bechamel, la mozzarella y el parmesano.','Hornea a 190 °C 30 minutos y gratina 3 minutos al final.'],
+tip:'Una ración de lasaña de restaurante pasa de 700 kcal. Esta sabe a la de casa con mucha menos grasa.'},
+{id:'cap-fish-chips',name:'Fish and chips al horno con salsa tártara de yogur',emoji:'🐟',cat:'capricho',time:35,serv:2,tags:['Fake away','Pescado'],
+ing:[['Patata cruda',450],['Aceite de oliva',10],['Merluza cruda',350,'lomos sin piel'],['Huevo entero',55,'1 huevo'],['Copos de maíz sin azúcar',50,'triturados'],['Especias variadas',2,'pimentón y ajo'],['Skyr o yogur griego 0%',100],['Pepinillos',30],['Zumo de limón',10],['Guisantes',150]],
+steps:['Corta las patatas en bastones gruesos, mézclalas con el aceite y sal y hornéalas a 220 °C 30 minutos (o 20 en freidora de aire).','Corta la merluza en tiras gruesas, sálala, pásala por el huevo batido y luego por los copos triturados con las especias.','Hornéala a 220 °C 12 minutos (o 8 en freidora) hasta que esté crujiente.','Mezcla el skyr con los pepinillos picados, limón, sal y pimienta: es la salsa tártara.','Cuece los guisantes 3 minutos y aplástalos con un tenedor. Sirve todo con limón.'],
+tip:'El de un pub inglés ronda las 1.000 kcal. Con copos de maíz rebozado crujiente sin freír.'},
+{id:'cap-pulled-pork',name:'Pulled pork con coleslaw en pan de hamburguesa',emoji:'🍖',cat:'capricho',time:45,serv:3,tags:['Fake away','Olla exprés'],
+ing:[['Cerdo, lomo crudo',450,'en un trozo'],['Especias variadas',6,'pimentón ahumado, ajo, comino'],['Cebolla',100],['Salsa barbacoa',60],['Caldo de verduras',200],['Col / repollo',200],['Zanahoria',100],['Skyr o yogur griego 0%',100],['Mostaza',10],['Vinagre de vino',10],['Pan de hamburguesa',210,'3 panes']],
+steps:['Unta el lomo con las especias y sal y dóralo en la olla por todos lados.','Añade la cebolla en juliana, la mitad de la barbacoa y el caldo. Cocina 25 minutos en olla exprés (o 1 hora y media tapado a fuego suave).','Deshilacha la carne con dos tenedores y mézclala con el resto de la barbacoa y un poco del jugo.','Coleslaw: mezcla la col y la zanahoria ralladas con el skyr, la mostaza, el vinagre y sal.','Rellena los panes con la carne y el coleslaw.'],
+tip:'Con lomo en lugar de paleta tiene la mitad de grasa y queda igual de jugoso si no le quitas el caldo.'},
+{id:'cap-patatas-cargadas',name:'Patatas cargadas con "bacon" de pavo y cheddar',emoji:'🥔',cat:'capricho',time:45,serv:2,tags:['Fake away','Gratinado'],
+ing:[['Patata cruda',600,'2 patatas grandes'],['Aceite de oliva',5],['Pechuga de pavo en lonchas',80],['Queso cheddar rallado',40],['Skyr o yogur griego 0%',100],['Hierbas frescas',8,'cebollino'],['Brócoli',200],['Especias variadas',2,'pimentón y ajo en polvo']],
+steps:['Pincha las patatas, ásalas en el microondas 10-12 minutos y córtalas en gajos gruesos.','Mézclalas con el aceite y las especias y dóralas en el horno a 220 °C 15 minutos (o 10 en freidora de aire).','Dora el pavo en tiras en una sartén hasta que esté crujiente. Cuece el brócoli al vapor 4 minutos.','Pon las patatas en una fuente con el brócoli, el pavo y el cheddar y gratina 5 minutos.','Sirve con el skyr con cebollino por encima.'],
+tip:'Las "loaded fries" de hamburguesería pasan de 1.000 kcal; estas quitan el antojo con la mitad.'},
+{id:'cap-calzone',name:'Calzone de jamón, queso y champiñones',emoji:'🥟',cat:'capricho',time:35,serv:2,tags:['Fake away','Masa de yogur'],
+ing:[['Harina de trigo',150],['Skyr o yogur griego 0%',150],['Levadura química',6],['Tomate triturado',80],['Especias variadas',2,'orégano'],['Jamón cocido / York',100],['Queso mozzarella light',125],['Champiñones',100],['Huevo entero',30,'para pintar']],
+steps:['Precalienta el horno a 220 °C. Mezcla la harina, el skyr, la levadura y sal hasta tener una masa que no se pegue.','Divídela en dos y estira cada mitad en un círculo.','En la mitad de cada círculo pon tomate, orégano, jamón, mozzarella y champiñones laminados.','Dobla, cierra los bordes apretando con un tenedor y pinta con huevo batido.','Hornea 18-20 minutos hasta que esté dorado.'],
+tip:'Sale gigante y la masa tiene el doble de proteína que la de pizzería.'},
+{id:'cap-flamenquin',name:'Flamenquín al horno con ensalada',emoji:'🥖',cat:'capricho',time:35,serv:2,tags:['Receta andaluza','Sin freír'],
+ing:[['Cerdo, lomo crudo',240,'4 filetes muy finos'],['Jamón serrano',60,'4 lonchas'],['Queso en lonchas light',40],['Huevo entero',55,'1 huevo'],['Pan rallado',40],['Copos de maíz sin azúcar',20,'triturados, para más crujiente'],['Aceite de oliva',8],['Lechuga',100],['Tomate',150],['Cebolla',40],['Patata cruda',250]],
+steps:['Corta las patatas en gajos y ásalas a 210 °C 25 minutos con la mitad del aceite.','Aplasta los filetes de lomo entre dos papeles con un rodillo hasta que queden muy finos. Sálalos.','Pon encima de cada uno una loncha de jamón y queso y enróllalo muy apretado.','Pásalos por el huevo y por la mezcla de pan rallado y copos, píntalos con el resto del aceite y hornéalos a 210 °C 15 minutos (o 10 en freidora de aire), girándolos.','Sírvelos en rodajas con la ensalada y las patatas.'],
+tip:'El flamenquín cordobés de siempre va frito; al horno pierde casi la mitad de calorías y sigue crujiente.'},
+{id:'cap-serranito',name:'Serranito ligero (el bocadillo sevillano)',emoji:'🥪',cat:'capricho',time:20,serv:2,tags:['Receta sevillana','Rápido'],
+ing:[['Pan blanco',160,'2 molletes o barritas'],['Pimiento verde',150,'pimientos de freír'],['Aceite de oliva',10],['Cerdo, lomo crudo',200,'4 filetes finos'],['Jamón serrano',40],['Tomate',120],['Patata cruda',250]],
+steps:['Corta las patatas en bastones y hazlas en la freidora de aire con 3 g de aceite y sal, 18 minutos (o al horno 25).','Haz los pimientos enteros a la plancha con un poco de aceite y sal 8 minutos, girándolos, hasta que estén blandos.','Haz los filetes de lomo salados a la plancha 1 minuto por lado.','Abre el pan, unta tomate rallado, y pon el lomo, el jamón y los pimientos.','Sirve con las patatas.'],
+tip:'El de bar lleva pimiento frito, patatas fritas y a veces mayonesa: unas 1.000 kcal. Este, unas 600.'},
+{id:'cap-quesadilla-ternera',name:'Quesadilla de ternera, pimientos y cheddar',emoji:'🫓',cat:'capricho',time:20,serv:2,tags:['Fake away','Estilo mexicano'],
+ing:[['Ternera magra cruda',220,'en tiras finas'],['Especias variadas',4,'comino, pimentón y orégano'],['Aceite de oliva',6],['Pimiento rojo',100],['Cebolla',80],['Tortilla de trigo integral',160,'4 tortillas'],['Queso cheddar rallado',40],['Queso mozzarella light',60],['Skyr o yogur griego 0%',60],['Tomate',120]],
+steps:['Saltea la cebolla y el pimiento en tiras con el aceite 4 minutos. Añade la ternera con las especias y sal, 3 minutos a fuego fuerte.','Pon una tortilla en la sartén, reparte la mitad de los quesos y del relleno y tapa con otra tortilla.','Cocina 2-3 minutos por lado a fuego medio, aplastando, hasta que esté dorada y el queso fundido. Repite.','Corta en triángulos y sirve con el skyr y tomate picado.'],
+tip:'Mezclar cheddar y mozzarella light da todo el sabor y el hilo con la mitad de grasa.'},
+{id:'cap-gnocchi-gratinados',name:'Ñoquis gratinados con tomate y mozzarella',emoji:'🍅',cat:'capricho',time:25,serv:2,tags:['Reconfortante','Gratinado'],
+ing:[['Ñoquis de patata',400],['Aceite de oliva',8],['Ajo',4],['Tomate triturado',300],['Especias variadas',2,'orégano'],['Espinacas',100],['Queso mozzarella light',125],['Queso parmesano',15],['Hierbas frescas',5,'albahaca']],
+steps:['Sofríe el ajo en el aceite, añade el tomate, el orégano y sal y cocina 8 minutos. Añade las espinacas al final.','Cuece los ñoquis en agua con sal hasta que floten (2 minutos) y escúrrelos.','Mézclalos con la salsa en una fuente, cubre con la mozzarella en trozos y el parmesano.','Gratina en el horno a 220 °C 8-10 minutos hasta que burbujee.','Termina con albahaca.'],
+tip:'Es el plato viral de "gnocchi al forno": reconfortante y listo en 25 minutos.'},
+{id:'cap-bocadillo-calamares',name:'Bocadillo de calamares al horno con alioli ligero',emoji:'🦑',cat:'capricho',time:25,serv:2,tags:['Fake away','Marisco'],
+ing:[['Calamar crudo',300,'en anillas'],['Huevo entero',55,'1 huevo'],['Harina de trigo',20],['Pan rallado',40],['Aceite de oliva',8],['Pan blanco',200,'2 barritas'],['Skyr o yogur griego 0%',60],['Ajo',3],['Zumo de limón',10],['Lechuga',60]],
+steps:['Seca muy bien las anillas, sálalas y pásalas por harina, huevo batido y pan rallado.','Píntalas con el aceite y hazlas en la freidora de aire a 200 °C 8-10 minutos (o al horno a 220 °C 12 minutos) hasta que estén doradas.','Mezcla el skyr con el ajo rallado, el limón y sal para el alioli.','Abre el pan, unta el alioli, pon lechuga y los calamares, y un chorrito de limón.'],
+tip:'El de la Plaza Mayor va frito en aceite abundante; en freidora queda crujiente con una fracción del aceite.'},
+{id:'cap-crispy-chicken',name:'Sándwich de pollo crujiente con salsa de miel y mostaza',emoji:'🍔',cat:'capricho',time:25,serv:2,tags:['Fake away','Freidora de aire'],
+ing:[['Pechuga de pollo cruda',300,'2 filetes'],['Huevo entero',55],['Copos de maíz sin azúcar',50],['Especias variadas',3,'pimentón, ajo y un poco de cayena'],['Pan de hamburguesa',140,'2 panes'],['Skyr o yogur griego 0%',50],['Mostaza',15],['Miel',10],['Lechuga',40],['Tomate',80],['Pepinillos',30]],
+steps:['Aplasta un poco los filetes para que queden de grosor parejo y sálalos.','Pásalos por el huevo batido y por los copos de maíz triturados con las especias, apretando.','Hazlos en la freidora de aire a 200 °C 12 minutos, dándoles la vuelta a mitad (o al horno 18 minutos).','Mezcla el skyr, la mostaza y la miel para la salsa.','Monta el pan con salsa, lechuga, el pollo crujiente, tomate y pepinillos.'],
+tip:'El de cadena de pollo frito pasa de 700 kcal solo el sándwich.'}
 );
 
 /* ---------- comidas comunes ya cocinadas o preparadas (valores por 100 g, tal cual se comen) ----------
@@ -1469,7 +1587,7 @@ const BASE_HEALTH = {
   'Galletas integrales': [1, ['Azúcar añadido', PROC], ['Integral']], 'Café solo': null,
   'Azúcar': [0, [AZ, 'Sin nutrientes'], []], 'Cerveza': [0, ['Alcohol'], []], 'Vino tinto': [0, ['Alcohol'], []],
   'Aceite de oliva': [2, [CAL], [GOOD]], 'Aguacate': [2, [], [GOOD, 'Rico en fibra']], 'Almendras': [2, [CAL], [GOOD, 'Rico en fibra']], 'Nueces': [2, [CAL], [GOOD, 'Omega 3']], 'Cacahuetes': [2, [CAL], [GOOD, 'Rico en proteína']],
-  'Tahini': [2, [CAL], [GOOD]], 'Pan de hamburguesa': [1, [RF], []], 'Queso cheddar rallado': [1, [SAL, GS], ['Rico en calcio']], 'Pepinillos': [1, [SAL], []], 'Alitas de pollo crudas': [1, [GS], ['Rico en proteína']], 'Pan rallado': [1, [RF], []], 'Queso en lonchas light': [2, [SAL], ['Rico en proteína']], 'Tortilla de maíz': [2, [], ['Rico en fibra']], 'Pistachos': [2, [CAL], [GOOD, 'Rico en fibra']], 'Bulgur crudo': [2, [], ['Integral', 'Rico en fibra']], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']],
+  'Tahini': [2, [CAL], [GOOD]], 'Pan de hamburguesa': [1, [RF], []], 'Queso cheddar rallado': [1, [SAL, GS], ['Rico en calcio']], 'Pepinillos': [1, [SAL], []], 'Alitas de pollo crudas': [1, [GS], ['Rico en proteína']], 'Pan rallado': [1, [RF], []], 'Queso en lonchas light': [2, [SAL], ['Rico en proteína']], 'Tortilla de maíz': [2, [], ['Rico en fibra']], 'Pistachos': [2, [CAL], [GOOD, 'Rico en fibra']], 'Bulgur crudo': [2, [], ['Integral', 'Rico en fibra']], 'Semillas de chía': [2, [], ['Omega 3', 'Rico en fibra']], 'Semillas de sésamo': [2, [CAL], [GOOD]], 'Salmón crudo': [2, [], ['Omega 3', 'Rico en proteína']], 'Atún fresco crudo': [2, [], ['Omega 3', 'Rico en proteína']],
   'Pan integral': [2, [], ['Integral', 'Rico en fibra']], 'Pan pita integral': [2, [], ['Integral']], 'Pasta integral cruda': [2, [], ['Integral', 'Rico en fibra']], 'Arroz integral crudo': [2, [], ['Integral']], 'Arroz integral cocido': [2, [], ['Integral']], 'Pasta integral cocida': [2, [], ['Integral', 'Rico en fibra']],
   'Hummus': [2, [], ['Legumbre', 'Rico en fibra']], 'Maíz dulce (lata)': [2, [], []], 'Leche entera': [2, [], ['Rico en calcio']], 'Yogur griego': [2, [], ['Fermentado']], 'Yogur natural': [2, [], ['Fermentado']],
   'Levadura química': null, 'Especias variadas': null, 'Hierbas frescas': null, 'Canela molida': null, 'Vinagre balsámico': null, 'Vinagre de vino': null, 'Caldo de verduras': null, 'Caldo de pollo': null, 'Zumo de limón': null, 'Mostaza': null
@@ -1946,7 +2064,7 @@ function vMenu(v) {
   v.innerHTML = `${tipCard('menu')}
   ${syncReady() ? `<div class="card row" style="padding:12px 14px;${sh ? 'border:1.5px solid var(--acc)' : ''}"><span style="font-size:22px">👥</span><div class="sp"><b>Menú compartido</b><div class="sm mute">${sh ? 'Activado · ' + Object.keys(H).map(cap).join(' y ') : shmExists ? 'Hay un menú compartido de la casa' : 'Un solo menú para los dos, con cantidades para cada uno'}</div></div><button class="btn small ${sh ? '' : 'pri'}" onclick="toggleShared()">${sh ? 'Desactivar' : 'Activar'}</button></div>` : ''}
   <div class="row" style="margin-top:2px"><button class="btn round" onclick="menuWeek--;render()">‹</button><div class="sp" style="text-align:center"><div style="font-weight:750">${menuWeek === 0 ? 'Esta semana' : menuWeek === 1 ? 'Semana que viene' : menuWeek === -1 ? 'Semana pasada' : 'Semana'}</div><div class="sm mute">${f(days[0])} – ${f(days[6])}</div></div><button class="btn round" onclick="menuWeek++;render()">›</button></div>
-  <div class="grid2" style="margin-top:14px"><button class="btn" onclick="openAutofill()">✨ Autorellenar</button><button class="btn pri" onclick="openShopping()">🛒 Lista compra</button></div>
+  <div class="grid2" style="margin-top:14px"><button class="btn" onclick="openAutofill()">✨ Generar menú</button><button class="btn pri" onclick="openShopping()">🛒 Lista compra</button></div>
   <div class="grid3" style="margin-top:8px"><button class="btn small" onclick="openPantry()">🥫 Despensa</button><button class="btn small" onclick="openBatch()">👩‍🍳 Batch</button><button class="btn small" onclick="openPrices()">💶 Precios</button></div>
   ${days.map((d, i) => {
     const m = M[d] || {}, kc = SLOTS.reduce((a, [s]) => a + ((m[s] && eatsMe(m[s]) && perRation(m[s], s)) ? perRation(m[s], s).kcal : 0), 0);
@@ -2018,16 +2136,51 @@ function eatPlanned(k, weigh) {
   const x = calc(food, g); (S.diary[day] = S.diary[day] || []).push({ id: uid(), foodId: food.id, name: food.name, grams: Math.round(g), meal: k, ...x, per: { kcal: food.kcal, p: food.p, c: food.c, f: food.f } });
   save(); render(); toast(`Apuntado: ${Math.round(g)} g · ${r0(x.kcal)} kcal`);
 }
+/* proteína principal de una receta, para no repetir pollo toda la semana */
+const PROT_RX = [['pollo', /pollo|alitas/i], ['pavo', /pavo/i], ['ternera', /ternera|vacuno/i], ['cerdo', /cerdo|lomo|york|salchicha/i], ['pescado', /salmón|merluza|bacalao|atún|dorada|lubina|pescado|sardin/i], ['marisco', /gamba|calamar|marisco|mejill/i], ['huevo', /huevo|clara/i], ['legumbre', /lenteja|garbanzo|alubia|edamame|hummus/i], ['vegetal', /tofu|seitán|tempeh/i]];
+const PROT_UI = { pollo: '🐔 pollo', pavo: '🦃 pavo', ternera: '🐄 ternera', cerdo: '🐖 cerdo', pescado: '🐟 pescado', marisco: '🦐 marisco', huevo: '🥚 huevo', legumbre: '🫘 legumbre', vegetal: '🌱 vegetal', otro: '🥗 otro' };
+const protCache = {};
+function mainProt(r) {
+  if (protCache[r.id]) return protCache[r.id]; let best = 'otro', bp = 0;
+  r.ing.forEach(([n, g]) => { const f = ingFood(n), k = PROT_RX.find(x => x[1].test(n)); if (f && k) { const pg = f.p * g / 100; if (pg > bp) { bp = pg; best = k[0]; } } });
+  return protCache[r.id] = best;
+}
 function openAutofill() {
-  openSheet(`<b style="font-size:18px">✨ Autorellenar semana</b><p class="sm mute">Elige recetas variadas del recetario sin repetir: desayunos para el desayuno, platos principales para comida y cena y algo dulce para la merienda.</p>
-  <label class="chk" style="margin:10px 0"><input type="checkbox" id="afm" checked> Incluir merienda</label>
-  <button class="btn pri block" id="af1">Rellenar solo los huecos vacíos</button><button class="btn block" style="margin-top:8px" id="af2">Rehacer toda la semana</button><button class="btn ghost block" onclick="closeSheet()">Cancelar</button>`);
+  const pref = S.settings.autofill || { desayuno: 1, comida: 1, merienda: 1, cena: 1, cap: 0 };
+  openSheet(`<b style="font-size:18px">✨ Generar menú</b><p class="sm mute">Elige qué quieres que te prepare. Las comidas y cenas se reparten entre pescado, marisco, carne, huevo y legumbre para que no se repita la misma proteína.</p>
+  <div class="h">¿Qué genero?</div>
+  <div class="grid2">${SLOTS.map(([k, l]) => `<label class="chk" style="margin:4px 0"><input type="checkbox" data-af="${k}" ${pref[k] ? 'checked' : ''}> ${MEAL_UI[k] ? MEAL_UI[k][0] + ' ' : ''}${l}</label>`).join('')}</div>
+  <label class="chk" style="margin:12px 0"><input type="checkbox" id="afcap" ${pref.cap ? 'checked' : ''}> 😋 Un capricho ligero el sábado por la noche</label>
+  <button class="btn pri block" id="af1">Rellenar solo los huecos vacíos</button><button class="btn block" style="margin-top:8px" id="af2">Rehacer lo marcado de toda la semana</button><button class="btn ghost block" onclick="closeSheet()">Cancelar</button>`);
   const run = all => {
-    const merienda = $('#afm').checked, used = new Set(), pools = { desayuno: 'desayuno', comida: 'principal', cena: 'principal', merienda: 'dulce' };
-    const days = weekDays(), M = activeMenu(); if (!all) days.forEach(d => Object.values(M[d] || {}).forEach(r => used.add(r.id)));
-    const pick = cat => { let pool = RECIPES.filter(r => r.cat === cat && !used.has(r.id)); if (!pool.length) pool = RECIPES.filter(r => r.cat === cat); const r = pool[Math.floor(Math.random() * pool.length)]; used.add(r.id); return { src: 'lib', id: r.id, serv: 1, fit: true }; };
-    days.forEach(d => { if (all) SLOTS.forEach(([s]) => { if (M[d] && M[d][s]) setSlot(d, s, null); }); SLOTS.forEach(([s]) => { if (s === 'merienda' && !merienda) return; if (!(M[d] && M[d][s])) setSlot(d, s, pick(pools[s])); }); });
-    save(); closeSheet(); render(); toast('Semana lista');
+    const want = {}; document.querySelectorAll('[data-af]').forEach(c => want[c.dataset.af] = c.checked ? 1 : 0);
+    const cap = $('#afcap').checked; S.settings.autofill = { ...want, cap: cap ? 1 : 0 };
+    if (!Object.values(want).some(Boolean)) return toast('Marca al menos una comida');
+    const used = new Set(), pools = { desayuno: 'desayuno', comida: 'principal', cena: 'principal', merienda: 'dulce' }, cnt = {};
+    const days = weekDays(), M = activeMenu(), protOf = ref => { const r = ref && ref.src === 'lib' && RECIPES.find(x => x.id === ref.id); return r && r.cat !== 'desayuno' && r.cat !== 'dulce' ? mainProt(r) : null; };
+    if (all) days.forEach(d => SLOTS.forEach(([s]) => { if (want[s] && M[d] && M[d][s]) setSlot(d, s, null); }));
+    days.forEach(d => Object.values(activeMenu()[d] || {}).forEach(r => { used.add(r.id); const p = protOf(r); if (p) cnt[p] = (cnt[p] || 0) + 1; }));
+    const rnd = a => a[Math.floor(Math.random() * a.length)];
+    const pick = (cat, d, s, i) => {
+      let base = RECIPES.filter(r => r.cat === cat && !used.has(r.id)); if (!base.length) base = RECIPES.filter(r => r.cat === cat);
+      let r;
+      if (cat === 'principal' || cat === 'capricho') {
+        const Mn = activeMenu(), other = protOf((Mn[d] || {})[s === 'comida' ? 'cena' : 'comida']), prev = i > 0 ? protOf((Mn[days[i - 1]] || {})[s]) : null;
+        const ok = (r, cap) => { const p = mainProt(r); return p !== other && p !== prev && (cnt[p] || 0) < cap; };
+        // primero proteínas poco usadas; si no hay, se relaja la regla
+        for (const capN of [1, 2, 3, 99]) { const pool = base.filter(r => ok(r, capN)); if (pool.length) { r = rnd(pool); break; } }
+        if (!r) r = rnd(base);
+        const p = mainProt(r); cnt[p] = (cnt[p] || 0) + 1;
+      } else r = rnd(base);
+      used.add(r.id); return { src: 'lib', id: r.id, serv: 1, fit: true };
+    };
+    days.forEach((d, i) => SLOTS.forEach(([s]) => {
+      if (!want[s] || (activeMenu()[d] && activeMenu()[d][s])) return;
+      const capHere = cap && s === 'cena' && new Date(d + 'T12:00').getDay() === 6;
+      setSlot(d, s, pick(capHere ? 'capricho' : pools[s], d, s, i));
+    }));
+    const kinds = new Set(); days.forEach(d => Object.values(activeMenu()[d] || {}).forEach(r => { const p = protOf(r); if (p) kinds.add(p); }));
+    save(); closeSheet(); render(); toast(`Menú listo · ${kinds.size} proteínas distintas`);
   };
   $('#af1').onclick = () => run(false); $('#af2').onclick = () => run(true);
 }
@@ -2188,8 +2341,8 @@ const isOn = x => x === 1 || !!(x && x.v);
 const SECTIONS = [['fruver', '🥬 Frutas y verduras'], ['carne', '🥩 Carne y pescado'], ['lacteos', '🥛 Lácteos y huevos'], ['pan', '🍞 Pan, cereales y pasta'], ['legum', '🫘 Legumbres y conservas'],
   ['secos', '🥜 Frutos secos y semillas'], ['aceite', '🫒 Aceites, salsas y especias'], ['congel', '❄️ Congelados'], ['dulce', '🍫 Dulces y bebidas'], ['otros', '🛒 Otros']];
 const SEC_OF = {
-  fruver: ['Aguacate', 'Ajo', 'Berenjena', 'Boniato crudo', 'Brócoli', 'Calabacín', 'Calabaza', 'Cebolla', 'Champiñones', 'Coliflor', 'Espinacas', 'Fresas', 'Hierbas frescas', 'Jengibre fresco', 'Judías verdes', 'Kiwi', 'Lechuga', 'Mango', 'Manzana', 'Naranja', 'Patata cruda', 'Pepino', 'Pimiento rojo', 'Pimiento verde', 'Plátano', 'Rúcula', 'Tomate', 'Uvas', 'Zanahoria', 'Zumo de limón', 'Remolacha cocida', 'Dátiles', 'Piña', 'Zumo de naranja natural'],
-  carne: ['Bacalao desalado', 'Carne picada de pavo', 'Carne picada de vacuno', 'Cerdo, lomo crudo', 'Gambas peladas', 'Jamón serrano', 'Merluza cruda', 'Pavo, pechuga cruda', 'Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Pechuga de pollo cruda', 'Salmón ahumado', 'Salmón crudo', 'Ternera magra cruda', 'Atún al natural (escurrido)', 'Alitas de pollo crudas'],
+  fruver: ['Aguacate', 'Ajo', 'Berenjena', 'Boniato crudo', 'Brócoli', 'Calabacín', 'Calabaza', 'Cebolla', 'Champiñones', 'Coliflor', 'Espinacas', 'Fresas', 'Hierbas frescas', 'Jengibre fresco', 'Judías verdes', 'Kiwi', 'Lechuga', 'Mango', 'Manzana', 'Naranja', 'Patata cruda', 'Pepino', 'Pimiento rojo', 'Pimiento verde', 'Plátano', 'Rúcula', 'Tomate', 'Uvas', 'Zanahoria', 'Zumo de limón', 'Remolacha cocida', 'Dátiles', 'Piña', 'Zumo de naranja natural', 'Espárragos verdes', 'Col / repollo'],
+  carne: ['Bacalao desalado', 'Carne picada de pavo', 'Carne picada de vacuno', 'Cerdo, lomo crudo', 'Gambas peladas', 'Jamón serrano', 'Merluza cruda', 'Pavo, pechuga cruda', 'Pechuga de pavo en lonchas', 'Pechuga de pollo a la plancha', 'Pechuga de pollo cruda', 'Salmón ahumado', 'Salmón crudo', 'Ternera magra cruda', 'Atún al natural (escurrido)', 'Alitas de pollo crudas', 'Atún fresco crudo', 'Calamar crudo', 'Dorada o lubina cruda'],
   lacteos: ['Clara de huevo', 'Huevo entero', 'Leche desnatada', 'Leche entera', 'Leche semidesnatada', 'Mantequilla', 'Queso cottage', 'Queso curado', 'Queso feta', 'Queso fresco', 'Queso fresco batido 0%', 'Queso mozzarella light', 'Queso parmesano', 'Skyr o yogur griego 0%', 'Yogur griego', 'Yogur natural', 'Bebida de almendras sin azúcar', 'Tofu', 'Hummus', 'Ñoquis de patata', 'Burrata', 'Queso en lonchas light', 'Queso cheddar rallado', 'Jamón cocido / York', 'Salchichas frescas de pollo o pavo'],
   pan: ['Arroz blanco cocido', 'Arroz blanco crudo', 'Arroz integral cocido', 'Arroz integral crudo', 'Avena en copos', 'Copos de maíz sin azúcar', 'Cuscús crudo', 'Fideos de arroz (crudos)', 'Harina de avena', 'Harina de trigo', 'Maicena', 'Pan blanco', 'Pan integral', 'Pan pita integral', 'Papel de arroz', 'Pasta cocida', 'Pasta cruda', 'Pasta integral cocida', 'Pasta integral cruda', 'Quinoa cocida', 'Quinoa cruda', 'Tortilla de trigo integral', 'Tortitas de arroz', 'Galletas integrales', 'Levadura química', 'Maíz para palomitas', 'Bulgur crudo', 'Pan de hamburguesa', 'Pan rallado', 'Tortilla de maíz', 'Pan de molde integral'],
   legum: ['Alubias cocidas', 'Garbanzos cocidos', 'Lentejas cocidas', 'Lentejas rojas crudas', 'Maíz dulce (lata)', 'Tomate triturado', 'Tomates secos', 'Leche de coco light', 'Caldo de pollo', 'Caldo de verduras', 'Pepinillos'],
@@ -2228,7 +2381,7 @@ function openShopping(keep) {
   if (sh) menus = Object.entries(house()).map(([n, g]) => ({ goals: g, menu: Object.fromEntries(Object.entries(SHM.days).map(([d, sl]) => [d, Object.fromEntries(Object.entries(sl).filter(([, ref]) => !ref.who || !ref.who.length || ref.who.includes(n)).map(([k, ref]) => [k, { ...ref, serv: 1 }]))])) }));
   else if (shopWithOthers && otherMenus) Object.values(otherMenus).forEach(m => menus.push(m));
   const all = weekNeeds(menus, days), names = Object.keys(all).sort((a, b) => a.localeCompare(b, 'es'));
-  if (!names.length) { openSheet(`<b style="font-size:18px">🛒 Lista de la compra</b><p class="mute">Primero añade recetas al menú de esta semana (o pulsa Autorellenar).</p><button class="btn pri block" onclick="closeSheet()">Vale</button>`); return; }
+  if (!names.length) { openSheet(`<b style="font-size:18px">🛒 Lista de la compra</b><p class="mute">Primero añade recetas al menú de esta semana (o pulsa ✨ Generar menú).</p><button class="btn pri block" onclick="closeSheet()">Vale</button>`); return; }
   const need = {}, inPantry = []; names.forEach(n => { const rest = all[n] - pantryCovers(n, all[n]); if (rest < 0.5) inPantry.push(n); else need[n] = rest; });
   const buy = Object.keys(need), chk = (S.shopChecked[wk] = S.shopChecked[wk] || {}), on = n => isOn(chk[n]);
   const view = S.settings.shopView || 'sec';
@@ -2564,6 +2717,7 @@ function importData() {
 
 /* ---------- GUÍA DE USO ---------- */
 const NEWS = [
+  { v: '4-oct · 01:30', short: 'Generar menú eligiendo qué comidas, sin repetir proteína, y 29 recetas nuevas.', items: ['✨ <b>Generar menú</b>: marca si quieres desayuno, comida, merienda y/o cena. Las comidas y cenas reparten la proteína: ninguna (tampoco el pollo) sale más de 2 veces por semana ni dos veces el mismo día.', '😋 Opción de meter <b>un capricho ligero el sábado por la noche</b>.', '🐟 <b>18 recetas sanas sin pollo</b>: merluza en salsa verde, salmón en papillote, atún encebollado, arroz caldoso de gambas, calamar a la plancha, dorada con panaderas, cerdo agridulce, pinchitos morunos, estofado de ternera, filete con chimichurri, huevos a la flamenca, espinacas con garbanzos, curry de garbanzos, tofu con fideos…', '🍔 <b>11 caprichos ligeros más</b> para quitar la gula: lasaña, fish and chips, pulled pork, patatas cargadas, calzone, flamenquín, serranito, quesadilla, ñoquis gratinados, bocadillo de calamares y sándwich de pollo crujiente.'] },
   { v: '2-oct · 23:15', short: 'Nueva sección 😋 Caprichos ligeros: hamburguesa, pizza, kebab, nachos… en versión ligera.', items: ['😋 <b>Caprichos ligeros</b>: 14 comidas y cenas tipo "cheat meal" pero con muchas menos calorías: smash burger doble, pizza casera, kebab, nachos, alitas BBQ, carbonara, mac and cheese, bravas, perritos, pollo a la naranja, tacos al pastor, croquetas al horno, burrito XL y croque madame.', '🙈 Van en su <b>propia sección</b> de Recetas: no salen en "Todas", ni al autorrellenar el menú, ni en ¿Qué como ahora?. Si quieres uno, lo eliges tú.'] },
   { v: '1-oct · 21:45', short: 'Apunta por unidades: 1 loncha, ½ aguacate, 2 huevos…', items: ['📏 Al añadir un alimento salen botones de <b>unidades</b>: ½ aguacate, 1 loncha, 2 huevos, 1 cucharada, 1 vaso… sin tener que pesar.', '🏷️ En productos escaneados, la app saca el peso de 1 unidad de la <b>etiqueta</b> ("1 loncha = 15 g") o del <b>paquete</b> ("120 g · 8 lonchas").', '✏️ Si no lo sabe, pulsa <b>📏 Apuntar por unidades</b>: escribes cuánto pesa el paquete y cuántas trae (o pones 1 en la báscula) y se queda guardado.', '⚖️ Al pesar, te dice también cuántas unidades son ("≈ 2 lonchas").'] },
   { v: '1-oct · 16:30', short: 'Precios de Lidl y tiendas de Sevilla.', items: ['🤖 Los precios automáticos son de <b>Mercadona y Dia</b>, y de <b>Lidl</b> lo que publica en su web (sobre todo ofertas). Consum se quita porque no hay en Sevilla.', '🏪 En la lista de tiendas para apuntar precios a mano están también <b>Family Cash, Dani, Eroski y El Jamón</b>.'] },
@@ -2661,7 +2815,7 @@ const HELP = [
 <p>En <b>Mis recetas → + Nueva receta propia</b> puedes hacer lo mismo con las recetas de casa.</p>`},
 {id:'menu',icon:'🍽️',title:'Menú semanal',tabs:['menu'],body:`
 <ul><li>Cada día tiene desayuno, comida, merienda y cena. Toca un hueco para elegir receta.</li>
-<li><b>✨ Autorellenar</b> elige recetas variadas sin repetir. Puede rellenar solo los huecos o rehacer toda la semana.</li>
+<li><b>✨ Generar menú</b> elige recetas variadas sin repetir. Marca qué quieres que genere (desayuno, comida, merienda, cena) y puede rellenar solo los huecos o rehacer lo marcado. En comidas y cenas reparte la proteína (pescado, marisco, carne, huevo, legumbre…): ninguna se repite más de 2 veces por semana ni dos veces el mismo día. Opcional: un 😋 capricho ligero el sábado por la noche.</li>
 <li>Toca un plato del menú para cambiar cuántas <b>raciones</b> vas a cocinar, cambiar la receta, apuntarlo al diario o quitarlo.</li>
 <li>Cada plato viene <b>ajustado a tus calorías</b>. Se puede desactivar plato a plato.</li>
 <li>Con ‹ › preparas la semana que viene.</li></ul>`},
@@ -2736,7 +2890,7 @@ const TIPS = {
   hoy: '¿No sabes qué comer? Pulsa <b>✨ ¿Qué como ahora?</b> y te propongo recetas que encajan en lo que te queda hoy.',
   pesar: 'Pon el plato, pulsa <b>Tara</b> y añade la comida. Con <b>📷 Escanear</b> ves al momento las calorías de lo que pesas.',
   recetas: 'Las recetas salen <b>a tu medida</b>: los gramos se ajustan a tus calorías. Prueba <b>⚖️ Cocinar con la báscula</b>.',
-  menu: 'Pulsa <b>✨ Autorellenar</b> y luego <b>🛒 Lista compra</b>: en dos toques tienes la semana planificada y la compra hecha.'
+  menu: 'Pulsa <b>✨ Generar menú</b> y luego <b>🛒 Lista compra</b>: en dos toques tienes la semana planificada y la compra hecha.'
 };
 function tipCard(t) {
   if (!TIPS[t] || (S.tipsSeen || {})[t]) return '';
